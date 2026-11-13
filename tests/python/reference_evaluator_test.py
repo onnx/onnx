@@ -45,9 +45,10 @@ from onnx.helper import (
     make_tensor_value_info,
     make_value_info,
 )
+from onnx.inliner import inline_selected_functions
 from onnx.numpy_helper import from_array
 from onnx.reference import ReferenceEvaluator
-from onnx.reference.op_run import OpRun, OpRunExpand
+from onnx.reference.op_run import OpRun, OpRunExpand, RuntimeImplementationError
 from onnx.reference.ops import load_op
 from onnx.reference.ops._op_common_indices import _get_indices, _is_out
 from onnx.reference.ops._op_list import Cast_19, Celu, NonZero
@@ -9339,6 +9340,173 @@ class TestReferenceEvaluator:
         assert output.dtype == expected_output.dtype
         assert output.shape == tuple(output_shape)
         assert_allclose(output, expected_output)
+
+    @staticmethod
+    def _mel_weight_matrix_model(integer_dtype, edge_dtype, output_datatype=None):
+        names = [
+            "num_mel_bins",
+            "dft_length",
+            "sample_rate",
+            "lower_edge_hertz",
+            "upper_edge_hertz",
+        ]
+        attributes = (
+            {} if output_datatype is None else {"output_datatype": output_datatype}
+        )
+        input_dtypes = [integer_dtype] * 3 + [edge_dtype] * 2
+        inputs = [
+            make_tensor_value_info(
+                name,
+                onnx.helper.np_dtype_to_tensor_dtype(np.dtype(dtype)),
+                [],
+            )
+            for name, dtype in zip(names, input_dtypes, strict=True)
+        ]
+        return make_model(
+            make_graph(
+                [make_node("MelWeightMatrix", names, ["output"], **attributes)],
+                "mel",
+                inputs,
+                [
+                    make_tensor_value_info(
+                        "output",
+                        TensorProto.FLOAT
+                        if output_datatype is None
+                        else output_datatype,
+                        [None, None],
+                    )
+                ],
+            ),
+            opset_imports=[make_opsetid("", 29)],
+        )
+
+    @pytest.mark.parametrize("integer_dtype", [np.int32, np.int64])
+    @pytest.mark.parametrize(
+        "edge_dtype", [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]
+    )
+    @pytest.mark.parametrize(
+        "output_datatype",
+        [
+            None,
+            TensorProto.FLOAT16,
+            TensorProto.BFLOAT16,
+            TensorProto.FLOAT,
+            TensorProto.DOUBLE,
+            TensorProto.INT8,
+            TensorProto.INT16,
+            TensorProto.INT32,
+            TensorProto.INT64,
+            TensorProto.UINT8,
+            TensorProto.UINT16,
+            TensorProto.UINT32,
+            TensorProto.UINT64,
+        ],
+    )
+    @pytest.mark.parametrize(
+        "parameters",
+        [
+            [3, 32, 8192, 0, 4096],
+            [8, 16, 8192, 0, 4096],
+            [1, 8, 400, -200, 503.052],
+            [1, 8, 9000, 0, 700 * np.expm1(3 * np.log1p(1000 / 700)) * (1 - 1e-12)],
+            [1, 8, 9000, 0, 700 * np.expm1(3 * np.log1p(1000 / 700)) * (1 + 1e-12)],
+        ],
+    )
+    def test_mel_weight_matrix_function_dtypes(
+        self, integer_dtype, edge_dtype, output_datatype, parameters
+    ):
+        model = self._mel_weight_matrix_model(
+            integer_dtype, edge_dtype, output_datatype
+        )
+        check_model(model)
+        expanded_op = type("MelWeightMatrix", (OpRunExpand,), {"op_domain": ""})
+        feeds = {
+            value.name: np.array(
+                number,
+                dtype=onnx.helper.tensor_dtype_to_np_dtype(
+                    value.type.tensor_type.elem_type
+                ),
+            )
+            for value, number in zip(model.graph.input, parameters, strict=True)
+        }
+        expected = ReferenceEvaluator(model).run(None, feeds)[0]
+        actual = ReferenceEvaluator(model, new_ops=[expanded_op]).run(None, feeds)[0]
+        assert actual.dtype == expected.dtype
+        assert_array_equal(actual, expected)
+        inlined = inline_selected_functions(
+            model, [("", "MelWeightMatrix")], inline_schema_functions=True
+        )
+        assert all(node.op_type != "MelWeightMatrix" for node in inlined.graph.node)
+        check_model(inlined, full_check=True)
+        inlined_output = ReferenceEvaluator(inlined).run(None, feeds)[0]
+        assert inlined_output.dtype == expected.dtype
+        assert_array_equal(inlined_output, expected)
+
+    @pytest.mark.parametrize("opset", [17, 28])
+    def test_mel_weight_matrix_function_older_opsets(self, opset):
+        model = self._mel_weight_matrix_model(np.int64, np.float64)
+        model.opset_import[0].version = opset
+        inlined = inline_selected_functions(
+            model, [("", "MelWeightMatrix")], inline_schema_functions=True
+        )
+        assert inlined.graph.node[0].op_type == "MelWeightMatrix"
+        expanded_op = type("MelWeightMatrix", (OpRunExpand,), {"op_domain": ""})
+        with pytest.raises(
+            RuntimeImplementationError, match=f"No function body.*opset {opset}"
+        ):
+            ReferenceEvaluator(model, new_ops=[expanded_op])
+
+    def test_mel_weight_matrix_function_dynamic_parameters(self):
+        model = self._mel_weight_matrix_model(np.int64, np.float64)
+        expanded_op = type("MelWeightMatrix", (OpRunExpand,), {"op_domain": ""})
+        direct = ReferenceEvaluator(model)
+        expanded = ReferenceEvaluator(model, new_ops=[expanded_op])
+        collapsed = np.zeros((9, 8), dtype=np.float32)
+        collapsed[[0, 0, 1, 1, 2, 3, 4, 5], np.arange(8)] = 1
+        cases = [
+            ([8, 16, 8192, 0, 4096], collapsed),
+            ([1, 8, 5000, 0, 4900], [[0], [1], [0.5], [0], [0]]),
+            ([3, 4, 8192, 0, 1e-8], [[1, 1, 1], [0, 0, 0], [0, 0, 0]]),
+            ([3, 4, 8192, -1e-15, 1e-15], [[0, 0, 1], [0, 0, 0], [1, 1, 0]]),
+            ([0, 16, 8192, 0, 4096], np.empty((9, 0))),
+            ([2, 0, 8192, 0, 4096], [[1, 1]]),
+            ([3, 16, 8192, -100, 100], None),
+            ([3, 16, 8192, 100, -100], None),
+            (
+                [1, 8, 400, -200, 503.052],
+                np.array([[0.8], [0.6], [0.4], [0.2], [1]], dtype=np.float32),
+            ),
+            ([1, 4, 3150, 0, 4900], [[0], [1], [0.5]]),
+        ]
+        # A tiny change across this edge moves the center to the next DFT bin.
+        boundary = 700 * np.expm1(3 * np.log1p(1000 / 700))
+        cases.extend(
+            ([1, 8, 9000, 0, upper], expected)
+            for upper, expected in [
+                (
+                    boundary * (1 - 1e-12),
+                    np.array([[1], [2 / 3], [1 / 3], [0], [0]], dtype=np.float32),
+                ),
+                (boundary * (1 + 1e-12), [[0], [1], [0.5], [0], [0]]),
+            ]
+        )
+        for parameters, independent_expected in cases:
+            feeds = {
+                value.name: np.array(
+                    number,
+                    dtype=onnx.helper.tensor_dtype_to_np_dtype(
+                        value.type.tensor_type.elem_type
+                    ),
+                )
+                for value, number in zip(model.graph.input, parameters, strict=True)
+            }
+            expected = direct.run(None, feeds)[0]
+            actual = expanded.run(None, feeds)[0]
+            assert_array_equal(actual, expected, err_msg=str(parameters))
+            if independent_expected is not None:
+                assert_array_equal(
+                    actual, independent_expected, err_msg=str(parameters)
+                )
 
     @staticmethod
     def _swiglu_model() -> ModelProto:

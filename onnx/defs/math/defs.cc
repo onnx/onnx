@@ -2980,6 +2980,97 @@ ONNX_OPERATOR_SET_SCHEMA(
         }
         )ONNX"));
 
+// Negative bin indices wrap from the last row; later nonnegative
+// writes take precedence when both indices address the same row.
+static constexpr const char* kMelWeightMatrixFunctionBody29 = R"ONNX(
+        {
+          Zero = Constant <value = int64 {0}>()
+          One = Constant <value = int64 {1}>()
+          Two = Constant <value = int64 {2}>()
+          Axis1 = Constant <value = int64[1] {1}>()
+          ZeroDouble = Constant <value = double {0}>()
+          SevenHundred = Constant <value = double {700}>()
+          MelScale = Constant <value = double {2595}>()
+          Ten = Constant <value = double {10}>()
+          LogTen = Log (Ten)
+          EdgeScale = CastLike (SevenHundred, lower_edge_hertz)
+          EdgeMelScale = CastLike (MelScale, lower_edge_hertz)
+          LowRatio = Div (lower_edge_hertz, EdgeScale)
+          HighRatio = Div (upper_edge_hertz, EdgeScale)
+          LowLog = Log1p (LowRatio)
+          HighLog = Log1p (HighRatio)
+          LowScaled = Mul (LowLog, EdgeMelScale)
+          HighScaled = Mul (HighLog, EdgeMelScale)
+          LowDouble = Cast <to = 11> (LowScaled)
+          HighDouble = Cast <to = 11> (HighScaled)
+          LowMel = Div (LowDouble, LogTen)
+          HighMel = Div (HighDouble, LogTen)
+          Bands = Cast <to = 7> (num_mel_bins)
+          DftLength = Cast <to = 7> (dft_length)
+          SampleRate = Cast <to = 11> (sample_rate)
+          PointCount = Add (Bands, Two)
+          PointCountDouble = Cast <to = 11> (PointCount)
+          MelSpan = Sub (HighMel, LowMel)
+          MelStep = Div (MelSpan, PointCountDouble)
+          PointIndices = Range (Zero, PointCount, One)
+          PointIndicesDouble = Cast <to = 11> (PointIndices)
+          MelOffsets = Mul (PointIndicesDouble, MelStep)
+          MelPoints = Add (MelOffsets, LowMel)
+          InverseScaled = Div (MelPoints, MelScale)
+          Exponents = Mul (InverseScaled, LogTen)
+          FrequenciesUnscaled = Expm1 (Exponents)
+          Frequencies = Mul (FrequenciesUnscaled, SevenHundred)
+          DftPlusOne = Add (DftLength, One)
+          DftScale = Cast <to = 11> (DftPlusOne)
+          ScaledFrequencies = Mul (DftScale, Frequencies)
+          BinRatios = Div (ScaledFrequencies, SampleRate)
+          BinFloors = Floor (BinRatios)
+          Bins = Cast <to = 7> (BinFloors)
+          BandIndices = Range (Zero, Bands, One)
+          CenterIndices = Add (BandIndices, One)
+          RightIndices = Add (BandIndices, Two)
+          Left = Gather (Bins, BandIndices)
+          Center = Gather (Bins, CenterIndices)
+          Right = Gather (Bins, RightIndices)
+          HalfDftLength = Div (DftLength, Two)
+          RowCount = Add (HalfDftLength, One)
+          Rows = Range (Zero, RowCount, One)
+          RowsColumn = Unsqueeze (Rows, Axis1)
+          WrappedRows = Sub (RowsColumn, RowCount)
+          RightLast = Sub (Right, One)
+          LastWritten = Max (Center, RightLast)
+          AboveLeft = GreaterOrEqual (RowsColumn, Left)
+          BelowLast = LessOrEqual (RowsColumn, LastWritten)
+          PositiveWritten = And (AboveLeft, BelowLast)
+          LogicalRows = Where (PositiveWritten, RowsColumn, WrappedRows)
+          RisingWidth = Sub (Center, Left)
+          FallingWidth = Sub (Right, Center)
+          SafeRisingWidth = Max (RisingWidth, One)
+          SafeFallingWidth = Max (FallingWidth, One)
+          RisingDenominator = Cast <to = 11> (SafeRisingWidth)
+          FallingDenominator = Cast <to = 11> (SafeFallingWidth)
+          RisingOffset = Sub (LogicalRows, Left)
+          FallingOffset = Sub (Right, LogicalRows)
+          RisingNumerator = Cast <to = 11> (RisingOffset)
+          FallingNumerator = Cast <to = 11> (FallingOffset)
+          RisingSlope = Div (RisingNumerator, RisingDenominator)
+          FallingSlope = Div (FallingNumerator, FallingDenominator)
+          HasRising = GreaterOrEqual (Center, Left)
+          HasFalling = Greater (Right, Center)
+          HasPeak = Or (HasRising, HasFalling)
+          PeakValue = Cast <to = 11> (HasPeak)
+          BelowCenter = Less (LogicalRows, Center)
+          RisingStart = GreaterOrEqual (LogicalRows, Left)
+          FallingEnd = Less (LogicalRows, Right)
+          AtPeak = Equal (LogicalRows, Center)
+          SlopeMask = Where (BelowCenter, RisingStart, FallingEnd)
+          SelectedSlope = Where (BelowCenter, RisingSlope, FallingSlope)
+          SlopeOutput = Where (SlopeMask, SelectedSlope, ZeroDouble)
+          Weights = Where (AtPeak, PeakValue, SlopeOutput)
+          output = Cast <to : int = @output_datatype> (Weights)
+        }
+        )ONNX";
+
 ONNX_OPERATOR_SET_SCHEMA(
     MelWeightMatrix,
     17,
@@ -3086,7 +3177,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             result_shape.add_dim()->set_dim_value(num_mel_bins_value);
             updateOutputShape(ctx, 0, result_shape);
           }
-        }));
+        })
+        .FunctionBody(kMelWeightMatrixFunctionBody29, 29));
 
 ONNX_OPERATOR_SET_SCHEMA(
     STFT,

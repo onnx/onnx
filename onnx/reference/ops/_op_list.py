@@ -595,7 +595,14 @@ def load_op(
                 f"and domain {domain!r}. Did you recompile the sources after updating the repository?"
             ) from None
         if schema.has_function:
-            body = schema.function_body
+            function_bytes = schema.get_function_with_opset_version(version)
+            if not function_bytes:
+                raise RuntimeImplementationError(
+                    f"No function body for operator {op_type!r} from domain {domain!r} "
+                    f"is available at opset {version}. Use its native implementation "
+                    f"or an opset with a function body: {schema.function_opset_versions}."
+                )
+            body = FunctionProto.FromString(function_bytes)
             assert evaluator_cls is not None, (
                 f"evaluator_cls must be specified to implement operator {op_type!r} from domain {domain!r}"
             )
