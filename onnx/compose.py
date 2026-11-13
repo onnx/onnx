@@ -710,7 +710,11 @@ def expand_out_dim_graph(
                 name=f"unsqueeze-{o.name}",
             )
         )
-        new_shape = [d.dim_value for d in o.type.tensor_type.shape.dim]
+        # Keep symbolic (dim_param) and unknown dimensions as they are
+        new_shape: list[int | str | None] = [
+            d.dim_value if d.HasField("dim_value") else (d.dim_param or None)
+            for d in o.type.tensor_type.shape.dim
+        ]
         # Unsqueeze resolves a negative axis against the output rank (input rank + 1)
         new_shape.insert(dim_idx if dim_idx >= 0 else len(new_shape) + dim_idx + 1, 1)
         g.output.append(
