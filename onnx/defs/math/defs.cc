@@ -580,16 +580,6 @@ static bool BuildContextDependentFunctionBodyGeGLU(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
-  const auto* const approx_attr_proto = ctx.getAttribute("approximate");
-  // A reference to an enclosing function's attribute has no value yet. Building
-  // the body now would hard-code the default and drop the later binding.
-  if (approx_attr_proto != nullptr && !approx_attr_proto->ref_attr_name().empty()) {
-    return false;
-  }
-  const std::string approximate = GetGeGLUApproximate(approx_attr_proto);
-  if (approximate != "none" && approximate != "tanh") {
-    return false;
-  }
   const auto* const tp = ctx.getInputType(0);
   if ((tp == nullptr) || (!tp->has_tensor_type())) {
     return false;
@@ -601,11 +591,11 @@ static bool BuildContextDependentFunctionBodyGeGLU(
     const int64_t U = TensorProto_DataType_FLOAT;
     builder.Add("A32 = Cast (A)", "to", U)
         .Add("B32 = Cast (B)", "to", U)
-        .Add("GeluGate = Gelu (A32)", "approximate", approximate)
+        .Add("GeluGate = Gelu <approximate: string = @approximate> (A32)")
         .Add("Y32 = Mul (GeluGate, B32)")
         .Add("Y = Cast (Y32)", "to", T);
   } else {
-    builder.Add("GeluGate = Gelu (A)", "approximate", approximate).Add("Y = Mul (GeluGate, B)");
+    builder.Add("GeluGate = Gelu <approximate: string = @approximate> (A)").Add("Y = Mul (GeluGate, B)");
   }
   schema.BuildFunction(functionProto);
   return true;

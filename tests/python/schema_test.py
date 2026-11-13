@@ -12,6 +12,7 @@ import pytest
 
 import onnx
 from onnx import AttributeProto, TensorProto, defs, helper, inliner
+from onnx.backend.test.case.node import function_expand_helper, function_testcase_helper
 from onnx.reference import ReferenceEvaluator
 
 MOD_OPSET_13 = 13
@@ -298,12 +299,15 @@ class TestSchema:
             (TensorProto.DOUBLE, False),
         ],
     )
+    @pytest.mark.parametrize("approximate", [None, "none", "tanh"])
     def test_geglu_context_dependent_function_compute_type(
-        self, elem_type: int, computes_in_float32: bool
+        self, elem_type: int, computes_in_float32: bool, approximate: str | None
     ) -> None:
         schema = defs.get_schema("GeGLU", 29)
         assert schema.has_context_dependent_function
-        node = helper.make_node("GeGLU", ["A", "B"], ["Y"], approximate="tanh")
+        node = helper.make_node("GeGLU", ["A", "B"], ["Y"])
+        if approximate is not None:
+            node.attribute.append(helper.make_attribute("approximate", approximate))
 
         input_types = [self._tensor_type_proto(elem_type)] * 2
         function_proto = onnx.FunctionProto()
@@ -315,20 +319,56 @@ class TestSchema:
         )
 
         gelu = next(n for n in function_proto.node if n.op_type == "Gelu")
-        assert helper.get_attribute_value(gelu.attribute[0]) == b"tanh"
-        assert (
-            any(n.op_type == "Cast" for n in function_proto.node) == computes_in_float32
+        assert gelu.attribute[0] == helper.make_attribute_ref(
+            "approximate", AttributeProto.STRING
+        )
+        assert [n.op_type for n in function_proto.node] == (
+            ["Cast", "Cast", "Gelu", "Mul", "Cast"]
+            if computes_in_float32
+            else ["Gelu", "Mul"]
         )
         output_types = onnx.shape_inference.infer_function_output_types(
             function_proto, input_types, list(node.attribute)
         )
         assert output_types[0].tensor_type.elem_type == elem_type
 
-    def test_geglu_unresolved_approximate_reference(self) -> None:
-        # An attribute reference has no value until the enclosing function is
-        # instantiated, so the body must not be built with the default "none".
+        expanded_tests, _ = function_testcase_helper(node, input_types, "geglu")
+        expanded_nodes, opset_imports = expanded_tests[0]
+        gelu = next(n for n in expanded_nodes if n.op_type == "Gelu")
+        assert (
+            helper.get_attribute_value(gelu.attribute[0])
+            == (approximate or "none").encode()
+        )
+        graph = helper.make_graph(
+            expanded_nodes,
+            "g",
+            [
+                helper.make_tensor_value_info(name, elem_type, [2, 3])
+                for name in ("A", "B")
+            ],
+            [helper.make_tensor_value_info("Y", elem_type, [2, 3])],
+        )
+        model = helper.make_model(graph, opset_imports=opset_imports)
+        onnx.checker.check_model(model, full_check=True)
+        dtype = helper.tensor_dtype_to_np_dtype(elem_type)
+        feeds = {
+            "A": np.array([[-4, -3, -1], [0, 1, 3]], dtype=dtype),
+            "B": np.array([[2, -1, 3], [4, -2, 0.5]], dtype=dtype),
+        }
+        expected = ReferenceEvaluator(node).run(None, feeds)[0]
+        actual = ReferenceEvaluator(model).run(None, feeds)[0]
+        assert actual.dtype == expected.dtype
+        np.testing.assert_allclose(
+            actual.astype(np.float64), expected.astype(np.float64), rtol=1e-3
+        )
+
+    @pytest.mark.parametrize("elem_type", [TensorProto.FLOAT, TensorProto.FLOAT16])
+    @pytest.mark.parametrize("approximate", ["none", "tanh"])
+    def test_geglu_unresolved_approximate_reference(
+        self, elem_type: int, approximate: str
+    ) -> None:
         schema = defs.get_schema("GeGLU", 29)
-        input_types = [self._tensor_type_proto(TensorProto.FLOAT)] * 2
+        input_types = [self._tensor_type_proto(elem_type)] * 2
         serialized_types = [t.SerializeToString() for t in input_types]
         node = helper.make_node("GeGLU", ["A", "B"], ["Y"])
         node.attribute.append(
@@ -336,48 +376,65 @@ class TestSchema:
                 "approximate", onnx.AttributeProto.STRING, ref_attr_name="approx"
             )
         )
-        assert not schema.get_context_dependent_function(
-            node.SerializeToString(), serialized_types
+        function_proto = onnx.FunctionProto.FromString(
+            schema.get_context_dependent_function(
+                node.SerializeToString(), serialized_types
+            )
+        )
+        assert function_proto.node
+        expanded_nodes = function_expand_helper(node, function_proto, "geglu_")
+        gelu = next(n for n in expanded_nodes if n.op_type == "Gelu")
+        assert gelu.attribute[0] == helper.make_attribute_ref(
+            "approximate", AttributeProto.STRING, ref_attr_name="approx"
         )
 
-        # The same op inside a model-local function that forwards its own
-        # attribute keeps the caller's value.
         function = helper.make_function(
             "custom",
             "WrapGeGLU",
             ["A", "B"],
             ["Y"],
-            [node],
+            expanded_nodes,
             [helper.make_opsetid("", 29)],
             attributes=["approx"],
         )
-        for approximate in ("none", "tanh"):
-            call = helper.make_node(
-                "WrapGeGLU", ["A", "B"], ["Y"], domain="custom", approx=approximate
-            )
-            graph = helper.make_graph(
-                [call],
-                "g",
-                [
-                    helper.make_tensor_value_info("A", TensorProto.FLOAT, [2, 3]),
-                    helper.make_tensor_value_info("B", TensorProto.FLOAT, [2, 3]),
-                ],
-                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [2, 3])],
-            )
-            model = helper.make_model(
-                graph,
-                functions=[function],
-                opset_imports=[
-                    helper.make_opsetid("", 29),
-                    helper.make_opsetid("custom", 1),
-                ],
-            )
-            onnx.checker.check_model(model, full_check=True)
-            inlined = inliner.inline_local_functions(model)
-            geglu = next(n for n in inlined.graph.node if n.op_type == "GeGLU")
-            assert (
-                helper.get_attribute_value(geglu.attribute[0]) == approximate.encode()
-            )
+        call = helper.make_node(
+            "WrapGeGLU", ["A", "B"], ["Y"], domain="custom", approx=approximate
+        )
+        graph = helper.make_graph(
+            [call],
+            "g",
+            [
+                helper.make_tensor_value_info(name, elem_type, [2, 3])
+                for name in ("A", "B")
+            ],
+            [helper.make_tensor_value_info("Y", elem_type, [2, 3])],
+        )
+        model = helper.make_model(
+            graph,
+            functions=[function],
+            opset_imports=[
+                helper.make_opsetid("", 29),
+                helper.make_opsetid("custom", 1),
+            ],
+        )
+        onnx.checker.check_model(model, full_check=True)
+        inlined = inliner.inline_local_functions(model)
+        gelu = next(n for n in inlined.graph.node if n.op_type == "Gelu")
+        assert helper.get_attribute_value(gelu.attribute[0]) == approximate.encode()
+        onnx.checker.check_model(inlined, full_check=True)
+        dtype = helper.tensor_dtype_to_np_dtype(elem_type)
+        feeds = {
+            "A": np.array([[-4, -3, -1], [0, 1, 3]], dtype=dtype),
+            "B": np.array([[2, -1, 3], [4, -2, 0.5]], dtype=dtype),
+        }
+        expected = ReferenceEvaluator(
+            helper.make_node("GeGLU", ["A", "B"], ["Y"], approximate=approximate)
+        ).run(None, feeds)[0]
+        actual = ReferenceEvaluator(inlined).run(None, feeds)[0]
+        assert actual.dtype == expected.dtype
+        np.testing.assert_allclose(
+            actual.astype(np.float64), expected.astype(np.float64), rtol=1e-3
+        )
 
     def test_node_determinism(self) -> None:
         rand_schema = defs.get_schema("RandomNormalLike")
