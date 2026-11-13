@@ -2417,24 +2417,6 @@ do not select groups by counting backwards from `G`.
 
 Quantized weights can be dequantized with DequantizeLinear before this operator.
 The dequantized weights must have the shape specified by `transB`.
-
-For static packed expert weights, use
-`weights = DequantizePacked(packed_weights, shape=[G,N,K], ...)` followed by
-`GroupedMatMul(input, weights, group_indices, transB=1)`.
-Here the weight dimensions are literal attribute values; `M` and `S` may
-remain symbolic. See [DequantizePacked](Operators.md#DequantizePacked) for
-block alignment and selected-expert decode fusion.
-This composition represents one projection within a mixture-of-experts layer.
-
-For FP8 weights stored as a typed tensor of shape `[G,N,K]`, use
-`weights = DequantizeLinear(fp8_weights, scales, axis=2, block_size=B)`
-for blocks of `B` elements along `K`. The scale shape is
-`[G,N,ceil(K/B)]`; for per-tensor scaling, use a scalar scale and omit
-`block_size`. The zero point may be omitted. The decoded weights and `input`
-must have the same floating-point type. An optional backend fusion can
-compute selected expert projections directly from quantized storage,
-preserving DequantizeLinear and GroupedMatMul semantics, including scale
-indexing, output conversion, and results for other consumers of the weights.
 )DOC";
 const char kDoc_SwiGLU_ver28[] = R"DOC(
 SwiGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
@@ -4454,22 +4436,6 @@ Each entry in `indices` produces a `r-1` dimensional slice of the input tensor.
 The entire operation produces, conceptually, a `q`-dimensional tensor of `r-1` dimensional slices,
 which is arranged into a `q + (r-1)`-dimensional tensor, with the `q` dimensions taking the
 place of the original `axis` that is being indexed into.
-
-An embedding lookup uses `Gather(table, token_ids, axis=0)`: a table of
-shape `[V,H]` and integer token IDs of shape `[N]` produce embeddings of
-shape `[N,H]`. `N` may be symbolic even when the table dimensions are fixed.
-For packed weights, first decode a flat UINT8 payload with
-`DequantizePacked(packed_table, shape=[V,H], ...)`; see
-[DequantizePacked](Operators.md#DequantizePacked) for block alignment and
-selected-row decode fusion.
-For a typed FP8 table of shape `[V,H]`, first use
-`DequantizeLinear(fp8_table, scales, axis=1, block_size=B)` with scale shape
-`[V,ceil(H/B)]`, or a scalar scale with `block_size` omitted for per-tensor
-scaling; the zero point may be omitted. An optional backend fusion can
-decode only selected rows instead of materializing the full floating-point
-table. It preserves dequantization arithmetic, scale indexing, output
-conversion, Gather index semantics (including negative indices), and
-results for other consumers of the table.
 
 The following few examples illustrate how `Gather` works for specific shapes of `data`,
 `indices`, and given value of `axis`:

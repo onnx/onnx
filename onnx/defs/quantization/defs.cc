@@ -150,39 +150,6 @@ For example, a Q4_0 block is a little-endian FLOAT16 scale `d` followed
 by 16 bytes `q`. It produces `y[j]=d*((q[j]&15)-8)` and
 `y[j+16]=d*((q[j]>>4)-8)` for j=0,...,15. Thus 36 bytes containing two
 blocks can be decoded with `format="gguf:q4_0", shape=[2,32]`.
-
-### Static weight decode patterns (informative)
-
-The following compositions use a flat UINT8 packed weight tensor and literal
-weight dimensions in `shape`. Shape inference obtains the decoded weight
-dimensions from this attribute while token counts may remain symbolic.
-In these examples, `H` and `K` are multiples of the format's elements per block;
-the letters in `shape` stand for fixed integer attribute values, not symbols.
-
-**Embedding lookup:** decode the table with `shape=[V,H]`, then apply
-`Gather(table, token_ids, axis=0)`. With integer `token_ids` of shape `[N]`,
-the result has shape `[N,H]`, where `N` may be symbolic. Because rows consist
-of independently decodable, aligned blocks, a backend may fuse the decode
-and Gather to read and decode only the selected rows without materializing
-the full floating-point table.
-
-**Selected-expert projection:** decode the weight bank with `shape=[E,O,K]`,
-then apply `GroupedMatMul(input, weights, expert_ids, transB=1)`, with no bias.
-For floating-point `input` of shape `[M,K]` and integer `expert_ids` of shape
-`[M,S]` with values in `[0,E)`, the result has shape `[M,S,O]`.
-The input type must match `output_dtype`; `M` and `S` may be symbolic.
-Each expert consists of independently decodable, block-aligned rows.
-A backend may fuse the decode and GroupedMatMul to compute the selected
-expert projections directly from packed storage without materializing the
-entire floating-point weight bank. This represents one projection within a
-mixture-of-experts layer.
-
-The graph semantics are floating-point decode followed by the consumer.
-Fusion is an optional backend optimization that preserves the specified
-FLOAT decoding arithmetic, output conversion, and consumer semantics.
-It can avoid the full floating-point table or bank that unfused execution
-materializes. When the decoded tensor has other consumers, the backend
-also preserves their results.
 )DOC")
         .Input(0, "x", "Consecutive quantization blocks with little-endian fields.", "tensor(uint8)")
         .Output(0, "y", "Dequantized tensor with the specified shape and output_dtype.", "T")

@@ -20,4 +20,5 @@ float4
 int2
 float6
 kv_cache
+static_weight_decode
 ```
