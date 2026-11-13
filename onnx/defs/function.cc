@@ -26,17 +26,17 @@ void FunctionExpandHelper(
     uniq_prefix = ss.str();
   }
   std::string node_name = node.has_name() ? node.name() : func.name() + uniq_prefix;
-  std::unordered_map<std::string, std::string> io_names_map;
+  inliner::Renamer renamer(node_name, g);
   std::unordered_map<std::string, AttributeProto> attr_map;
 
   for (int idx = 0; idx < node.input_size(); ++idx) {
     if (idx >= func.input_size()) {
       ONNX_THROW("Input for function node " + node_name + " is out of bounds");
     }
-    io_names_map[func.input().Get(idx)] = node.input().Get(idx);
+    renamer.BindName(func.input(idx), node.input(idx));
   }
   for (int idx = node.input_size(); idx < func.input_size(); ++idx) {
-    io_names_map[func.input().Get(idx)] = "";
+    renamer.BindName(func.input(idx), "");
   }
   for (int idx = 0; idx < node.output_size(); ++idx) {
     // If the node output is missing, the corresponding function output should
@@ -48,7 +48,7 @@ void FunctionExpandHelper(
     if (idx >= func.output_size()) {
       ONNX_THROW("Output for function node " + node_name + " is out of bounds");
     }
-    io_names_map[func.output().Get(idx)] = node.output().Get(idx);
+    renamer.BindName(func.output(idx), node.output(idx));
   }
 
   for (const auto& attr : node.attribute()) {
@@ -99,19 +99,6 @@ void FunctionExpandHelper(
     }
   }
 
-  inliner::Renamer renamer(node_name, g);
-  for (const auto& [formal, actual] : io_names_map) {
-    renamer.BindName(formal, actual);
-  }
-  for (const auto& function_node : func.node()) {
-    for (const auto& output : function_node.output()) {
-      if (!output.empty() && !io_names_map.count(output)) {
-        std::string renamed("Func_");
-        renamed.append(node_name).append(output);
-        renamer.BindName(output, renamed);
-      }
-    }
-  }
   for (const auto& function_node : func.node()) {
     NodeProto* new_node = g.add_node();
     new_node->CopyFrom(function_node);

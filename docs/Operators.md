@@ -200,6 +200,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-22">22</a>, <a href="Changelog.md#Mish-18">18</a>|22|
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-22">22</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|22|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|16|
+|<a href="#Pack">Pack</a>|<a href="Changelog.md#Pack-29">29</a>|29|
 |<a href="#RMSNormalization">RMSNormalization</a>|<a href="Changelog.md#RMSNormalization-23">23</a>|23|
 |<a href="#Range">Range</a>|<a href="Changelog.md#Range-27">27</a>, <a href="Changelog.md#Range-11">11</a>|27|
 |<a href="#ReduceL1">ReduceL1</a>|<a href="Changelog.md#ReduceL1-18">18</a>, <a href="Changelog.md#ReduceL1-13">13</a>, <a href="Changelog.md#ReduceL1-11">11</a>, <a href="Changelog.md#ReduceL1-1">1</a>|18|
@@ -220,6 +221,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#SwiGLU">SwiGLU</a>|<a href="Changelog.md#SwiGLU-28">28</a>|28|
 |<a href="#Swish">Swish</a>|<a href="Changelog.md#Swish-24">24</a>|24|
 |<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-22">22</a>, <a href="Changelog.md#ThresholdedRelu-10">10</a>|18|
+|<a href="#Unpack">Unpack</a>|<a href="Changelog.md#Unpack-29">29</a>|29|
 
 ### ai.onnx.preview
 |**Operator**|**Since version**||
@@ -22798,7 +22800,7 @@ node = onnx.helper.make_node(
 x = np.array([[-1, 0, 1]]).astype(np.float32)
 # expected output
 # [[-2.4076061 -1.407606  -0.407606 ]]
-y = logsoftmax(x)
+y = _log_softmax(x)
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_example_1")
 ```
 
@@ -22813,7 +22815,7 @@ x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]]).astype(np.float32)
 # expected output
 # [[-3.4401896  -2.4401896  -1.4401896  -0.44018966]
 # [-3.4401896  -2.4401896  -1.4401896  -0.44018966]]
-y = logsoftmax(x)
+y = _log_softmax(x)
 
 node = onnx.helper.make_node(
     "LogSoftmax",
@@ -22829,7 +22831,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
     axis=0,
 )
-y = logsoftmax(x, axis=0)
+y = _log_softmax(x, axis=0)
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_axis_0")
 
 node = onnx.helper.make_node(
@@ -22838,7 +22840,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
     axis=1,
 )
-y = logsoftmax(x, axis=1)
+y = _log_softmax(x, axis=1)
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_axis_1")
 
 node = onnx.helper.make_node(
@@ -22847,7 +22849,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
     axis=2,
 )
-y = logsoftmax(x, axis=2)
+y = _log_softmax(x, axis=2)
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_axis_2")
 
 node = onnx.helper.make_node(
@@ -22856,7 +22858,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
     axis=-1,
 )
-y = logsoftmax(x, axis=-1)
+y = _log_softmax(x, axis=-1)
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_negative_axis")
 
 # default axis is -1
@@ -22866,6 +22868,114 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_default_axis")
+```
+
+</details>
+
+
+<details>
+<summary>logsoftmax_empty_input</summary>
+
+```python
+node = onnx.helper.make_node("LogSoftmax", ["x"], ["y"], axis=1)
+x = np.empty((0, 3), dtype=np.float32)
+expect(node, inputs=[x], outputs=[x], name="test_logsoftmax_empty_input")
+```
+
+</details>
+
+
+<details>
+<summary>logsoftmax_large_finite_gap</summary>
+
+```python
+node = onnx.helper.make_node("LogSoftmax", ["x"], ["y"], axis=1)
+x = np.array([[0, -200]], dtype=np.float32)
+expect(
+    node,
+    inputs=[x],
+    outputs=[x],
+    name="test_logsoftmax_large_finite_gap",
+    rtol=1e-3,
+    atol=0,
+)
+```
+
+</details>
+
+
+<details>
+<summary>logsoftmax_single_class</summary>
+
+```python
+node = onnx.helper.make_node("LogSoftmax", ["x"], ["y"], axis=1)
+x = np.array([[[1, -2, 3]], [[4, 5, -6]]], dtype=np.float32)
+expect(
+    node,
+    inputs=[x],
+    outputs=[np.zeros_like(x)],
+    name="test_logsoftmax_single_class",
+    atol=0,
+)
+```
+
+</details>
+
+
+<details>
+<summary>logsoftmax_small_log_probability</summary>
+
+```python
+for dtype, margin in [
+    (np.float16, 10.0),
+    (np.float32, 18.0),
+    (np.float64, 40.0),
+]:
+    x = np.full((3, 3), -margin, dtype=dtype)
+    np.fill_diagonal(x, 0)
+    x = np.stack([x, x])
+    # Zero absolute tolerance catches a collapsed result; relative
+    # tolerance still allows differences between backend implementations.
+    # Compute the expected value analytically, independently of the helper.
+    normalizer = np.log1p(2 * np.exp(-margin))
+    expected = (x.astype(np.float64) - normalizer).astype(dtype)
+    for axis in [0, 1, -1]:
+        node = onnx.helper.make_node("LogSoftmax", ["x"], ["y"], axis=axis)
+        expect(
+            node,
+            inputs=[np.moveaxis(x, -1, axis)],
+            outputs=[np.moveaxis(expected, -1, axis)],
+            name=f"test_logsoftmax_small_log_probability_{np.dtype(dtype).name}_axis_{axis}",
+            rtol=1e-3,
+            atol=0,
+        )
+```
+
+</details>
+
+
+<details>
+<summary>logsoftmax_tied_maxima</summary>
+
+```python
+node = onnx.helper.make_node("LogSoftmax", ["x"], ["y"], axis=-1)
+x = np.array([[0, 0, -200], [4, 4, 4], [0, -np.inf, -np.inf]], dtype=np.float64)
+expected = np.array(
+    [
+        [-np.log(2), -np.log(2), -200 - np.log(2)],
+        [-np.log(3), -np.log(3), -np.log(3)],
+        [0, -np.inf, -np.inf],
+    ],
+    dtype=np.float64,
+)
+expect(
+    node,
+    inputs=[x],
+    outputs=[expected],
+    name="test_logsoftmax_tied_maxima",
+    rtol=1e-3,
+    atol=0,
+)
 ```
 
 </details>
@@ -28949,6 +29059,186 @@ slope = np.random.randn(5).astype(np.float32)
 y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * slope
 
 expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
+```
+
+</details>
+
+
+### <a name="Pack"></a><a name="pack">**Pack**</a>
+
+  Packs UINT8 codes into UINT8 (default) or UINT32 words along `axis` (default -1).
+  Input and output have the same rank, at least 1; axis must be in [-rank, rank-1].
+  The `output_type` selects storage words of word_bits = 8 or 32 bits.
+  Specify either `bits` in [1, 8], or both `radix` and `group_size`;
+  the two spellings are mutually exclusive. With `bits`, each element of `X`
+  must be in [0, 2^bits - 1].
+
+  When using `bits`, an input axis dimension N becomes B = ceil(N * bits / word_bits).
+  Each fixed combination of indices in the other dimensions defines an
+  independent sequence, called a row below; a rank-1 tensor has one row.
+
+  Within each row, codes are packed in increasing axis index order, with
+  the least significant bit of each code first. Number the bits of each code
+  and storage word starting at 0 for the least significant bit. For code index
+  `0 <= i < N` and bit index `0 <= k < bits`, bit `k` of input code `i` is stored
+  at bit `(i * bits + k) % word_bits` of output word `floor((i * bits + k) / word_bits)`.
+  When a code spans a word boundary, its remaining higher-order bits occupy
+  the low bits of the next word. Each row begins at bit 0 of a new word.
+  Unused high bits in the final word of each row are zero. Bit positions
+  are defined numerically, independently of host endianness; tensor raw data
+  uses ONNX's little-endian serialization.
+
+  All non-axis dimensions are preserved, including zero dimensions, and the
+  same output shape rule applies when any non-axis dimension is zero.
+  An input with `N = 0` produces an output with `B = 0`.
+
+  With default UINT8 storage, `bits = 3` packs `[0, 1, 2, 3, 4, 5, 6, 7]` into
+  `[136, 198, 250]`. With `bits = 5`, the rows `[[1, 2, 3], [31, 0, 16]]`
+  are packed into `[[65, 12], [31, 64]]`.
+  With UINT32 storage, `bits = 5` packs `[1, 2, 3]` into `[3137]`.
+
+  Grouped packing uses radix R in [2, 256] and positive group size G, with
+  R^G <= 2^63 - 1. Each input value must be in [0, R - 1]. Divide each row
+  into consecutive groups of G values; zero-pad the last group if incomplete.
+  Group [x0, ..., x(G-1)] becomes the integer sum(xj * R^j): the first digit
+  is least significant. Each group index occupies W = ceil(log2(R^G)) bits.
+  Pack these indices contiguously, least-significant bit first, with no
+  word alignment between groups. The output axis dimension is
+  ceil(ceil(N/G) * W / word_bits). Unused final word bits are zero.
+  R^G determines the precision of the integer arithmetic needed to form and
+  decode group indices: indices range from 0 to R^G - 1 and require W value
+  bits. Implementations must also accommodate intermediate values, including
+  R^G if computed explicitly. Prefer (R, G) pairs that can be implemented
+  using standard 32-bit or 64-bit integer arithmetic rather than requiring
+  arbitrary-precision arithmetic. This specification's R^G bound permits
+  exact signed 64-bit arithmetic for the base-radix group calculations.
+  One commonly used choice is (R, G) = (3, 5), packing five ternary codes
+  into one byte because 3^5 = 243.
+  The original bits spelling is exactly (R, G) = (2^bits, 1).
+  With UINT8 storage and R=3, G=5, [0, 1, 2, 0, 1] becomes [102], and [2, 2, 2, 2, 2]
+  becomes [242]. Partial group [1, 2] becomes [7].
+  Results for invalid inputs are unspecified; function decompositions need
+  not diagnose out-of-range codes.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>Axis along which independent sequences are packed. Negative axes are supported.</dd>
+<dt><tt>bits</tt> : int</dt>
+<dd>Number of bits per unsigned code. Mutually exclusive with radix/group_size.</dd>
+<dt><tt>group_size</tt> : int</dt>
+<dd>Codes per group. Positive; radix^group_size must fit in positive INT64.</dd>
+<dt><tt>output_type</tt> : int (default is 2)</dt>
+<dd>Packed storage type: TensorProto UINT8 (2) or UINT32 (12). Logical codes remain UINT8.</dd>
+<dt><tt>radix</tt> : int</dt>
+<dd>Base of grouped codes, in [2, 256]. Requires group_size; excludes bits.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>UINT8 tensor of rank at least 1, with codes below the selected radix.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : TStorage</dt>
+<dd>Packed tensor preserving every dimension except axis, which becomes ceil(ceil(N / group_size) * group_width / word_bits); bits implies group_size=1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8)</dt>
+<dd>Unsigned byte tensors.</dd>
+<dt><tt>TStorage</tt> : tensor(uint8), tensor(uint32)</dt>
+<dd>Unsigned storage word tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>pack_3bit</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=3)
+x = np.arange(8, dtype=np.uint8)
+y = np.array([0x88, 0xC6, 0xFA], dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_3bit")
+```
+
+</details>
+
+
+<details>
+<summary>pack_empty</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=3)
+x = np.empty((2, 0), dtype=np.uint8)
+expect(node, inputs=[x], outputs=[x], name="test_pack_empty")
+```
+
+</details>
+
+
+<details>
+<summary>pack_empty_rows</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=5)
+x = np.empty((2, 0, 9), dtype=np.uint8)
+y = np.empty((2, 0, 6), dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_empty_rows")
+```
+
+</details>
+
+
+<details>
+<summary>pack_rows_5bit</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=5)
+x = np.array([[1, 2, 3], [31, 0, 16]], dtype=np.uint8)
+y = np.array([[0x41, 0x0C], [0x1F, 0x40]], dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_rows_5bit")
+```
+
+</details>
+
+
+<details>
+<summary>pack_ternary</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], radix=3, group_size=5)
+x = np.array([[0, 1, 2, 0, 1], [2, 2, 2, 2, 2]], dtype=np.uint8)
+y = np.array([[102], [242]], dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_ternary")
+```
+
+</details>
+
+
+<details>
+<summary>pack_uint32_axis</summary>
+
+```python
+node = helper.make_node(
+    "Pack", ["X"], ["Y"], bits=5, axis=0, output_type=TensorProto.UINT32
+)
+x = np.full((7, 2), 31, dtype=np.uint8)
+y = np.array([[0xFFFFFFFF, 0xFFFFFFFF], [7, 7]], dtype=np.uint32)
+expect(node, inputs=[x], outputs=[y], name="test_pack_uint32_axis")
 ```
 
 </details>
@@ -41158,6 +41448,31 @@ expect(
 
 
 <details>
+<summary>softmaxcrossentropy_large_finite_gap</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SoftmaxCrossEntropyLoss",
+    ["x", "labels"],
+    ["loss", "log_prob"],
+    reduction="none",
+)
+x = np.array([[0, -200]], dtype=np.float32)
+labels = np.array([1], dtype=np.int64)
+expect(
+    node,
+    inputs=[x, labels],
+    outputs=[np.array([200], dtype=np.float32), x],
+    name="test_sce_large_finite_gap",
+    rtol=1e-3,
+    atol=0,
+)
+```
+
+</details>
+
+
+<details>
 <summary>softmaxcrossentropy_mean</summary>
 
 ```python
@@ -41983,6 +42298,81 @@ expect(
 
 
 <details>
+<summary>softmaxcrossentropy_single_class</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SoftmaxCrossEntropyLoss",
+    ["x", "labels"],
+    ["loss", "log_prob"],
+    reduction="none",
+)
+x = np.array([[10], [-20]], dtype=np.float32)
+labels = np.zeros(2, dtype=np.int64)
+expect(
+    node,
+    inputs=[x, labels],
+    outputs=[np.zeros(2, dtype=np.float32), np.zeros_like(x)],
+    name="test_sce_single_class",
+    atol=0,
+)
+```
+
+</details>
+
+
+<details>
+<summary>softmaxcrossentropy_small_loss</summary>
+
+```python
+for dtype, margin in [
+    (np.float16, 10.0),
+    (np.float32, 18.0),
+    (np.float64, 40.0),
+]:
+    x = np.full((3, 3), -margin, dtype=dtype)
+    np.fill_diagonal(x, 0)
+    # Zero absolute tolerance catches a collapsed result; relative
+    # tolerance still allows differences between backend implementations.
+    # Independent analytical values ensure a regression cannot change
+    # both the implementation and its expected outputs together.
+    normalizer = np.log1p(2 * np.exp(-margin))
+    log_prob = (x.astype(np.float64) - normalizer).astype(dtype)
+    loss = np.array([normalizer, 2 * normalizer, 0], dtype=dtype)
+    x = np.repeat(x[..., None, None], 2, axis=-1)
+    log_prob = np.repeat(log_prob[..., None, None], 2, axis=-1)
+    loss = np.repeat(loss[..., None, None], 2, axis=-1)
+    labels = np.repeat(
+        np.array([0, 1, -1], dtype=np.int64)[..., None, None], 2, axis=-1
+    )
+    weights = np.array([1, 2, 3], dtype=dtype)
+    for reduction in ["none", "sum", "mean"]:
+        node = onnx.helper.make_node(
+            "SoftmaxCrossEntropyLoss",
+            ["x", "labels", "weights"],
+            ["loss", "log_prob"],
+            reduction=reduction,
+            ignore_index=-1,
+        )
+        expected_loss = loss
+        if reduction == "sum":
+            expected_loss = loss.sum()
+        elif reduction == "mean":
+            expected_loss = (loss.sum() / 6).astype(dtype)
+        expect(
+            node,
+            inputs=[x, labels, weights],
+            outputs=[expected_loss, log_prob],
+            name=f"test_sce_small_loss_{np.dtype(dtype).name}_{reduction}",
+            rtol=1e-3,
+            atol=0,
+        )
+```
+
+</details>
+
+
+<details>
 <summary>softmaxcrossentropy_sum</summary>
 
 ```python
@@ -42043,6 +42433,39 @@ expect(
     inputs=[x, labels],
     outputs=[loss, log_prob],
     name="test_sce_sum_log_prob",
+)
+```
+
+</details>
+
+
+<details>
+<summary>softmaxcrossentropy_tied_maxima</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SoftmaxCrossEntropyLoss",
+    ["x", "labels"],
+    ["loss", "log_prob"],
+    reduction="none",
+)
+x = np.array([[0, 0, -200], [4, 4, 4]], dtype=np.float64)
+labels = np.array([1, 2], dtype=np.int64)
+loss = np.array([np.log(2), np.log(3)], dtype=np.float64)
+log_prob = np.array(
+    [
+        [-np.log(2), -np.log(2), -200 - np.log(2)],
+        [-np.log(3), -np.log(3), -np.log(3)],
+    ],
+    dtype=np.float64,
+)
+expect(
+    node,
+    inputs=[x, labels],
+    outputs=[loss, log_prob],
+    name="test_sce_tied_maxima",
+    rtol=1e-3,
+    atol=0,
 )
 ```
 
@@ -46470,6 +46893,192 @@ expect(
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_bfloat16_sorted_without_axis",
 )
+```
+
+</details>
+
+
+### <a name="Unpack"></a><a name="unpack">**Unpack**</a>
+
+  Unpacks UINT8 or UINT32 storage words into UINT8 unsigned integer codes
+  independently along `axis` (default -1). Input and output have the same
+  rank, at least 1. Negative axes are supported; axis must be in [-rank, rank-1].
+  The input type determines word_bits: 8 for UINT8, 32 for UINT32.
+  Specify either `bits` in [1, 8], or both `radix` and `group_size`;
+  the two spellings are mutually exclusive.
+  The input `count` must be a nonnegative scalar INT64 tensor specifying the
+  number of output codes along axis, excluding padding. With `bits`, each
+  element of `Y` is in [0, 2^bits - 1].
+
+  When using `bits`, the input axis dimension B must equal ceil(count * bits / word_bits).
+  The output axis dimension is count; all other dimensions are preserved.
+  Each fixed combination of indices in the other dimensions defines an
+  independent sequence, called a row below; a rank-1 tensor has one row.
+
+  Within each row, input words are read in increasing axis index order,
+  starting with the least significant bit of each word. Consecutive groups of
+  `bits` bits form output codes in order, with the first bit of each group as
+  the code's least significant bit. Number the bits of each word and code
+  starting at 0 for the least significant bit. For code index
+  `0 <= i < count` and bit index `0 <= k < bits`, bit `k` of output code `i` is
+  read from bit `(i * bits + k) % word_bits` of input word `floor((i * bits + k) / word_bits)`.
+  When a code spans a word boundary, its higher-order bits are read from
+  the low bits of the next word. Each row begins at bit 0 of a new word.
+  Unused high bits in the final input word of each row are padding and are ignored.
+  Bit positions are defined numerically, independently of host endianness;
+  tensor raw data uses ONNX's little-endian serialization.
+
+  All non-axis dimensions are preserved, including zero dimensions, and the
+  same shape requirements apply when any non-axis dimension is zero.
+  With `count = 0`, both input and output must have an empty selected axis.
+
+  With UINT8 storage, `bits = 3` and `count = 8` unpack `[136, 198, 250]` into
+  `[0, 1, 2, 3, 4, 5, 6, 7]`. With `bits = 3` and `count = 2`, `[255]`
+  is unpacked into `[7, 7]`.
+
+  Grouped unpacking uses radix R in [2, 256] and positive group size G, with
+  R^G <= 2^63 - 1. Read consecutive W = ceil(log2(R^G)) bit group indices,
+  least-significant bit first, without word alignment between groups.
+  R^G determines the precision of the integer arithmetic required for both
+  packing and unpacking: valid group indices require W value bits, and any
+  explicitly computed R^G or other intermediate must also fit. Prefer
+  (R, G) pairs supported by standard 32-bit or 64-bit integer arithmetic.
+  The R^G bound above permits exact signed 64-bit base-radix calculations.
+  A commonly used choice is (R, G) = (3, 5): five ternary codes per byte.
+  Every group index must be less than R^G; encodings outside this range
+  are invalid. Expand each index into G base-R digits, least significant
+  digit first, then trim to count values per row. The input axis dimension
+  must equal ceil(ceil(count/G) * W / word_bits). Unused digits of the last group
+  and unused high bits of the last word are ignored. Each output code is
+  in [0, R - 1]. The original bits spelling is (R, G) = (2^bits, 1).
+  With UINT8 storage and R=3, G=5, [102] with count=5 becomes [0, 1, 2, 0, 1];
+  [7] with count=2 becomes [1, 2].
+  Results for invalid inputs are unspecified; function decompositions need
+  not diagnose invalid indices or incorrect input sizes.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>Axis along which independent sequences are unpacked. Negative axes are supported.</dd>
+<dt><tt>bits</tt> : int</dt>
+<dd>Number of bits per unsigned code. Mutually exclusive with radix/group_size.</dd>
+<dt><tt>group_size</tt> : int</dt>
+<dd>Codes per group. Positive; radix^group_size must fit in positive INT64.</dd>
+<dt><tt>radix</tt> : int</dt>
+<dd>Base of grouped codes, in [2, 256]. Requires group_size; excludes bits.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : TStorage</dt>
+<dd>UINT8 or UINT32 tensor of rank at least 1, with the exact packed word count along axis.</dd>
+<dt><tt>count</tt> : tensor(int64)</dt>
+<dd>Scalar INT64 tensor giving the logical output length along axis. Must be nonnegative.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>UINT8 tensor preserving every dimension except axis, which becomes count. Each element is below the selected radix.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8)</dt>
+<dd>Unsigned byte tensors.</dd>
+<dt><tt>TStorage</tt> : tensor(uint8), tensor(uint32)</dt>
+<dd>Unsigned storage word tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>unpack_3bit</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=3)
+x = np.array([0x88, 0xC6, 0xFA], dtype=np.uint8)
+count = np.array(8, dtype=np.int64)
+y = np.arange(8, dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_3bit")
+```
+
+</details>
+
+
+<details>
+<summary>unpack_empty</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=3)
+x = np.empty((2, 0), dtype=np.uint8)
+count = np.array(0, dtype=np.int64)
+expect(node, inputs=[x, count], outputs=[x], name="test_unpack_empty")
+```
+
+</details>
+
+
+<details>
+<summary>unpack_empty_rows</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=5)
+x = np.empty((2, 0, 6), dtype=np.uint8)
+count = np.array(9, dtype=np.int64)
+y = np.empty((2, 0, 9), dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_empty_rows")
+```
+
+</details>
+
+
+<details>
+<summary>unpack_rows_5bit</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=5)
+x = np.array([[0x41, 0x0C], [0x1F, 0x40]], dtype=np.uint8)
+count = np.array(3, dtype=np.int64)
+y = np.array([[1, 2, 3], [31, 0, 16]], dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_rows_5bit")
+```
+
+</details>
+
+
+<details>
+<summary>unpack_ternary</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], radix=3, group_size=5)
+x = np.array([[102], [242]], dtype=np.uint8)
+count = np.array(5, dtype=np.int64)
+y = np.array([[0, 1, 2, 0, 1], [2, 2, 2, 2, 2]], dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_ternary")
+```
+
+</details>
+
+
+<details>
+<summary>unpack_uint32_axis</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=5, axis=0)
+x = np.full((2, 2), 0xFFFFFFFF, dtype=np.uint32)
+count = np.array(7, dtype=np.int64)
+y = np.full((7, 2), 31, dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_uint32_axis")
 ```
 
 </details>

@@ -315,7 +315,9 @@ class InliningRenamer : public internal::MutableVisitor {
   void LookupOrRename(std::string& name, bool is_new_def) {
     if (name.empty())
       return;
-    for (auto i = rename_scopes.size(); i > 0; --i) {
+    // Definitions can shadow outer scopes; references search all enclosing scopes.
+    const auto end_scope = is_new_def ? rename_scopes.size() - 1 : 0;
+    for (auto i = rename_scopes.size(); i > end_scope; --i) {
       const auto& map = rename_scopes[i - 1];
       auto iter = map.find(name);
       if (iter != map.end()) {

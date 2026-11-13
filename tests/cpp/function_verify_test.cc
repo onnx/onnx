@@ -142,6 +142,15 @@ struct FunctionOpAttributeMap {
   }
 
   FunctionOpAttributeMap() {
+    for (const char* bits :
+         {"bits = 1", "bits = 2", "bits = 3", "bits = 4", "bits = 5", "bits = 6", "bits = 7", "bits = 8"}) {
+      addTestCase("Pack", 29, {bits});
+      addTestCase("Unpack", 29, {bits});
+    }
+    for (const char* group : {"group_size = 1", "group_size = 5", "group_size = 39"}) {
+      addTestCase("Pack", 29, {"radix = 3", group});
+      addTestCase("Unpack", 29, {"radix = 3", group});
+    }
     addTestCase("Elu", 6, {"alpha = 1.0"});
     addTestCase("LeakyRelu", 16, {"alpha = 0.1"});
     addTestCase("HardSigmoid", 6, {"alpha = 0.2", "beta=0.5"});
@@ -344,6 +353,102 @@ TEST(FunctionVerification, VerifyFunctionOps) {
     }
   }
   std::cerr << "[          ] Verified " << verified_counter << "/" << function_counter << " Functions." << '\n';
+}
+
+TEST(FunctionVerification, VerifyPackingFunctionsAndExpansion) {
+  int verified_counter = 0;
+  for (const auto* op : {"Pack", "Unpack"}) {
+    const auto* schema = OpSchemaRegistry::Schema(op, 29, "");
+    ASSERT_NE(schema, nullptr);
+    for (const auto& attrs : FunctionOpAttributeMap::instance().getTestCases(*schema)) {
+      for (const auto storage_type : {TensorProto::UINT8, TensorProto::UINT32}) {
+        for (const int64_t axis : {-1, 0}) {
+          ModelProto model;
+          ASSERT_TRUE(OnnxParser::Parse(model, R"ONNX(
+            <ir_version: 14, opset_import: ["" : 29]>
+            expanded (uint8[2,17] weights, int64 logical_count) => (uint8[M,N] result) {}
+          )ONNX").IsOK());
+          auto& graph = *model.mutable_graph();
+          auto& input_type = *graph.mutable_input(0)->mutable_type();
+          const bool unpack = std::string(op) == "Unpack";
+          if (unpack) {
+            input_type.mutable_tensor_type()->set_elem_type(storage_type);
+          }
+          NodeProto node;
+          node.set_op_type(op);
+          node.add_input("weights");
+          if (unpack) {
+            node.add_input("logical_count");
+          }
+          node.add_output("result");
+          for (const auto& attr : attrs) {
+            *node.add_attribute() = attr;
+          }
+          if (!unpack) {
+            *node.add_attribute() = MakeAttribute("output_type", static_cast<int64_t>(storage_type));
+          }
+          *node.add_attribute() = MakeAttribute("axis", axis);
+          FunctionBodyBuildContextImpl context(node, {input_type, graph.input(1).type()});
+          FunctionProto function;
+          ASSERT_TRUE(schema->BuildContextDependentFunction(context, function));
+          VerifyFunction(*schema, &function, verified_counter);
+          if (!unpack) {
+            graph.mutable_output(0)->mutable_type()->mutable_tensor_type()->set_elem_type(
+                getAttribute(context, "output_type", TensorProto::UINT8));
+          }
+          FunctionExpandHelper(node, function, graph);
+          EXPECT_NO_THROW(checker::check_model(model));
+        }
+      }
+    }
+  }
+  EXPECT_GT(verified_counter, 0);
+}
+
+TEST(FunctionVerification, VerifyFunctionExpansionWithNestedCaptures) {
+  ModelProto model;
+  ASSERT_TRUE(OnnxParser::Parse(model, R"ONNX(
+    <ir_version: 14, opset_import: ["" : 29]>
+    expanded (float[2] caller_input) => (float[2] caller_output) {}
+  )ONNX").IsOK());
+  const auto* schema = OpSchemaRegistry::Schema("Identity", 29, "");
+  ASSERT_NE(schema, nullptr);
+  FunctionProto function;
+  FunctionBuilder(function).Add(R"ONNX(
+    condition = Constant <value = bool {1}>()
+    captured = Neg(input)
+    output = If(condition) <
+      then_branch = outer_then () => (outer_result) {
+        outer_result = If(condition) <
+          then_branch = inner_then () => (inner_result) {
+            inner_result = Identity(captured)
+          },
+          else_branch = inner_else () => (inner_result) {
+            inner_result = Identity(input)
+          }
+        >
+      },
+      else_branch = outer_else () => (captured) {
+        captured = Identity(input)
+      }
+    >
+  )ONNX");
+  schema->BuildFunction(function);
+  NodeProto node;
+  node.set_op_type("Identity");
+  node.add_input("caller_input");
+  node.add_output("caller_output");
+  auto& graph = *model.mutable_graph();
+  FunctionExpandHelper(node, function, graph);
+  EXPECT_NO_THROW(checker::check_model(model));
+  const auto& outer_if = graph.node(2);
+  const auto& outer_then = outer_if.attribute(0).g();
+  const auto& outer_else = outer_if.attribute(1).g();
+  const auto& inner_then = outer_then.node(0).attribute(0).g();
+  const auto& inner_else = outer_then.node(0).attribute(1).g();
+  EXPECT_EQ(inner_then.node(0).input(0), graph.node(1).output(0));
+  EXPECT_EQ(inner_else.node(0).input(0), "caller_input");
+  EXPECT_NE(outer_else.node(0).output(0), graph.node(1).output(0));
 }
 
 // Verify that FunctionExpandHelper obtains missing default attributes
