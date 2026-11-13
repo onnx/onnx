@@ -11,6 +11,10 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
+OpSchema GatherNDSchema(bool allow_int32_indices);
+OpSchema ScatterNDSchema(bool allow_int32_indices, bool allow_mean = false);
+void ScatterReductionShapeInference(InferenceContext& ctx);
+
 // The below is called by ops after opset 11, inclusively.
 void resizeShapeInference(InferenceContext& ctx);
 

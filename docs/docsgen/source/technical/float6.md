@@ -71,8 +71,8 @@ Upcasting exact. Downcasting RNE with saturation. Examples:
      - 7.5 (sat)
      - 28.0 (sat)
    * - nan
-     - -0.0 (unspecified; matches FLOAT4E2M1's cast behavior, not saturated)
-     - -0.0 (unspecified; matches FLOAT4E2M1's cast behavior, not saturated)
+     - Unspecified (no NaN encoding)
+     - Unspecified (no NaN encoding)
 ```
 
 ## Packing and Unpacking

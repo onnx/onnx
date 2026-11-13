@@ -54,7 +54,8 @@ __all__ = [
     "Cast_24",
     "CastLike_15",
     "CastLike_19",
-    "CausalConvWithState",
+    "CausalConvWithState_27",
+    "CausalConvWithState_29",
     "Ceil",
     "Celu",
     "CenterCropPad",
@@ -82,6 +83,7 @@ __all__ = [
     "DequantizeLinear_21",
     "DequantizeLinear_23",
     "DequantizeLinear_25",
+    "DequantizePacked",
     "Det",
     "DFT_17",
     "DFT_20",
@@ -94,6 +96,7 @@ __all__ = [
     "Equal",
     "Erf",
     "Exp",
+    "Expm1",
     "Expand",
     "EyeLike",
     "Flatten",
@@ -103,6 +106,7 @@ __all__ = [
     "GatherND",
     "Gemm_6",
     "Gemm_7",
+    "Gemm_29",
     "GlobalAveragePool",
     "GlobalLpPool",
     "GlobalMaxPool",
@@ -127,6 +131,8 @@ __all__ = [
     "LessOrEqual",
     "LinearAttention",
     "Log",
+    "Log1p",
+    "LogCumSumExp",
     "LogSoftmax",
     "Loop",
     "LpNormalization",
@@ -139,6 +145,9 @@ __all__ = [
     "MaxPool",
     "MaxUnpool",
     "Mean",
+    "MeanVarianceNormalization_9",
+    "MeanVarianceNormalization_13",
+    "MeanVarianceNormalization_29",
     "MelWeightMatrix",
     "Min",
     "Mod",
@@ -153,6 +162,7 @@ __all__ = [
     "OptionalGetElement",
     "OptionalHasElement",
     "Or",
+    "Pack",
     "Pad_1",
     "Pad_2",
     "Pad_11",
@@ -259,6 +269,7 @@ __all__ = [
     "Transpose",
     "Trilu",
     "Unique",
+    "Unpack",
     "Unsqueeze_1",
     "Unsqueeze_11",
     "Unsqueeze_13",
@@ -321,7 +332,10 @@ from onnx.reference.ops.op_bitwise_xor import BitwiseXor
 from onnx.reference.ops.op_blackman_window import BlackmanWindow
 from onnx.reference.ops.op_cast import Cast_1, Cast_19, Cast_24
 from onnx.reference.ops.op_cast_like import CastLike_15, CastLike_19
-from onnx.reference.ops.op_causal_conv_with_state import CausalConvWithState
+from onnx.reference.ops.op_causal_conv_with_state import (
+    CausalConvWithState_27,
+    CausalConvWithState_29,
+)
 from onnx.reference.ops.op_ceil import Ceil
 from onnx.reference.ops.op_celu import Celu
 from onnx.reference.ops.op_center_crop_pad import CenterCropPad
@@ -352,6 +366,7 @@ from onnx.reference.ops.op_dequantize_linear import (
     DequantizeLinear_23,
     DequantizeLinear_25,
 )
+from onnx.reference.ops.op_dequantize_packed import DequantizePacked
 from onnx.reference.ops.op_det import Det
 from onnx.reference.ops.op_dft import DFT_17, DFT_20
 from onnx.reference.ops.op_div import Div
@@ -363,13 +378,14 @@ from onnx.reference.ops.op_equal import Equal
 from onnx.reference.ops.op_erf import Erf
 from onnx.reference.ops.op_exp import Exp
 from onnx.reference.ops.op_expand import Expand
+from onnx.reference.ops.op_expm1 import Expm1
 from onnx.reference.ops.op_eyelike import EyeLike
 from onnx.reference.ops.op_flatten import Flatten
 from onnx.reference.ops.op_floor import Floor
 from onnx.reference.ops.op_gather import Gather
 from onnx.reference.ops.op_gather_elements import GatherElements
 from onnx.reference.ops.op_gathernd import GatherND
-from onnx.reference.ops.op_gemm import Gemm_6, Gemm_7
+from onnx.reference.ops.op_gemm import Gemm_6, Gemm_7, Gemm_29
 from onnx.reference.ops.op_global_average_pool import GlobalAveragePool
 from onnx.reference.ops.op_global_lp_pool import GlobalLpPool
 from onnx.reference.ops.op_global_max_pool import GlobalMaxPool
@@ -393,6 +409,8 @@ from onnx.reference.ops.op_less import Less
 from onnx.reference.ops.op_less_or_equal import LessOrEqual
 from onnx.reference.ops.op_linear_attention import LinearAttention
 from onnx.reference.ops.op_log import Log
+from onnx.reference.ops.op_log1p import Log1p
+from onnx.reference.ops.op_log_cum_sum_exp import LogCumSumExp
 from onnx.reference.ops.op_log_softmax import LogSoftmax
 from onnx.reference.ops.op_loop import Loop
 from onnx.reference.ops.op_lp_normalization import LpNormalization
@@ -405,6 +423,11 @@ from onnx.reference.ops.op_max import Max
 from onnx.reference.ops.op_max_pool import MaxPool
 from onnx.reference.ops.op_max_unpool import MaxUnpool
 from onnx.reference.ops.op_mean import Mean
+from onnx.reference.ops.op_mean_variance_normalization import (
+    MeanVarianceNormalization_9,
+    MeanVarianceNormalization_13,
+    MeanVarianceNormalization_29,
+)
 from onnx.reference.ops.op_mel_weight_matrix import MelWeightMatrix
 from onnx.reference.ops.op_min import Min
 from onnx.reference.ops.op_mod import Mod
@@ -419,6 +442,7 @@ from onnx.reference.ops.op_optional import Optional
 from onnx.reference.ops.op_optional_get_element import OptionalGetElement
 from onnx.reference.ops.op_optional_has_element import OptionalHasElement
 from onnx.reference.ops.op_or import Or
+from onnx.reference.ops.op_pack import Pack
 from onnx.reference.ops.op_pad import Pad_1, Pad_2, Pad_11, Pad_18
 from onnx.reference.ops.op_pow import Pow
 from onnx.reference.ops.op_prelu import PRelu
@@ -509,6 +533,7 @@ from onnx.reference.ops.op_topk import TopK_1, TopK_10, TopK_11
 from onnx.reference.ops.op_transpose import Transpose
 from onnx.reference.ops.op_trilu import Trilu
 from onnx.reference.ops.op_unique import Unique
+from onnx.reference.ops.op_unpack import Unpack
 from onnx.reference.ops.op_unsqueeze import Unsqueeze_1, Unsqueeze_11, Unsqueeze_13
 from onnx.reference.ops.op_upsample import Upsample
 from onnx.reference.ops.op_where import Where
@@ -586,6 +611,12 @@ def load_op(
             body = schema.get_context_dependent_function(
                 node.SerializeToString(), [it.SerializeToString() for it in input_types]
             )
+            if not body:
+                raise RuntimeImplementationError(
+                    f"Cannot build a context-dependent function for operator {op_type!r} "
+                    f"from domain {domain!r} at opset {version}. Provide concrete attributes "
+                    "and supported input types, or register a custom implementation."
+                )
             proto = FunctionProto()
             proto.ParseFromString(body)
             assert evaluator_cls is not None, (

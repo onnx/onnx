@@ -12,10 +12,151 @@
 #include <utility>
 #include <vector>
 
+#include "onnx/common/safe_math.h"
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
+static void GatherNDShapeInference(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (!hasNInputShapes(ctx, 2)) {
+    return;
+  }
+  const auto& data_shape = ctx.getInputType(0)->tensor_type().shape();
+  const auto data_rank = data_shape.dim_size();
+  const auto& indices_shape = ctx.getInputType(1)->tensor_type().shape();
+  const auto indices_rank = indices_shape.dim_size();
+  const int64_t batch_dims_data = getAttribute(ctx, "batch_dims", 0);
+  if (data_rank < 1 || indices_rank < 1) {
+    fail_shape_inference(
+        "Both `data` and `indices` input tensors in GatherND op "
+        "need to have rank larger than 0.");
+  }
+  if (batch_dims_data < 0) {
+    fail_shape_inference("attribute 'batch_dims' of 'GatherND' must not be negative");
+  }
+  if (!indices_shape.dim(indices_rank - 1).has_dim_value()) {
+    return;
+  }
+  const auto indices_last_dim = indices_shape.dim(indices_rank - 1).dim_value();
+  if (indices_last_dim < 0) {
+    fail_shape_inference("Last dimension of `indices` input tensor in GatherND op must not be negative");
+  }
+  if (indices_last_dim == 0) {
+    fail_shape_inference(
+        "Last dimension of `indices` input tensor in GatherND op must be greater than 0 "
+        "to form non-empty index tuples; got 0");
+  }
+  const auto last_index_dimension = checkedAdd(indices_last_dim, batch_dims_data);
+  if (last_index_dimension > data_rank) {
+    fail_shape_inference(
+        "Last dimension of `indices` input tensor in GatherND op "
+        "must not be larger than the rank of `data` tensor");
+  }
+  auto* output_shape = getOutputShape(ctx, 0);
+  for (int i = 0; i < indices_rank - 1; ++i) {
+    *output_shape->add_dim() = indices_shape.dim(i);
+  }
+  for (int i = static_cast<int>(last_index_dimension); i < data_rank; ++i) {
+    *output_shape->add_dim() = data_shape.dim(i);
+  }
+}
+
+OpSchema GatherNDSchema(bool allow_int32_indices) {
+  auto schema =
+      OpSchema()
+          .SetDoc(kDoc_GatherND_ver13)
+          .Attr(
+              "batch_dims",
+              "The number of leading batch dimensions shared by data and indices. "
+              "Index tuples address data axes starting at axis batch_dims.",
+              AttributeProto::INT,
+              static_cast<int64_t>(0))
+          .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+          .Input(
+              1,
+              "indices",
+              "Tensor of rank q >= 1. Each index must be in [-s, s-1], where s is the size of "
+              "the corresponding data axis after the batch dimensions. An out-of-bounds index is an error.",
+              allow_int32_indices ? "Tind" : "tensor(int64)",
+              OpSchema::Single,
+              true,
+              1,
+              OpSchema::NonDifferentiable)
+          .Output(
+              0,
+              "output",
+              "Tensor of rank q + r - indices_shape[-1] - 1 - batch_dims.",
+              "T",
+              OpSchema::Single,
+              true,
+              1,
+              OpSchema::Differentiable)
+          .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
+          .TypeAndShapeInferenceFunction(GatherNDShapeInference);
+  if (allow_int32_indices) {
+    schema.SetDoc(
+        std::string(kDoc_GatherND_ver13) +
+        "\nOpset 29 adds support for int32 indices; int64 indices remain supported.\n");
+    schema.TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to int32 or int64 tensors.");
+  }
+  return schema;
+}
+
+OpSchema ScatterNDSchema(bool allow_int32_indices, bool allow_mean) {
+  auto schema =
+      OpSchema()
+          .SetDoc(allow_mean ? kDoc_ScatterND_ver29 : kDoc_ScatterND_ver18)
+          .Attr(
+              "reduction",
+              allow_mean ? "Type of reduction to apply: none (default), add, mul, max, min, mean. "
+                           "'none': no reduction applied. "
+                           "'add': reduction using the addition operation. "
+                           "'mul': reduction using the multiplication operation. "
+                           "'max': reduction using the maximum operation. "
+                           "'min': reduction using the minimum operation. "
+                           "'mean': arithmetic mean of all contributions to each output element."
+                         : "Type of reduction to apply: none (default), add, mul, max, min. "
+                           "'none': no reduction applied. "
+                           "'add':  reduction using the addition operation. "
+                           "'mul':  reduction using the multiplication operation. "
+                           "'max': reduction using the maximum operation. "
+                           "'min': reduction using the minimum operation.",
+              AttributeProto::STRING,
+              std::string("none"))
+          .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+          .Input(
+              1,
+              "indices",
+              "Tensor of rank q >= 1.",
+              allow_int32_indices ? "Tind" : "tensor(int64)",
+              OpSchema::Single,
+              true,
+              1,
+              OpSchema::NonDifferentiable)
+          .Input(
+              2,
+              "updates",
+              "Tensor of rank q + r - indices_shape[-1] - 1.",
+              "T",
+              OpSchema::Single,
+              true,
+              1,
+              OpSchema::Differentiable)
+          .Output(0, "output", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+          .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
+          .TypeAndShapeInferenceFunction(
+              allow_mean ? ScatterReductionShapeInference : propagateShapeAndTypeFromFirstInput);
+  if (allow_int32_indices) {
+    schema.SetDoc(
+        std::string(allow_mean ? kDoc_ScatterND_ver29 : kDoc_ScatterND_ver18) +
+        "\nOpset 29 adds support for int32 indices; int64 indices remain supported.\n");
+    schema.TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to int32 or int64 tensors.");
+  }
+  return schema;
+}
+
 void resizeShapeInferenceHelper(
     const TensorShapeProto& input_shape,
     const std::vector<int64_t>& sizes_data,

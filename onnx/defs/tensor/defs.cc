@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <numeric>
 #include <string>
 #include <utility>
@@ -18,6 +19,556 @@
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
+
+namespace {
+
+struct PackingParameters {
+  int64_t radix;
+  int64_t group_size;
+  int64_t width;
+  std::vector<int64_t> powers;
+};
+
+} // namespace
+
+template <typename Context>
+static PackingParameters GetPackingParameters(const Context& ctx) {
+  const auto* bits = ctx.getAttribute("bits");
+  const auto* radix = ctx.getAttribute("radix");
+  const auto* group_size = ctx.getAttribute("group_size");
+  if (bits != nullptr) {
+    if (radix != nullptr || group_size != nullptr) {
+      fail_shape_inference("Specify either bits or both radix and group_size, not both.");
+    }
+    if (bits->i() < 1 || bits->i() > 8) {
+      fail_shape_inference("bits must be between 1 and 8.");
+    }
+    return {static_cast<int64_t>(uint64_t{1} << static_cast<uint64_t>(bits->i())), 1, bits->i(), {1}};
+  }
+  if (radix == nullptr || group_size == nullptr) {
+    fail_shape_inference("Specify either bits or both radix and group_size.");
+  }
+  if (radix->i() < 2 || radix->i() > 256 || group_size->i() < 1) {
+    fail_shape_inference("radix must be in [2, 256] and group_size must be positive.");
+  }
+  PackingParameters result{radix->i(), group_size->i(), 0, {}};
+  int64_t limit = 1;
+  for (int64_t i = 0; i < result.group_size; ++i) {
+    if (limit > std::numeric_limits<int64_t>::max() / result.radix) {
+      fail_shape_inference("radix^group_size must fit in a positive INT64.");
+    }
+    result.powers.push_back(limit);
+    limit *= result.radix;
+  }
+  for (auto maximum = limit - 1; maximum != 0; maximum /= 2) {
+    ++result.width;
+  }
+  return result;
+}
+
+template <typename Context>
+static int64_t PackingStorageType(const Context& ctx, bool unpack) {
+  int64_t type = TensorProto::UINT8;
+  if (unpack) {
+    const auto* input_type = ctx.getInputType(0);
+    if (input_type == nullptr || !input_type->has_tensor_type() ||
+        input_type->tensor_type().elem_type() == TensorProto::UNDEFINED) {
+      return TensorProto::UNDEFINED;
+    }
+    type = input_type->tensor_type().elem_type();
+  } else {
+    type = getAttribute(ctx, "output_type", TensorProto::UINT8);
+  }
+  if (type != TensorProto::UINT8 && type != TensorProto::UINT32) {
+    fail_shape_inference("Packed storage type must be UINT8 or UINT32.");
+  }
+  return type;
+}
+
+static int64_t PackedGroupWordCount(int64_t count, const PackingParameters& p, int64_t word_bits) {
+  const auto groups = (count / p.group_size) + (count % p.group_size != 0);
+  if (groups / word_bits > std::numeric_limits<int64_t>::max() / p.width) {
+    fail_shape_inference("Packed dimension exceeds INT64.");
+  }
+  const auto whole = (groups / word_bits) * p.width;
+  const auto tail = (((groups % word_bits) * p.width) + (word_bits - 1)) / word_bits;
+  if (whole > std::numeric_limits<int64_t>::max() - tail) {
+    fail_shape_inference("Packed dimension exceeds INT64.");
+  }
+  return whole + tail;
+}
+
+static void InferPackedShape(InferenceContext& ctx, bool unpack) {
+  const auto storage_type = PackingStorageType(ctx, unpack);
+  const int64_t word_bits = storage_type == TensorProto::UINT32 ? 32 : 8;
+  updateOutputElemType(ctx, 0, unpack ? TensorProto::UINT8 : static_cast<int32_t>(storage_type));
+  const auto parameters = GetPackingParameters(ctx);
+  if (unpack && hasInputShape(ctx, 1) && getInputShape(ctx, 1).dim_size() != 0) {
+    fail_shape_inference("count must be a scalar.");
+  }
+  int64_t count = -1;
+  const TensorShapeProto* symbolic_count = nullptr;
+  if (unpack) {
+    const auto* data = ctx.getInputData(1);
+    if (data != nullptr) {
+      if (data->dims_size() != 0 || data->data_type() != TensorProto::INT64) {
+        fail_shape_inference("count must be a scalar int64 tensor.");
+      }
+      const auto values = ParseData<int64_t>(data);
+      if (values.size() != 1 || values[0] < 0) {
+        fail_shape_inference("count must be nonnegative.");
+      }
+      count = values[0];
+    } else {
+      symbolic_count = ctx.getSymbolicInput(1);
+      if (symbolic_count != nullptr && symbolic_count->dim_size() == 1 && symbolic_count->dim(0).has_dim_value()) {
+        count = symbolic_count->dim(0).dim_value();
+        if (count < 0) {
+          fail_shape_inference("count must be nonnegative.");
+        }
+      }
+    }
+  }
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+  const auto& input_shape = getInputShape(ctx, 0);
+  const auto rank = input_shape.dim_size();
+  if (rank == 0) {
+    fail_shape_inference("Input must have rank at least 1.");
+  }
+  auto axis = getAttribute(ctx, "axis", -1);
+  if (axis < -rank || axis >= rank) {
+    fail_shape_inference("axis is out of range.");
+  }
+  if (axis < 0) {
+    axis += rank;
+  }
+  auto* output_shape = getOutputShape(ctx, 0);
+  for (int i = 0; i < rank; ++i) {
+    *output_shape->add_dim() = input_shape.dim(i);
+  }
+  const auto& last = input_shape.dim(static_cast<int>(axis));
+  auto* output_last = output_shape->mutable_dim(static_cast<int>(axis));
+  output_last->Clear();
+  if (unpack) {
+    if (count >= 0) {
+      output_last->set_dim_value(count);
+      if (storage_type != TensorProto::UNDEFINED && last.has_dim_value() &&
+          last.dim_value() != PackedGroupWordCount(count, parameters, word_bits)) {
+        fail_shape_inference("Packed axis dimension must equal the word count required by the packing attributes.");
+      }
+    } else if (symbolic_count != nullptr && symbolic_count->dim_size() == 1) {
+      *output_last = symbolic_count->dim(0);
+    } else if (storage_type != TensorProto::UNDEFINED && parameters.width == word_bits && parameters.group_size == 1) {
+      *output_last = last;
+    }
+  } else if (last.has_dim_value()) {
+    output_last->set_dim_value(PackedGroupWordCount(last.dim_value(), parameters, word_bits));
+  } else if (parameters.width == word_bits && parameters.group_size == 1) {
+    *output_last = last;
+  }
+}
+
+static void InferPackShape(InferenceContext& ctx) {
+  InferPackedShape(ctx, false);
+}
+
+static void InferUnpackShape(InferenceContext& ctx) {
+  InferPackedShape(ctx, true);
+}
+
+static bool
+BuildGroupedPacking(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& function, bool unpack) {
+  const auto p = GetPackingParameters(ctx);
+  const auto storage_type = PackingStorageType(ctx, unpack);
+  if (storage_type == TensorProto::UNDEFINED) {
+    return false;
+  }
+  const int64_t word_bits = storage_type == TensorProto::UINT32 ? 32 : 8;
+  auto axis = getAttribute(ctx, "axis", -1);
+  // Normalize the packing axis to the last dimension and restore the original layout afterward.
+  std::vector<int64_t> permutation;
+  std::vector<int64_t> inverse;
+  if (axis != -1) {
+    const auto* input_type = ctx.getInputType(0);
+    if (input_type == nullptr || !input_type->has_tensor_type() || !input_type->tensor_type().has_shape()) {
+      return false;
+    }
+    const auto rank = input_type->tensor_type().shape().dim_size();
+    if (axis < -rank || axis >= rank) {
+      fail_shape_inference("axis is out of range.");
+    }
+    if (axis < 0) {
+      axis += rank;
+    }
+    permutation.reserve(static_cast<size_t>(rank));
+    for (int64_t i = 0; i < rank; ++i) {
+      if (i != axis) {
+        permutation.push_back(i);
+      }
+    }
+    permutation.push_back(axis);
+    inverse.resize(static_cast<size_t>(rank));
+    for (int64_t i = 0; i < rank; ++i) {
+      inverse[static_cast<size_t>(permutation[static_cast<size_t>(i)])] = i;
+    }
+  }
+  FunctionBuilder builder(function);
+  if (permutation.empty()) {
+    builder.Add("packing_input = Identity(X)");
+  } else {
+    builder.Add("packing_input = Transpose(X)", "perm", permutation);
+  }
+  // Group indices fit in INT64; storage-word bit weights also fit when bit 31 is set.
+  builder.Const("radix_value", p.radix);
+  builder.Const("group_size_value", p.group_size);
+  builder.Const("width", p.width);
+  builder.Const("powers", p.powers);
+  std::vector<int64_t> bit_powers;
+  bit_powers.reserve(static_cast<size_t>(p.width));
+  for (int64_t i = 0; i < p.width; ++i) {
+    bit_powers.push_back(static_cast<int64_t>(uint64_t{1} << static_cast<uint64_t>(i)));
+  }
+  builder.Const("bit_powers", bit_powers);
+  builder.Const("ConstantTwo", int64_t{2});
+  builder.Const("word_bits", word_bits);
+  builder.Const("word_rounding", word_bits - 1);
+  std::vector<int64_t> word_powers;
+  word_powers.reserve(static_cast<size_t>(word_bits));
+  for (int64_t i = 0; i < word_bits; ++i) {
+    word_powers.push_back(static_cast<int64_t>(uint64_t{1} << static_cast<uint64_t>(i)));
+  }
+  builder.Const("word_powers", word_powers);
+  TensorProto packed_zero;
+  packed_zero.set_data_type(static_cast<int32_t>(storage_type));
+  packed_zero.add_dims(1);
+  if (storage_type == TensorProto::UINT32) {
+    packed_zero.add_uint64_data(0);
+  } else {
+    packed_zero.add_int32_data(0);
+  }
+  builder.Const("packed_zero", packed_zero);
+  builder.Add(R"ONNX(
+    zero = Constant <value = int64 {0}>()
+    one = Constant <value = int64 {1}>()
+    axes = Constant <value = int64[1] {-1}>()
+    leading = Shape <end = -1>(packing_input)
+  )ONNX");
+  if (!unpack) {
+    builder.Add(
+        "input_shape = Shape(packing_input)\nlast = Constant <value = int64 {-1}>()\ncount = Gather(input_shape, last)");
+  }
+  builder.Add(R"ONNX(
+    whole_groups = Div(count, group_size_value)
+    remainder = Mod(count, group_size_value)
+    has_tail = Greater(remainder, zero)
+    tail = Cast <to = 7>(has_tail)
+    groups = Add(whole_groups, tail)
+    byte_groups = Div(groups, word_bits)
+    whole_bytes = Mul(byte_groups, width)
+    residual_groups = Mod(groups, word_bits)
+    tail_bits = Mul(residual_groups, width)
+    rounded = Add(tail_bits, word_rounding)
+    tail_bytes = Div(rounded, word_bits)
+    bytes = Add(whole_bytes, tail_bytes)
+    size = Size(X)
+    empty = Equal(size, zero)
+  )ONNX");
+  // Avoid constructing code-index tensors for empty rows, including huge symbolic dimensions.
+  if (unpack) {
+    builder.Add(R"ONNX(
+      packing_output = If(empty) <
+        then_branch = empty_decode () => (empty_output) {
+          trailing = Unsqueeze(count, axes)
+          output_shape = Concat <axis = 0>(leading, trailing)
+          empty_output = ConstantOfShape <value = uint8[1] {0}>(output_shape)
+        },
+        else_branch = decode () => (decoded) {
+          group_indices = Range(zero, groups, one)
+          starts = Mul(group_indices, width)
+          column = Unsqueeze(starts, axes)
+          bit_indices = Range(zero, width, one)
+          offsets = Add(column, bit_indices)
+          byte_indices = Div(offsets, word_bits)
+          shifts64 = Mod(offsets, word_bits)
+          codes = Gather <axis = -1>(packing_input, byte_indices)
+          codes64 = Cast <to = 7>(codes)
+          shift_powers = Gather(word_powers, shifts64)
+          shifted = Div(codes64, shift_powers)
+          bits64 = Mod(shifted, ConstantTwo)
+          weighted = Mul(bits64, bit_powers)
+          indices = ReduceSum <keepdims = 0>(weighted, axes)
+          positions = Range(zero, count, one)
+          selected_groups = Div(positions, group_size_value)
+          digits = Mod(positions, group_size_value)
+          selected = Gather <axis = -1>(indices, selected_groups)
+          divisors = Gather(powers, digits)
+          divided = Div(selected, divisors)
+          values = Mod(divided, radix_value)
+          decoded = Cast <to = 2>(values)
+        }
+      >
+    )ONNX");
+  } else {
+    // The final word sum is at most 2^32 - 1, so its expanded intermediates need only UINT32.
+    builder.Add("word_powers32 = Cast <to = 12>(word_powers)");
+    builder.Add(R"ONNX(
+      packing_output = If(empty) <
+        then_branch = empty_encode () => (empty_output) {
+          trailing = Unsqueeze(bytes, axes)
+          output_shape = Concat <axis = 0>(leading, trailing)
+          empty_bytes = ConstantOfShape <value = uint8[1] {0}>(output_shape)
+          empty_output = CastLike(empty_bytes, packed_zero)
+        },
+        else_branch = encode () => (encoded) {
+          group_indices = Range(zero, groups, one)
+          starts = Mul(group_indices, group_size_value)
+          column = Unsqueeze(starts, axes)
+          digit_indices = Range(zero, group_size_value, one)
+          positions = Add(column, digit_indices)
+          safe_positions = Min(positions, count)
+          pads = Constant <value = int64[2] {0, 1}>()
+          padded = Pad(packing_input, pads, , axes)
+          codes = Gather <axis = -1>(padded, safe_positions)
+          codes64 = Cast <to = 7>(codes)
+          weighted = Mul(codes64, powers)
+          indices = ReduceSum <keepdims = 0>(weighted, axes)
+          padded_indices = Pad(indices, pads, , axes)
+          byte_indices = Range(zero, bytes, one)
+          bit_starts = Mul(byte_indices, word_bits)
+          bit_column = Unsqueeze(bit_starts, axes)
+          bit_positions = Range(zero, word_bits, one)
+          offsets = Add(bit_column, bit_positions)
+          selected_groups = Div(offsets, width)
+          safe_groups = Min(selected_groups, groups)
+          bit_indices = Mod(offsets, width)
+          selected = Gather <axis = -1>(padded_indices, safe_groups)
+          divisors = Gather(bit_powers, bit_indices)
+          divided = Div(selected, divisors)
+          bits64 = Mod(divided, ConstantTwo)
+          bits32 = Cast <to = 12>(bits64)
+          placed = Mul(bits32, word_powers32)
+          summed = ReduceSum <keepdims = 0>(placed, axes)
+          encoded = CastLike(summed, packed_zero)
+        }
+      >
+    )ONNX");
+  }
+  if (inverse.empty()) {
+    builder.Add("Y = Identity(packing_output)");
+  } else {
+    builder.Add("Y = Transpose(packing_output)", "perm", inverse);
+  }
+  schema.BuildFunction(function);
+  return true;
+}
+
+static bool BuildGroupedPack(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& function) {
+  return BuildGroupedPacking(ctx, schema, function, false);
+}
+
+static bool BuildGroupedUnpack(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& function) {
+  return BuildGroupedPacking(ctx, schema, function, true);
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Pack,
+    29,
+    OpSchema()
+        .SetDoc(R"DOC(
+Packs UINT8 codes into UINT8 (default) or UINT32 words along `axis` (default -1).
+Input and output have the same rank, at least 1; axis must be in [-rank, rank-1].
+The `output_type` selects storage words of word_bits = 8 or 32 bits.
+Specify either `bits` in [1, 8], or both `radix` and `group_size`;
+the two spellings are mutually exclusive. With `bits`, each element of `X`
+must be in [0, 2^bits - 1].
+
+When using `bits`, an input axis dimension N becomes B = ceil(N * bits / word_bits).
+Each fixed combination of indices in the other dimensions defines an
+independent sequence, called a row below; a rank-1 tensor has one row.
+
+Within each row, codes are packed in increasing axis index order, with
+the least significant bit of each code first. Number the bits of each code
+and storage word starting at 0 for the least significant bit. For code index
+`0 <= i < N` and bit index `0 <= k < bits`, bit `k` of input code `i` is stored
+at bit `(i * bits + k) % word_bits` of output word `floor((i * bits + k) / word_bits)`.
+When a code spans a word boundary, its remaining higher-order bits occupy
+the low bits of the next word. Each row begins at bit 0 of a new word.
+Unused high bits in the final word of each row are zero. Bit positions
+are defined numerically, independently of host endianness; tensor raw data
+uses ONNX's little-endian serialization.
+
+All non-axis dimensions are preserved, including zero dimensions, and the
+same output shape rule applies when any non-axis dimension is zero.
+An input with `N = 0` produces an output with `B = 0`.
+
+With default UINT8 storage, `bits = 3` packs `[0, 1, 2, 3, 4, 5, 6, 7]` into
+`[136, 198, 250]`. With `bits = 5`, the rows `[[1, 2, 3], [31, 0, 16]]`
+are packed into `[[65, 12], [31, 64]]`.
+With UINT32 storage, `bits = 5` packs `[1, 2, 3]` into `[3137]`.
+
+Grouped packing uses radix R in [2, 256] and positive group size G, with
+R^G <= 2^63 - 1. Each input value must be in [0, R - 1]. Divide each row
+into consecutive groups of G values; zero-pad the last group if incomplete.
+Group [x0, ..., x(G-1)] becomes the integer sum(xj * R^j): the first digit
+is least significant. Each group index occupies W = ceil(log2(R^G)) bits.
+Pack these indices contiguously, least-significant bit first, with no
+word alignment between groups. The output axis dimension is
+ceil(ceil(N/G) * W / word_bits). Unused final word bits are zero.
+R^G determines the precision of the integer arithmetic needed to form and
+decode group indices: indices range from 0 to R^G - 1 and require W value
+bits. Implementations must also accommodate intermediate values, including
+R^G if computed explicitly. Prefer (R, G) pairs that can be implemented
+using standard 32-bit or 64-bit integer arithmetic rather than requiring
+arbitrary-precision arithmetic. This specification's R^G bound permits
+exact signed 64-bit arithmetic for the base-radix group calculations.
+One commonly used choice is (R, G) = (3, 5), packing five ternary codes
+into one byte because 3^5 = 243.
+The original bits spelling is exactly (R, G) = (2^bits, 1).
+With UINT8 storage and R=3, G=5, [0, 1, 2, 0, 1] becomes [102], and [2, 2, 2, 2, 2]
+becomes [242]. Partial group [1, 2] becomes [7].
+Results for invalid inputs are unspecified; function decompositions need
+not diagnose out-of-range codes.
+)DOC")
+        .Attr(
+            "axis",
+            "Axis along which independent sequences are packed. Negative axes are supported.",
+            AttributeProto::INT,
+            int64_t{-1})
+        .Attr(
+            "output_type",
+            "Packed storage type: TensorProto UINT8 (2) or UINT32 (12). Logical codes remain UINT8.",
+            AttributeProto::INT,
+            int64_t{TensorProto::UINT8})
+        .Attr(
+            "bits",
+            "Number of bits per unsigned code. Mutually exclusive with radix/group_size.",
+            AttributeProto::INT,
+            false)
+        .Attr(
+            "radix",
+            "Base of grouped codes, in [2, 256]. Requires group_size; excludes bits.",
+            AttributeProto::INT,
+            false)
+        .Attr(
+            "group_size",
+            "Codes per group. Positive; radix^group_size must fit in positive INT64.",
+            AttributeProto::INT,
+            false)
+        .Input(0, "X", "UINT8 tensor of rank at least 1, with codes below the selected radix.", "T")
+        .Output(
+            0,
+            "Y",
+            "Packed tensor preserving every dimension except axis, which becomes "
+            "ceil(ceil(N / group_size) * group_width / word_bits); bits implies group_size=1.",
+            "TStorage")
+        .TypeConstraint("T", {"tensor(uint8)"}, "Unsigned byte tensors.")
+        .TypeConstraint("TStorage", {"tensor(uint8)", "tensor(uint32)"}, "Unsigned storage word tensors.")
+        .TypeAndShapeInferenceFunction(InferPackShape)
+        .SetContextDependentFunctionBodyBuilder(BuildGroupedPack));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Unpack,
+    29,
+    OpSchema()
+        .SetDoc(R"DOC(
+Unpacks UINT8 or UINT32 storage words into UINT8 unsigned integer codes
+independently along `axis` (default -1). Input and output have the same
+rank, at least 1. Negative axes are supported; axis must be in [-rank, rank-1].
+The input type determines word_bits: 8 for UINT8, 32 for UINT32.
+Specify either `bits` in [1, 8], or both `radix` and `group_size`;
+the two spellings are mutually exclusive.
+The input `count` must be a nonnegative scalar INT64 tensor specifying the
+number of output codes along axis, excluding padding. With `bits`, each
+element of `Y` is in [0, 2^bits - 1].
+
+When using `bits`, the input axis dimension B must equal ceil(count * bits / word_bits).
+The output axis dimension is count; all other dimensions are preserved.
+Each fixed combination of indices in the other dimensions defines an
+independent sequence, called a row below; a rank-1 tensor has one row.
+
+Within each row, input words are read in increasing axis index order,
+starting with the least significant bit of each word. Consecutive groups of
+`bits` bits form output codes in order, with the first bit of each group as
+the code's least significant bit. Number the bits of each word and code
+starting at 0 for the least significant bit. For code index
+`0 <= i < count` and bit index `0 <= k < bits`, bit `k` of output code `i` is
+read from bit `(i * bits + k) % word_bits` of input word `floor((i * bits + k) / word_bits)`.
+When a code spans a word boundary, its higher-order bits are read from
+the low bits of the next word. Each row begins at bit 0 of a new word.
+Unused high bits in the final input word of each row are padding and are ignored.
+Bit positions are defined numerically, independently of host endianness;
+tensor raw data uses ONNX's little-endian serialization.
+
+All non-axis dimensions are preserved, including zero dimensions, and the
+same shape requirements apply when any non-axis dimension is zero.
+With `count = 0`, both input and output must have an empty selected axis.
+
+With UINT8 storage, `bits = 3` and `count = 8` unpack `[136, 198, 250]` into
+`[0, 1, 2, 3, 4, 5, 6, 7]`. With `bits = 3` and `count = 2`, `[255]`
+is unpacked into `[7, 7]`.
+
+Grouped unpacking uses radix R in [2, 256] and positive group size G, with
+R^G <= 2^63 - 1. Read consecutive W = ceil(log2(R^G)) bit group indices,
+least-significant bit first, without word alignment between groups.
+R^G determines the precision of the integer arithmetic required for both
+packing and unpacking: valid group indices require W value bits, and any
+explicitly computed R^G or other intermediate must also fit. Prefer
+(R, G) pairs supported by standard 32-bit or 64-bit integer arithmetic.
+The R^G bound above permits exact signed 64-bit base-radix calculations.
+A commonly used choice is (R, G) = (3, 5): five ternary codes per byte.
+Every group index must be less than R^G; encodings outside this range
+are invalid. Expand each index into G base-R digits, least significant
+digit first, then trim to count values per row. The input axis dimension
+must equal ceil(ceil(count/G) * W / word_bits). Unused digits of the last group
+and unused high bits of the last word are ignored. Each output code is
+in [0, R - 1]. The original bits spelling is (R, G) = (2^bits, 1).
+With UINT8 storage and R=3, G=5, [102] with count=5 becomes [0, 1, 2, 0, 1];
+[7] with count=2 becomes [1, 2].
+Results for invalid inputs are unspecified; function decompositions need
+not diagnose invalid indices or incorrect input sizes.
+)DOC")
+        .Attr(
+            "axis",
+            "Axis along which independent sequences are unpacked. Negative axes are supported.",
+            AttributeProto::INT,
+            int64_t{-1})
+        .Attr(
+            "bits",
+            "Number of bits per unsigned code. Mutually exclusive with radix/group_size.",
+            AttributeProto::INT,
+            false)
+        .Attr(
+            "radix",
+            "Base of grouped codes, in [2, 256]. Requires group_size; excludes bits.",
+            AttributeProto::INT,
+            false)
+        .Attr(
+            "group_size",
+            "Codes per group. Positive; radix^group_size must fit in positive INT64.",
+            AttributeProto::INT,
+            false)
+        .Input(
+            0,
+            "X",
+            "UINT8 or UINT32 tensor of rank at least 1, with the exact packed word count along axis.",
+            "TStorage")
+        .Input(
+            1,
+            "count",
+            "Scalar INT64 tensor giving the logical output length along axis. Must be nonnegative.",
+            "tensor(int64)")
+        .Output(
+            0,
+            "Y",
+            "UINT8 tensor preserving every dimension except axis, which becomes count. "
+            "Each element is below the selected radix.",
+            "T")
+        .TypeConstraint("T", {"tensor(uint8)"}, "Unsigned byte tensors.")
+        .TypeConstraint("TStorage", {"tensor(uint8)", "tensor(uint32)"}, "Unsigned storage word tensors.")
+        .TypeAndShapeInferenceFunction(InferUnpackShape)
+        .SetContextDependentFunctionBodyBuilder(BuildGroupedUnpack));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cast,
@@ -1088,54 +1639,31 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ScatterND,
-    18,
-    OpSchema()
-        .SetDoc(kDoc_ScatterND_ver18)
-        .Attr(
-            "reduction",
-            "Type of reduction to apply: none (default), add, mul, max, min. "
-            "'none': no reduction applied. "
-            "'add':  reduction using the addition operation. "
-            "'mul':  reduction using the addition operation. "
-            "'max': reduction using the maximum operation."
-            "'min': reduction using the minimum operation.",
-            AttributeProto::STRING,
-            std::string("none"))
-        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Input(
-            1,
-            "indices",
-            "Tensor of rank q >= 1.",
-            "tensor(int64)",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Input(
-            2,
-            "updates",
-            "Tensor of rank q + r - indices_shape[-1] - 1.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Output(0, "output", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          if (hasNInputShapes(ctx, 1)) {
-            propagateShapeFromInputToOutput(ctx, 0, 0);
-          }
-        }));
+void ScatterReductionShapeInference(InferenceContext& ctx) {
+  const auto* reduction_attr = ctx.getAttribute("reduction");
+  const std::string reduction = reduction_attr ? reduction_attr->s() : "none";
+  if (reduction != "none" && reduction != "add" && reduction != "mul" && reduction != "max" && reduction != "min" &&
+      reduction != "mean") {
+    fail_shape_inference("Invalid scatter reduction '", reduction, "'. Use one of: none, add, mul, max, min, mean.");
+  }
+  if (reduction == "mean" && ctx.getInputType(0) && ctx.getInputType(0)->has_tensor_type()) {
+    const auto elem_type = ctx.getInputType(0)->tensor_type().elem_type();
+    if (elem_type == TensorProto::BOOL || elem_type == TensorProto::STRING || elem_type == TensorProto::COMPLEX64 ||
+        elem_type == TensorProto::COMPLEX128) {
+      fail_type_inference(
+          "Scatter reduction 'mean' requires an integer or floating-point tensor. Cast the inputs to a supported type.");
+    }
+  }
+  propagateShapeAndTypeFromFirstInput(ctx);
+}
+
+ONNX_OPERATOR_SET_SCHEMA(ScatterND, 29, ScatterNDSchema(true, true));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ScatterElements,
-    18,
+    29,
     OpSchema()
-        .SetDoc(kDoc_ScatterElements_ver18)
+        .SetDoc(kDoc_ScatterElements_ver29)
         .Attr(
             "axis",
             "Which axis to scatter on. Negative value means "
@@ -1144,12 +1672,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "reduction",
-            "Type of reduction to apply: none (default), add, mul, max, min. "
+            "Type of reduction to apply: none (default), add, mul, max, min, mean. "
             "'none': no reduction applied. "
             "'add':  reduction using the addition operation. "
-            "'mul': reduction using the multiplication operation."
-            "'max': reduction using the maximum operation."
-            "'min': reduction using the minimum operation.",
+            "'mul': reduction using the multiplication operation. "
+            "'max': reduction using the maximum operation. "
+            "'min': reduction using the minimum operation. "
+            "'mean': arithmetic mean of all contributions to each output element.",
             AttributeProto::STRING,
             std::string("none"))
         .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
@@ -1183,12 +1712,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Input and output types can be of any tensor type.")
         .TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to integer types")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          if (hasNInputShapes(ctx, 1)) {
-            propagateShapeFromInputToOutput(ctx, 0, 0);
-          }
-        }));
+        .TypeAndShapeInferenceFunction(ScatterReductionShapeInference));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Gather,
@@ -2745,89 +3269,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    GatherND,
-    13,
-    OpSchema()
-        .SetDoc(kDoc_GatherND_ver13)
-        .Attr(
-            "batch_dims",
-            "The number of batch dimensions. The gather of indexing starts from dimension of data[batch_dims:]",
-            AttributeProto::INT,
-            static_cast<int64_t>(0))
-        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Input(
-            1,
-            "indices",
-            "Tensor of rank q >= 1. All index values are expected to be within bounds [-s, s-1] "
-            "along axis of size s. It is an error if any of the index values are out of bounds.",
-            "tensor(int64)",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Output(
-            0,
-            "output",
-            "Tensor of rank q + r - indices_shape[-1] - 1.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Type inference
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-
-          // Shape inference
-          if (!hasNInputShapes(ctx, 2)) {
-            // cannot proceed with shape or rank inference
-            return;
-          }
-
-          const auto& data_shape = ctx.getInputType(0)->tensor_type().shape();
-          const auto data_rank = data_shape.dim_size();
-
-          const auto& indices_shape = ctx.getInputType(1)->tensor_type().shape();
-          const auto indices_rank = indices_shape.dim_size();
-
-          int64_t batch_dims_data = getAttribute(ctx, "batch_dims", 0);
-          if (data_rank < 1 || indices_rank < 1) {
-            fail_shape_inference(
-                "Both `data` and `indices` input tensors in GatherND op "
-                "need to have rank larger than 0.");
-          }
-          if (batch_dims_data < 0) {
-            fail_shape_inference("attribute 'batch_dims' of 'GatherND' must not be negative");
-          }
-
-          // cannot ascertain if the input shapes are valid if shape of
-          // `indices` is missing last dimension value so return at this point
-          if (!indices_shape.dim(indices_rank - 1).has_dim_value()) {
-            return;
-          }
-
-          const auto indices_last_dim = indices_shape.dim(indices_rank - 1).dim_value();
-          if (indices_last_dim < 0) {
-            fail_shape_inference("Last dimension of `indices` input tensor in GatherND op must not be negative");
-          }
-          const auto last_index_dimension = checkedAdd(indices_last_dim, batch_dims_data);
-
-          if (last_index_dimension > data_rank) {
-            fail_shape_inference(
-                "Last dimension of `indices` input tensor in GatherND op "
-                "must not be larger than the rank of `data` tensor");
-          }
-
-          for (int i = 0; i < indices_rank - 1; ++i) {
-            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = indices_shape.dim(i);
-          }
-
-          for (auto i = last_index_dimension; i < data_rank; ++i) {
-            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = data_shape.dim(i);
-          }
-        }));
+ONNX_OPERATOR_SET_SCHEMA(GatherND, 29, GatherNDSchema(true));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Pad,

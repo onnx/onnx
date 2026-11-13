@@ -19,6 +19,9 @@
 
 namespace ONNX_NAMESPACE {
 
+ONNX_OPERATOR_SET_SCHEMA(GatherND, 13, GatherNDSchema(false));
+ONNX_OPERATOR_SET_SCHEMA(ScatterND, 18, ScatterNDSchema(false));
+
 ONNX_OPERATOR_SET_SCHEMA(
     Cast,
     25,
@@ -2828,6 +2831,60 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(
+    ScatterElements,
+    18,
+    OpSchema()
+        .SetDoc(kDoc_ScatterElements_ver18)
+        .Attr(
+            "axis",
+            "Which axis to scatter on. Negative value means "
+            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "reduction",
+            "Type of reduction to apply: none (default), add, mul, max, min. "
+            "'none': no reduction applied. "
+            "'add':  reduction using the addition operation. "
+            "'mul': reduction using the multiplication operation."
+            "'max': reduction using the maximum operation."
+            "'min': reduction using the minimum operation.",
+            AttributeProto::STRING,
+            std::string("none"))
+        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(
+            1,
+            "indices",
+            "Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to be "
+            "within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.",
+            "Tind",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            2,
+            "updates",
+            "Tensor of rank r >=1 (same rank and shape as indices)",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Tensor of rank r >= 1 (same rank as input).",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Input and output types can be of any tensor type.")
+        .TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to integer types")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+ONNX_OPERATOR_SET_SCHEMA(
     ScatterND,
     16,
     OpSchema()
@@ -4754,6 +4811,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (indices_last_dim < 0) {
             fail_shape_inference("Last dimension of `indices` input tensor in GatherND op must not be negative");
           }
+          if (indices_last_dim == 0) {
+            fail_shape_inference(
+                "Last dimension of `indices` input tensor in GatherND op must be greater than 0 "
+                "to form non-empty index tuples; got 0");
+          }
           const auto last_index_dimension = checkedAdd(indices_last_dim, batch_dims_data);
 
           if (last_index_dimension > data_rank) {
@@ -5978,6 +6040,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (last_index_dimension < 0) {
             fail_shape_inference("Last dimension of `indices` input tensor in GatherND op must not be negative");
+          }
+          if (last_index_dimension == 0) {
+            fail_shape_inference(
+                "Last dimension of `indices` input tensor in GatherND op must be greater than 0 "
+                "to form non-empty index tuples; got 0");
           }
           if (last_index_dimension > data_rank) {
             fail_shape_inference(
