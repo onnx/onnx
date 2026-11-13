@@ -115,16 +115,32 @@ an unprioritized list of items for the next year.
 ### Optimizations SIG
 
 **Lead(s):** Freddy Chiu, Justin Chu
-**Last updated:** _2026-11-06_
 
-#### Q3 2026
+**Last updated:** 2026-11-13
+
+Note: All milestones are tentative. SIG projects: [onnx/optimizer](https://github.com/onnx/optimizer), [onnx-shape-inference](https://github.com/onnx/onnx-shape-inference), [neural-compressor](https://github.com/onnx/neural-compressor).
 
 #### Q4 2026
 - Migration of the onnx-shape-inference project as a SIG-owned project
+- onnx/optimizer: new release (last: v0.4.2, Jan 2026) with new fusion passes, a C++ IR entry point, ONNX function preservation, wheels for free-threaded Python and ARM, and many correctness fixes
+- onnx/optimizer: resolve the reported output-mismatch bugs found by differential testing
 
 #### Q1 2027
+- Fusion passes for LLM patterns (e.g. GELU, attention, rotary embeddings) that target the native `Attention` and `RotaryEmbedding` operators; coordinate with the ONNX Script rewriter to avoid duplicate work
+- Quantization: survey of ONNX-level quantization tools (ONNX Runtime quantization, AMD Quark, neural-compressor, vendor SDK forks) and a feature comparison for SDK users; decide the future role of neural-compressor
+- Differential-testing regression suite for optimization passes, built from the reported cases and run on a schedule
 
 #### Q2 2027
+- Quantization: shared QDQ conventions and reference recipes, so that vendor tools produce comparable results; align with the Operator SIG's quantized-format work (GGUF formats, low-bit quantization)
+- Lowered representation for kernel generators such as tinygrad: design note on an explicit form (e.g. no implicit broadcasting), using a separate domain only if needed (with the Operator SIG)
+- Clarify the roles of onnx/optimizer, onnx-shape-inference, onnxsim, and the ONNX Script optimizer (which passes and analyses live where)
+- Extend differential testing to the ONNX reference implementation, using the improved conformance test suite (Architecture & Infrastructure SIG)
+
+#### Q3 2027
+- onnx/optimizer: stable C++ API based on the IR entry point, so other tools can embed the passes
+- onnx/optimizer: pass that makes broadcasting explicit, as a first step toward the lowered representation
+- Quantized reference models in the shared test corpus
+- Evaluate a remote model executor (onnx-remote) for measuring and tuning models on devices without a native converter (e.g. Snapdragon phones)
 
 ---
 
