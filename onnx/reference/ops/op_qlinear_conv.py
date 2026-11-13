@@ -65,12 +65,17 @@ class QLinearConv(OpRun):
 
         R = res * (x_scale * w_scale / y_scale)
         if y_zero_point is not None:
+            # Spec: y = saturate(round(acc * (x_scale * w_scale / y_scale)) +
+            # y_zero_point), with ties-to-even rounding applied before the
+            # zero point is added. Adding first is not equivalent when the
+            # quotient is a half-integer and y_zero_point is odd.
+            R = np.rint(R)
             R += y_zero_point
             if y_zero_point.dtype == np.int8:
                 R = np.clip(R, -128, 127)
             else:
                 R = np.clip(R, 0, 255)
-            return (np.round(R).astype(y_zero_point.dtype),)
+            return (R.astype(y_zero_point.dtype),)
         if x.dtype == np.int8:
             R = np.clip(R, -128, 127)
         else:

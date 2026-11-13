@@ -9681,6 +9681,46 @@ class TestReferenceEvaluator:
         )
         assert_array_equal(got, np.array(expected, dtype=np.int64).reshape(-1, 3))
 
+    @pytest.mark.parametrize(
+        ("x_dtype", "x_value", "zp_dtype", "zp_value", "expected"),
+        [
+            # acc * (x_scale * w_scale / y_scale) = 0.5, y_zero_point = 1.
+            # Spec: rint(0.5) + 1 = 1. Rounding the sum yields rint(1.5) = 2.
+            (np.uint8, 1, np.uint8, 1, 1),
+            # = 2.5. Spec: rint(2.5) + 1 = 3. Sum-then-round: rint(3.5) = 4.
+            (np.uint8, 5, np.uint8, 1, 3),
+            # = -1.5 (int8). Spec: rint(-1.5) + 1 = -1. Sum-then-round: rint(-0.5) = 0.
+            (np.int8, -3, np.int8, 1, -1),
+        ],
+    )
+    def test_qlinear_conv_round_before_zero_point(
+        self,
+        x_dtype: np.dtype,
+        x_value: int,
+        zp_dtype: np.dtype,
+        zp_value: int,
+        expected: int,
+    ) -> None:
+        node = make_node(
+            "QLinearConv",
+            ["x", "x_scale", "x_zp", "w", "w_scale", "w_zp", "y_scale", "y_zp"],
+            ["Y"],
+            kernel_shape=[1, 1],
+        )
+        feeds = {
+            "x": np.array([[[[x_value]]]], dtype=x_dtype),
+            "x_scale": np.float32(1.0),
+            "x_zp": np.array(0, dtype=x_dtype),
+            "w": np.ones((1, 1, 1, 1), dtype=np.int8),
+            "w_scale": np.float32(1.0),
+            "w_zp": np.int8(0),
+            "y_scale": np.float32(2.0),
+            "y_zp": np.array(zp_value, dtype=zp_dtype),
+        }
+        (y,) = ReferenceEvaluator(node).run(None, feeds)
+        assert y.dtype == zp_dtype
+        assert y.flatten()[0] == expected
+
 
 class TestReferenceEvaluatorShapeAnnotationChecking:
     """Tests for the opt-in runtime shape-annotation validation feature
