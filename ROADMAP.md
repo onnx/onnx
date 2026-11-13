@@ -12,9 +12,21 @@ SPDX-License-Identifier: Apache-2.0
 
 ---
 
+## Table of contents
+
+- [How to contribute](#how-to-contribute)
+- [Special Interest Groups & Working Groups](#special-interest-groups--working-groups)
+  - [SIG Architecture & Infrastructure](#sig-architecture--infrastructure)
+  - [Operator SIG](#operator-sig)
+  - [SONNX Working Group](#sonnx-working-group)
+  - [Optimizations SIG](#optimizations-sig)
+  - [Template for new SIG/WG sections](#sigwg-name)
+
+---
+
 ## How to contribute
 
-1. Find your SIG/WG section below (or add a new one following the template).
+1. Find your SIG/WG section below (or add a new one following the [template](#sigwg-name) and link it in the table of contents).
 2. Fill in your objectives per quarter.
 3. Submit a PR or send your input to the roadmap coordinator.
 
@@ -80,6 +92,8 @@ an unprioritized list of items for the next year.
 #### Q2 2027:
 - Support for ternary-value quantization and single-bit quantization
 - FlexAttention
+
+---
 
 ### SONNX Working Group
 
