@@ -98,6 +98,16 @@ class CheckerContext final {
     check_custom_domain_ = value;
   }
 
+  // If false, external data references are validated from the model alone and
+  // the external data files are never accessed.
+  bool check_external_data_files() const {
+    return check_external_data_files_;
+  }
+
+  void set_check_external_data_files(bool value) {
+    check_external_data_files_ = value;
+  }
+
   explicit CheckerContext() = default;
 
  private:
@@ -109,6 +119,7 @@ class CheckerContext final {
   bool model_dir_from_path_ = false;
   bool skip_opset_compatibility_check_ = false;
   bool check_custom_domain_ = false;
+  bool check_external_data_files_ = true;
 };
 
 class LexicalScopeContext final {
@@ -195,6 +206,22 @@ ONNX_API void check_model(
     bool full_check = false,
     bool skip_opset_compatibility_check = false,
     bool check_custom_domain = false);
+// With check_external_data_files = false, external data references are checked
+// without accessing the files: their entries are validated, but not whether the
+// files exist or hold enough data. Separate overloads keep the ones above, and
+// their exported symbols, unchanged.
+ONNX_API void check_model(
+    const ModelProto& model,
+    bool full_check,
+    bool skip_opset_compatibility_check,
+    bool check_custom_domain,
+    bool check_external_data_files);
+ONNX_API void check_model(
+    const std::string& model_path,
+    bool full_check,
+    bool skip_opset_compatibility_check,
+    bool check_custom_domain,
+    bool check_external_data_files);
 std::filesystem::path resolve_external_data_location(
     const std::string& base_dir,
     const std::string& location,

@@ -207,6 +207,8 @@ onnx.checker.check_model("path/to/the/model.onnx")
 # onnx.checker.check_model(loaded_onnx_model) will fail if given >2GB model
 ```
 
+For what the checker verifies about external data, and how to check a model whose external data files are not available, see [Checking models with external data](docsgen/source/api/checker.md#checking-models-with-external-data).
+
 ## Running Shape Inference on an ONNX Model
 
 ```{eval-rst}

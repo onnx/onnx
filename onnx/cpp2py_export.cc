@@ -624,26 +624,35 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   checker.def(
       "check_model",
-      [](const nb::bytes& bytes, bool full_check, bool skip_opset_compatibility_check, bool check_custom_domain)
-          -> void {
+      [](const nb::bytes& bytes,
+         bool full_check,
+         bool skip_opset_compatibility_check,
+         bool check_custom_domain,
+         bool check_external_data_files) -> void {
         ModelProto proto{};
         ParseProtoFromPyBytesOrThrow(&proto, bytes);
-        checker::check_model(proto, full_check, skip_opset_compatibility_check, check_custom_domain);
+        checker::check_model(
+            proto, full_check, skip_opset_compatibility_check, check_custom_domain, check_external_data_files);
       },
       nb::arg("bytes"),
       nb::arg("full_check") = false,
       nb::arg("skip_opset_compatibility_check") = false,
-      nb::arg("check_custom_domain") = false);
+      nb::arg("check_custom_domain") = false,
+      nb::arg("check_external_data_files") = true);
 
   checker.def(
       "check_model_path",
       static_cast<void (*)(
-          const std::string& path, bool full_check, bool skip_opset_compatibility_check, bool check_custom_domain)>(
-          &checker::check_model),
+          const std::string& path,
+          bool full_check,
+          bool skip_opset_compatibility_check,
+          bool check_custom_domain,
+          bool check_external_data_files)>(&checker::check_model),
       nb::arg("path"),
       nb::arg("full_check") = false,
       nb::arg("skip_opset_compatibility_check") = false,
-      nb::arg("check_custom_domain") = false);
+      nb::arg("check_custom_domain") = false,
+      nb::arg("check_external_data_files") = true);
 
   checker.def("_open_external_data", &checker::open_external_data);
 
