@@ -465,4 +465,44 @@ TEST(Renamer, BasicFunctionality) {
   ASSERT_TRUE(node.output(0).find("test") != std::string::npos);
 }
 
+TEST(Renamer, ShardingTensorReferences) {
+  auto graph = ParseGraph(R"ONNX(
+  test_graph (float[2] X) => (float[2] Y) {
+    temp = Identity(X)
+    Y = Identity(temp)
+  }
+  )ONNX");
+  for (auto& node : *graph.mutable_node()) {
+    auto* config = node.add_device_configurations();
+    config->set_configuration_id("two_devices");
+    config->set_pipeline_stage(1);
+    for (const auto& name : {node.input(0), node.output(0)}) {
+      auto* spec = config->add_sharding_spec();
+      spec->set_tensor_name(name);
+      spec->add_device(0);
+      spec->add_device(1);
+      auto* dim = spec->add_sharded_dim();
+      dim->set_axis(0);
+      auto* sharding = dim->add_simple_sharding();
+      sharding->set_dim_value(2);
+      sharding->set_num_shards(2);
+    }
+  }
+
+  inliner::Renamer renamer("test", graph);
+  renamer.BindName("X", "A");
+  renamer.BindName("Y", "out");
+  for (auto& node : *graph.mutable_node()) {
+    auto expected = node.device_configurations(0);
+    renamer.RenameNode(node);
+    expected.mutable_sharding_spec(0)->set_tensor_name(node.input(0));
+    expected.mutable_sharding_spec(1)->set_tensor_name(node.output(0));
+    EXPECT_EQ(node.device_configurations(0).SerializeAsString(), expected.SerializeAsString());
+  }
+  EXPECT_EQ(graph.node(0).input(0), "A");
+  EXPECT_NE(graph.node(0).output(0), "temp");
+  EXPECT_EQ(graph.node(1).input(0), graph.node(0).output(0));
+  EXPECT_EQ(graph.node(1).output(0), "out");
+}
+
 } // namespace ONNX_NAMESPACE::Test
