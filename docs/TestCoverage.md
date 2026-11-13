@@ -17395,7 +17395,7 @@ expect(node, inputs=[x], outputs=[y], name="test_l2normalization_axis_1")
 
 
 ### LpPool
-There are 8 test cases, listed as following:
+There are 9 test cases, listed as following:
 <details>
 <summary>lppool_1d_default</summary>
 
@@ -17499,6 +17499,32 @@ y = np.array(
 ).astype(np.float32)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_dilations")
+```
+
+</details>
+<details>
+<summary>lppool_2d_float16_large_values</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LpPool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[2, 2],
+    strides=[2, 2],
+    p=2,
+)
+# Squaring values above 256 overflows float16 (max 65504), so the
+# expected output is computed in float32.
+x = np.linspace(0, 511, 16).reshape(1, 1, 4, 4).astype(np.float16)
+x32 = x.astype(np.float32)
+windows = x32.reshape(1, 1, 2, 2, 2, 2)
+y = np.power(np.power(np.abs(windows), 2).sum(axis=(3, 5)), 1.0 / 2).astype(
+    np.float16
+)
+expect(
+    node, inputs=[x], outputs=[y], name="test_lppool_2d_float16_large_values"
+)
 ```
 
 </details>
