@@ -5170,6 +5170,44 @@ class TestReferenceEvaluator:
         got = ref.run(None, {"X": data})
         assert_allclose(got[0], expected)
 
+    @pytest.mark.parametrize(
+        ("tensor_type", "dtype", "low", "high", "nonzero"),
+        [
+            (TensorProto.UINT8, np.uint8, 0, 255, 123),
+            (TensorProto.INT8, np.int8, -128, 127, -17),
+            (TensorProto.UINT16, np.uint16, 0, 65535, 32123),
+            (TensorProto.INT16, np.int16, -32768, 32767, -20000),
+        ],
+    )
+    @pytest.mark.parametrize("with_zero_point", [False, True])
+    def test_quantize_linear_large_finite_saturates(
+        self, tensor_type, dtype, low, high, nonzero, with_zero_point
+    ):
+        inputs = ["X", "scale"]
+        initializers = [make_tensor("scale", TensorProto.FLOAT, [], [1.0])]
+        offset = 0
+        if with_zero_point:
+            inputs.append("zero")
+            initializers.append(make_tensor("zero", tensor_type, [], [nonzero]))
+            offset = nonzero
+
+        model = make_model(
+            make_graph(
+                [make_node("QuantizeLinear", inputs, ["Y"], output_dtype=tensor_type)],
+                "large_quantize",
+                [make_tensor_value_info("X", TensorProto.FLOAT, [5])],
+                [make_tensor_value_info("Y", tensor_type, [5])],
+                initializers,
+            ),
+            opset_imports=[make_opsetid("", 23)],
+        )
+        data = np.array([3e9, -3e9, 0.5, 1.5, -1.5], dtype=np.float32)
+        expected = np.array(
+            [high, low, offset, offset + 2, max(low, offset - 2)], dtype=dtype
+        )
+        got = ReferenceEvaluator(model).run(None, {"X": data})[0]
+        assert_array_equal(got, expected)
+
     def test_quantize_linear_uint16(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
         Y = make_tensor_value_info("Y", TensorProto.UINT16, [None])
