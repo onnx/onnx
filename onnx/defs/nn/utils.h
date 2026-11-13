@@ -11,6 +11,7 @@
 
 namespace ONNX_NAMESPACE::defs::nn::utils {
 
+OpSchema LinearAttentionSchema(bool expanded_value_heads = false);
 OpSchema CausalConvWithStateSchema(bool dilated);
 
 extern const std::vector<int64_t> kMeanVarianceNormalizationDefaultAxes;

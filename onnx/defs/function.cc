@@ -39,14 +39,14 @@ void FunctionExpandHelper(
     renamer.BindName(func.input(idx), "");
   }
   for (int idx = 0; idx < node.output_size(); ++idx) {
-    if (idx >= func.output_size()) {
-      ONNX_THROW("Output for function node " + node_name + " is out of bounds");
-    }
     // If the node output is missing, the corresponding function output should
     // be treated as an internal value (not as missing) because it could also be
     // an intermediate value.
     if (node.output().Get(idx).empty()) {
       continue;
+    }
+    if (idx >= func.output_size()) {
+      ONNX_THROW("Output for function node " + node_name + " is out of bounds");
     }
     renamer.BindName(func.output(idx), node.output(idx));
   }
@@ -80,6 +80,22 @@ void FunctionExpandHelper(
   for (const auto& [attr_name, attr] : default_attrs) {
     if (!attr_map.count(attr_name)) {
       attr_map[attr_name] = attr.default_value;
+    }
+  }
+
+  for (const auto& function_node : func.node()) {
+    for (const auto& attr : function_node.attribute()) {
+      if (!attr.has_ref_attr_name())
+        continue;
+      const auto actual = attr_map.find(attr.ref_attr_name());
+      if (actual != attr_map.end() &&
+          (actual->second.type() == AttributeProto::GRAPH || actual->second.type() == AttributeProto::GRAPHS)) {
+        ONNX_THROW(
+            "Cannot expand function node '" + node_name + "': graph-valued attribute '" + attr.ref_attr_name() +
+            "' referenced by '" + attr.name() +
+            "' is unsupported because caller graph captures cannot be safely renamed. "
+            "Retain the function call or define the subgraph directly in the function body.");
+      }
     }
   }
 

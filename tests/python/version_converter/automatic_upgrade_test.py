@@ -2157,7 +2157,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
 
     def test_LinearAttention_basic_mha(self) -> None:
         # H_q == H_kv == 4, d_k == d_v == 16. update_rule="linear" with no
-        # optional inputs: baseline shape/dtype plumbing on the no-op upgrade.
+        # optional inputs: baseline shape/dtype plumbing on the compatible upgrade.
         self._test_op_upgrade(
             "LinearAttention",
             27,
@@ -2186,6 +2186,122 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             attrs={
                 "q_num_heads": 8,
                 "kv_num_heads": 2,
+                "update_rule": "linear",
+            },
+        )
+
+    @pytest.mark.parametrize("widths", [(0, 1), (1, 0), (0, 0), (1, 1)])
+    @pytest.mark.parametrize("state_only", [False, True])
+    def test_linear_attention_28_to_29_head_widths(self, widths, state_only) -> None:
+        dk, dv = widths
+        inputs = [
+            helper.make_tensor_value_info(
+                name, TensorProto.FLOAT, [1, 1, None if state_only else width]
+            )
+            for name, width in (("Q", dk), ("K", dk), ("V", dv))
+        ]
+        if state_only:
+            inputs.append(
+                helper.make_tensor_value_info("Past", TensorProto.FLOAT, [1, 1, dk, dv])
+            )
+        model = helper.make_model(
+            helper.make_graph(
+                [
+                    helper.make_node(
+                        "LinearAttention",
+                        [value.name for value in inputs],
+                        ["Y", "S"],
+                        q_num_heads=1,
+                        kv_num_heads=1,
+                        update_rule="linear",
+                        scale=1.0,
+                    )
+                ],
+                "linear_attention_upgrade",
+                inputs,
+                [
+                    helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 1, dv]),
+                    helper.make_tensor_value_info(
+                        "S", TensorProto.FLOAT, [1, 1, dk, dv]
+                    ),
+                ],
+            ),
+            opset_imports=[helper.make_opsetid("", 28)],
+        )
+        onnx.checker.check_model(model, full_check=True)
+        if dk == 0 or dv == 0:
+            with pytest.raises(RuntimeError, match="zero-width head dimension"):
+                onnx.version_converter.convert_version(model, 29)
+        else:
+            converted = onnx.version_converter.convert_version(model, 29)
+            onnx.checker.check_model(converted, full_check=True)
+        assert model.opset_import[0].version == 28
+
+    @pytest.mark.parametrize("value_heads", [4, 6, 16])
+    def test_linear_attention_28_to_29_zero_width_decay(self, value_heads) -> None:
+        model = helper.make_model(
+            helper.make_graph(
+                [
+                    helper.make_node(
+                        "LinearAttention",
+                        ["Q", "K", "V", "", "Decay", "Beta"],
+                        ["Y", "S"],
+                        q_num_heads=1,
+                        kv_num_heads=1,
+                        update_rule="gated_delta",
+                    )
+                ],
+                "zero_width_decay",
+                [
+                    helper.make_tensor_value_info(name, TensorProto.FLOAT, shape)
+                    for name, shape in (
+                        ("Q", [1, 1, None]),
+                        ("K", [1, 1, None]),
+                        ("V", [1, 1, value_heads]),
+                        ("Decay", [1, 1, 0]),
+                        ("Beta", [1, 1, 1]),
+                    )
+                ],
+                [
+                    helper.make_tensor_value_info(
+                        "Y", TensorProto.FLOAT, [1, 1, value_heads]
+                    ),
+                    helper.make_tensor_value_info(
+                        "S", TensorProto.FLOAT, [1, 1, None, value_heads]
+                    ),
+                ],
+            ),
+            opset_imports=[helper.make_opsetid("", 28)],
+        )
+        onnx.checker.check_model(model, full_check=True)
+        with pytest.raises(RuntimeError, match="zero-width head dimension"):
+            onnx.version_converter.convert_version(model, 29)
+
+    @pytest.mark.parametrize("value_heads", [4, 6, 16])
+    def test_linear_attention_expanded_heads(self, value_heads) -> None:
+        self._test_op_upgrade(
+            "LinearAttention",
+            29,
+            [[1, 3, 8], [1, 3, 8], [1, 3, value_heads * 3]],
+            [[1, 3, value_heads * 3], [1, value_heads, 4, 3]],
+            attrs={
+                "q_num_heads": 2,
+                "kv_num_heads": 2,
+                "v_num_heads": value_heads,
+                "update_rule": "linear",
+            },
+        )
+
+    def test_linear_attention_state_trajectory(self) -> None:
+        self._test_op_upgrade(
+            "LinearAttention",
+            29,
+            [[1, 3, 8], [1, 3, 8], [1, 3, 18]],
+            [[1, 3, 18], [1, 6, 4, 3], [1, 3, 6, 4, 3]],
+            attrs={
+                "q_num_heads": 2,
+                "kv_num_heads": 2,
+                "v_num_heads": 6,
                 "update_rule": "linear",
             },
         )
