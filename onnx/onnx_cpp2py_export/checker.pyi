@@ -6,7 +6,8 @@ class LexicalScopeContext:
     ir_version: int = ...
     opset_imports: dict[str, int] = ...
 
-class ValidationError(Exception): ...
+class ValidationError(Exception):
+    code: str | None
 
 def check_value_info(bytes: bytes, checker_context: CheckerContext) -> None: ...  # noqa: A002
 def check_tensor(bytes: bytes, checker_context: CheckerContext) -> None: ...  # noqa: A002

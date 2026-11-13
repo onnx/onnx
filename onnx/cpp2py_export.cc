@@ -610,9 +610,41 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   nb::class_<checker::LexicalScopeContext> lexical_scope_context(checker, "LexicalScopeContext");
   lexical_scope_context.def(nb::init<>());
 
-  nb::exception<checker::ValidationError>( // NOLINT(bugprone-unused-raii,bugprone-throw-keyword-missing)
-      checker,
-      "ValidationError");
+  // Created by hand rather than with nb::exception, which would register a second
+  // translator for ValidationError that sets only the message: this way, the one
+  // below is the only one.
+  const std::string validation_error_name = nb::cast<std::string>(checker.attr("__name__")) + ".ValidationError";
+  nb::object validation_error = nb::steal(PyErr_NewException(validation_error_name.c_str(), PyExc_Exception, nullptr));
+  if (!validation_error.is_valid()) {
+    throw nb::python_error();
+  }
+  // Errors raised elsewhere, e.g. from Python, have no code.
+  validation_error.attr("code") = nb::none();
+  checker.attr("ValidationError") = validation_error;
+  nb::register_exception_translator(
+      [](const std::exception_ptr& p, void* payload) {
+        try {
+          std::rethrow_exception(p);
+        } catch (const checker::ValidationError& e) {
+          auto* type = static_cast<PyObject*>(payload);
+          PyObject* error = PyObject_CallFunction(type, "s", e.what());
+          if (error == nullptr) {
+            return; // The failed call has set a Python error.
+          }
+          if (!e.code().empty()) {
+            PyObject* code = PyUnicode_FromStringAndSize(e.code().data(), static_cast<Py_ssize_t>(e.code().size()));
+            const bool set = code != nullptr && PyObject_SetAttrString(error, "code", code) == 0;
+            Py_XDECREF(code);
+            if (!set) {
+              Py_DECREF(error);
+              return; // A Python error is set.
+            }
+          }
+          PyErr_SetObject(type, error);
+          Py_DECREF(error);
+        }
+      },
+      validation_error.ptr());
 
   checker.def("check_value_info", MakeChecker(checker::check_value_info));
   checker.def("check_tensor", MakeChecker(checker::check_tensor));

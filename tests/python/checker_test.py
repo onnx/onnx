@@ -24,7 +24,7 @@ from onnx import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable, Sequence
     from pathlib import Path
 
 
@@ -2184,3 +2184,344 @@ class TestChecker:
             match=r"Input channels C must be divisible by group for ConvTranspose",
         ):
             checker.check_model(model, full_check=True)
+
+
+_IDENTITY_MODEL = """
+<ir_version: 10, opset_import: ["" : 21]>
+agraph (float[2] x) => (float[2] y) {
+    y = Identity(x)
+}
+"""
+
+
+def _model_without_graph_name() -> ModelProto:
+    model = onnx.parser.parse_model(_IDENTITY_MODEL)
+    model.graph.name = ""
+    return model
+
+
+def _model_with_untyped_initializer() -> ModelProto:
+    model = onnx.parser.parse_model(_IDENTITY_MODEL)
+    model.graph.initializer.add(name="w")
+    return model
+
+
+def _model_with_ir_version(ir_version: int) -> ModelProto:
+    model = onnx.parser.parse_model(_IDENTITY_MODEL)
+    model.ir_version = ir_version
+    return model
+
+
+def _model_with_duplicate_metadata_key() -> ModelProto:
+    model = onnx.parser.parse_model(_IDENTITY_MODEL)
+    helper.set_model_props(model, {"key": "a"})
+    model.metadata_props.add(key="key", value="b")
+    return model
+
+
+def _model_with_duplicate_attribute() -> ModelProto:
+    model = onnx.parser.parse_model(_IDENTITY_MODEL)
+    for _ in range(2):
+        model.graph.node[0].attribute.append(helper.make_attribute("alpha", 1.0))
+    return model
+
+
+def _model_with_duplicate_initializer() -> ModelProto:
+    model = onnx.parser.parse_model(_IDENTITY_MODEL)
+    for _ in range(2):
+        model.graph.initializer.append(
+            numpy_helper.from_array(np.zeros(2, dtype=np.float32), "w")
+        )
+    return model
+
+
+def _model_with_initializer_and_sparse_initializer_of_same_name() -> ModelProto:
+    model = onnx.parser.parse_model(_IDENTITY_MODEL)
+    model.graph.initializer.append(
+        numpy_helper.from_array(np.zeros(2, dtype=np.float32), "w")
+    )
+    model.graph.sparse_initializer.append(
+        helper.make_sparse_tensor(
+            numpy_helper.from_array(np.ones(1, dtype=np.float32), "w"),
+            numpy_helper.from_array(np.zeros(1, dtype=np.int64), "w_indices"),
+            [2],
+        )
+    )
+    return model
+
+
+def _model_without_opset_import() -> ModelProto:
+    model = onnx.parser.parse_model(_IDENTITY_MODEL)
+    del model.opset_import[:]
+    return model
+
+
+def _model_with_newer_data_type() -> ModelProto:
+    value = helper.make_tensor_value_info("x", TensorProto.FLOAT4E2M1, [2])
+    graph = helper.make_graph(
+        [helper.make_node("Identity", ["x"], ["y"])],
+        "g",
+        [value],
+        [helper.make_tensor_value_info("y", TensorProto.FLOAT4E2M1, [2])],
+    )
+    return helper.make_model(
+        graph, ir_version=10, opset_imports=[helper.make_opsetid("", 21)]
+    )
+
+
+class TestValidationErrorCode:
+    @pytest.mark.parametrize(
+        ("model_text", "code"),
+        [
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21]>
+                agraph (float[2] x) => (float[2] z) {
+                    z = Identity(y)
+                    y = Identity(x)
+                }
+                """,
+                "input-not-defined",
+            ),
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21]>
+                agraph (float[2] x) => (float[2] y) {
+                    y = Identity(x)
+                    y = Identity(x)
+                }
+                """,
+                "not-ssa",
+            ),
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21]>
+                agraph (float[2] x) => (float[2] y) {
+                    y = NoSuchOp(x)
+                }
+                """,
+                "operator-not-registered",
+            ),
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21]>
+                agraph (float[2] x) => (float[2] y) {
+                    y = custom.Op(x)
+                }
+                """,
+                "opset-import-missing",
+            ),
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21]>
+                agraph (float[2] x) => (float[2] y) {
+                    y = Add(x)
+                }
+                """,
+                "node-schema-mismatch",
+            ),
+            (
+                """
+                <ir_version: 5, opset_import: ["" : 10]>
+                agraph (float[1, 1, 2, 2] x, float[4] s) => (float[1, 1, 4, 4] y) {
+                    y = Upsample(x, s)
+                }
+                """,
+                "operator-deprecated",
+            ),
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21]>
+                agraph (float[2] x) => (float[2] z) {
+                    y = Identity(x)
+                }
+                """,
+                "graph-output-not-produced",
+            ),
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21]>
+                agraph (bool cond, float[2] x) => (float[2] y) {
+                    y = If(cond) <
+                        then_branch = g1 () => (float[2] t) { t = NoSuchOp(x) },
+                        else_branch = g2 () => (float[2] e) { e = Identity(x) }
+                    >
+                }
+                """,
+                "operator-not-registered",
+            ),
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21, "local" : 1]>
+                agraph (float[2] x) => (float[2] y) {
+                    y = local.f(x)
+                }
+                <domain: "local", opset_import: ["" : 21]>
+                f (a) => (b) {
+                    b = Identity(c)
+                    c = Identity(a)
+                }
+                """,
+                "input-not-defined",
+            ),
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21]>
+                agraph (float[2] x) => (float[2] y) {
+                    y = Identity(typo)
+                }
+                """,
+                "input-not-defined",
+            ),
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21, "local" : 1]>
+                agraph (float[2] x) => (float[2] y) {
+                    y = local.f(x)
+                }
+                <domain: "local", opset_import: ["" : 21]>
+                f (a) => (b) {
+                    b = custom.Op(a)
+                }
+                """,
+                "opset-import-missing",
+            ),
+        ],
+        ids=[
+            "input_not_defined",
+            "not_ssa",
+            "operator_not_registered",
+            "opset_import_missing",
+            "node_schema_mismatch",
+            "operator_deprecated",
+            "graph_output_not_produced",
+            "in_subgraph",
+            "in_function",
+            "input_never_defined",
+            "opset_import_missing_in_function",
+        ],
+    )
+    def test_parsed_model(self, model_text: str, code: str) -> None:
+        model = onnx.parser.parse_model(model_text)
+        with pytest.raises(checker.ValidationError) as excinfo:
+            checker.check_model(model)
+        assert excinfo.value.code == code
+
+    @pytest.mark.parametrize(
+        ("make_model", "code"),
+        [
+            (lambda: _model_with_ir_version(0), "ir-version-missing"),
+            (
+                lambda: _model_with_ir_version(onnx.IR_VERSION + 1),
+                "ir-version-unsupported",
+            ),
+            (_model_with_duplicate_metadata_key, "metadata-props-duplicate-key"),
+            (_model_without_opset_import, "opset-import-missing"),
+            (_model_without_graph_name, "required-field-empty"),
+            (_model_with_untyped_initializer, "required-field-missing"),
+            (_model_with_newer_data_type, "data-type-requires-newer-ir-version"),
+            (_model_with_duplicate_attribute, "node-schema-mismatch"),
+            (_model_with_duplicate_initializer, "not-ssa"),
+            (_model_with_initializer_and_sparse_initializer_of_same_name, "not-ssa"),
+        ],
+        ids=[
+            "ir_version_missing",
+            "ir_version_unsupported",
+            "metadata_props_duplicate_key",
+            "no_opset_import",
+            "graph_name_empty",
+            "initializer_data_type_missing",
+            "data_type_requires_newer_ir_version",
+            "duplicate_attribute",
+            "duplicate_initializer",
+            "initializer_and_sparse_initializer_of_same_name",
+        ],
+    )
+    def test_built_model(self, make_model: Callable[[], ModelProto], code: str) -> None:
+        with pytest.raises(checker.ValidationError) as excinfo:
+            checker.check_model(make_model())
+        assert excinfo.value.code == code
+
+    @pytest.mark.parametrize(
+        ("external_data", "file_contents", "code"),
+        [
+            ({"location": "w.bin"}, None, "external-data-file-missing"),
+            ({"location": "../w.bin"}, b"\x00" * 8, "external-data-location-invalid"),
+            ({"location": "subdir"}, None, "external-data-location-invalid"),
+            (
+                {"location": "w.bin", "offset": "abc"},
+                b"\x00" * 8,
+                "external-data-entry-invalid",
+            ),
+            (
+                {"location": "w.bin", "offset": "100"},
+                b"\x00" * 8,
+                "external-data-out-of-range",
+            ),
+            ({"location": "w.bin"}, b"\x00" * 4, "external-data-out-of-range"),
+        ],
+        ids=[
+            "file_missing",
+            "outside_model_directory",
+            "directory",
+            "offset_not_an_integer",
+            "offset_past_end",
+            "file_too_small",
+        ],
+    )
+    def test_external_data(
+        self,
+        tmp_path: Path,
+        external_data: dict[str, str],
+        file_contents: bytes | None,
+        code: str,
+    ) -> None:
+        (tmp_path / "subdir").mkdir()
+        if file_contents is not None:
+            (tmp_path / "w.bin").write_bytes(file_contents)
+        model = onnx.parser.parse_model(_IDENTITY_MODEL)
+        tensor = numpy_helper.from_array(np.zeros(2, dtype=np.float32), "w")
+        tensor.ClearField("raw_data")
+        tensor.data_location = TensorProto.EXTERNAL
+        for key, value in external_data.items():
+            tensor.external_data.add(key=key, value=value)
+        model.graph.initializer.append(tensor)
+        model_path = tmp_path / "model.onnx"
+        model_path.write_bytes(model.SerializeToString())
+        with pytest.raises(checker.ValidationError) as excinfo:
+            checker.check_model(model_path)
+        assert excinfo.value.code == code
+
+    def test_message_is_unchanged(self) -> None:
+        model = onnx.parser.parse_model(_IDENTITY_MODEL)
+        model.ir_version = 0
+        with pytest.raises(
+            checker.ValidationError,
+            match=r"^The model does not have an ir_version set properly\.$",
+        ):
+            checker.check_model(model)
+
+    def test_check_tensor(self) -> None:
+        with pytest.raises(checker.ValidationError) as excinfo:
+            checker.check_tensor(TensorProto(name="t"))
+        assert excinfo.value.code == "required-field-missing"
+
+    def test_rule_without_code(self) -> None:
+        model = onnx.parser.parse_model(_IDENTITY_MODEL)
+        model.ir_version = 2
+        with pytest.raises(checker.ValidationError) as excinfo:
+            checker.check_model(model)
+        assert excinfo.value.code is None
+
+    def test_raised_from_python(self) -> None:
+        assert checker.ValidationError("message").code is None
+
+    def test_infer_node_outputs(self) -> None:
+        # Shape inference verifies the node against its schema the same way.
+        with pytest.raises(checker.ValidationError) as excinfo:
+            shape_inference.infer_node_outputs(
+                onnx.defs.get_schema("Add", 21),
+                helper.make_node("Add", ["x"], ["y"]),
+                {"x": helper.make_tensor_type_proto(TensorProto.FLOAT, [2])},
+            )
+        assert excinfo.value.code == "node-schema-mismatch"
