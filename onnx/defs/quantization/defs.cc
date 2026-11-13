@@ -154,8 +154,8 @@ blocks can be decoded with `format="gguf:q4_0", shape=[2,32]`.
 ### Static weight decode patterns (informative)
 
 The following compositions use a flat UINT8 packed weight tensor and literal
-weight dimensions in `shape`. Token counts may remain symbolic: inferring the
-decoded weight shape does not require the payload values at runtime.
+weight dimensions in `shape`. Shape inference obtains the decoded weight
+dimensions from this attribute while token counts may remain symbolic.
 In these examples, `H` and `K` are multiples of the format's elements per block;
 the letters in `shape` stand for fixed integer attribute values, not symbols.
 
@@ -174,17 +174,15 @@ The input type must match `output_dtype`; `M` and `S` may be symbolic.
 Each expert consists of independently decodable, block-aligned rows.
 A backend may fuse the decode and GroupedMatMul to compute the selected
 expert projections directly from packed storage without materializing the
-entire floating-point weight bank. This is one projection, not a complete
+entire floating-point weight bank. This represents one projection within a
 mixture-of-experts layer.
 
-These graphs semantically decode floating-point weights before the consuming
-operator. DequantizePacked alone does not promise lazy execution, fusion,
-native quantized arithmetic, or low memory use. Unfused execution can expand
-the entire table or bank, which may be prohibitively large. Any fusion must
-preserve the specified FLOAT decoding arithmetic, output conversion, and
-consumer semantics; arbitrary lower-precision accumulation is not implied
-to be equivalent. Other consumers of the decoded tensor must be accounted
-for before eliminating that intermediate.
+The graph semantics are floating-point decode followed by the consumer.
+Fusion is an optional backend optimization that preserves the specified
+FLOAT decoding arithmetic, output conversion, and consumer semantics.
+It can avoid the full floating-point table or bank that unfused execution
+materializes. When the decoded tensor has other consumers, the backend
+also preserves their results.
 )DOC")
         .Input(0, "x", "Consecutive quantization blocks with little-endian fields.", "tensor(uint8)")
         .Output(0, "y", "Dequantized tensor with the specified shape and output_dtype.", "T")

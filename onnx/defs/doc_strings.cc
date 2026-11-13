@@ -2423,21 +2423,18 @@ For static packed expert weights, use
 `GroupedMatMul(input, weights, group_indices, transB=1)`.
 Here the weight dimensions are literal attribute values; `M` and `S` may
 remain symbolic. See [DequantizePacked](Operators.md#DequantizePacked) for
-block alignment and optional selected-expert decode fusion constraints.
-This composition represents one projection, not a complete mixture-of-experts layer.
+block alignment and selected-expert decode fusion.
+This composition represents one projection within a mixture-of-experts layer.
 
 For FP8 weights stored as a typed tensor of shape `[G,N,K]`, use
 `weights = DequantizeLinear(fp8_weights, scales, axis=2, block_size=B)`
 for blocks of `B` elements along `K`. The scale shape is
 `[G,N,ceil(K/B)]`; for per-tensor scaling, use a scalar scale and omit
 `block_size`. The zero point may be omitted. The decoded weights and `input`
-must have the same floating-point type. A backend may fuse dequantization
-and this operator to avoid materializing unselected expert weights, but must
-preserve DequantizeLinear and GroupedMatMul semantics, including scale
-indexing and output conversion. Fusion, native FP8 arithmetic, and lower
-memory use are not guaranteed; arbitrary lower-precision accumulation is
-not implied to be equivalent. Other consumers must be accounted for before
-eliminating the decoded weights.
+must have the same floating-point type. An optional backend fusion can
+compute selected expert projections directly from quantized storage,
+preserving DequantizeLinear and GroupedMatMul semantics, including scale
+indexing, output conversion, and results for other consumers of the weights.
 )DOC";
 const char kDoc_SwiGLU_ver28[] = R"DOC(
 SwiGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
@@ -4464,16 +4461,15 @@ shape `[N,H]`. `N` may be symbolic even when the table dimensions are fixed.
 For packed weights, first decode a flat UINT8 payload with
 `DequantizePacked(packed_table, shape=[V,H], ...)`; see
 [DequantizePacked](Operators.md#DequantizePacked) for block alignment and
-optional selected-row decode fusion constraints.
+selected-row decode fusion.
 For a typed FP8 table of shape `[V,H]`, first use
 `DequantizeLinear(fp8_table, scales, axis=1, block_size=B)` with scale shape
 `[V,ceil(H/B)]`, or a scalar scale with `block_size` omitted for per-tensor
-scaling; the zero point may be omitted. A backend may fuse dequantization
-and Gather to decode only selected rows, preserving scale indexing, output
-conversion, and Gather index semantics (including negative indices).
-Fusion and low memory use are not guaranteed: unfused execution can expand
-the whole floating-point table. Other consumers must be accounted for
-before eliminating it.
+scaling; the zero point may be omitted. An optional backend fusion can
+decode only selected rows instead of materializing the full floating-point
+table. It preserves dequantization arithmetic, scale indexing, output
+conversion, Gather index semantics (including negative indices), and
+results for other consumers of the table.
 
 The following few examples illustrate how `Gather` works for specific shapes of `data`,
 `indices`, and given value of `axis`:
