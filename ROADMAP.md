@@ -144,6 +144,7 @@ Note: All milestones are tentative and depend on the Operator SIG review of the 
 #### Q1 2027
 - Align `Multinomial` and `Bernoulli` with the explicit PRNG state model
 - Propose a `Poisson` sampling operator
+- Build demo converter using the updated set of PRNG ops for a small set of Stan models
 
 #### Q2 2027
 - ONNX Runtime implementation of the updated random operators
