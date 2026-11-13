@@ -8949,6 +8949,179 @@ class TestReferenceEvaluator:
         # Each of the 3 iterations adds `bias` to the running state.
         assert_allclose(final, np.array([30, 300], dtype=np.float32))
 
+    @pytest.mark.parametrize("in_dir", [0, 1])
+    @pytest.mark.parametrize("out_dir", [0, 1])
+    @pytest.mark.parametrize("in_ax", [-3, -2, -1, 0, 1, 2])
+    @pytest.mark.parametrize("out_ax", [-3, -2, -1, 0, 1, 2])
+    def test_scan_axes_and_directions(self, in_dir, out_dir, in_ax, out_ax):
+        rng = np.random.default_rng(42)
+        x = rng.standard_normal((3, 4, 2)).astype(np.float32)
+        norm_in = in_ax + x.ndim if in_ax < 0 else in_ax
+        elem_shape = [d for idx, d in enumerate(x.shape) if idx != norm_in]
+        init = rng.standard_normal(elem_shape).astype(np.float32)
+
+        body = make_graph(
+            [
+                make_node("Mul", ["s_in", "two"], ["scaled"]),
+                make_node("Add", ["scaled", "x_in"], ["s_out"]),
+                make_node("Identity", ["s_out"], ["y_out"]),
+            ],
+            "scan_body",
+            [
+                make_tensor_value_info("s_in", TensorProto.FLOAT, elem_shape),
+                make_tensor_value_info("x_in", TensorProto.FLOAT, elem_shape),
+            ],
+            [
+                make_tensor_value_info("s_out", TensorProto.FLOAT, elem_shape),
+                make_tensor_value_info("y_out", TensorProto.FLOAT, elem_shape),
+            ],
+            [from_array(np.array(2.0, dtype=np.float32), name="two")],
+        )
+        norm_out = out_ax + x.ndim if out_ax < 0 else out_ax
+        out_shape = list(elem_shape)
+        out_shape.insert(norm_out, x.shape[norm_in])
+        graph = make_graph(
+            [
+                make_node(
+                    "Scan",
+                    ["init", "x"],
+                    ["final", "y"],
+                    num_scan_inputs=1,
+                    body=body,
+                    scan_input_axes=[in_ax],
+                    scan_input_directions=[in_dir],
+                    scan_output_axes=[out_ax],
+                    scan_output_directions=[out_dir],
+                )
+            ],
+            "g",
+            [
+                make_tensor_value_info("init", TensorProto.FLOAT, elem_shape),
+                make_tensor_value_info("x", TensorProto.FLOAT, list(x.shape)),
+            ],
+            [
+                make_tensor_value_info("final", TensorProto.FLOAT, elem_shape),
+                make_tensor_value_info("y", TensorProto.FLOAT, out_shape),
+            ],
+        )
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 21)])
+        check_model(onnx_model)
+
+        final, y = ReferenceEvaluator(onnx_model).run(None, {"init": init, "x": x})
+
+        slices = np.moveaxis(x, norm_in, 0)
+        if in_dir == 1:
+            slices = slices[::-1]
+        state = init.copy()
+        steps = []
+        for step_x in slices:
+            state = np.float32(2.0) * state + step_x
+            steps.append(state.copy())
+        if out_dir == 1:
+            steps.reverse()
+        expected_y = np.stack(steps, axis=norm_out)
+
+        assert_allclose(final, state, rtol=1e-6, atol=1e-6)
+        assert_allclose(y, expected_y, rtol=1e-6, atol=1e-6)
+
+    def test_scan_multi_input_output_negative_axes(self):
+        # Regression test: `max([0, -1]) == 0` previously bypassed the axis!=0
+        # check and silently sliced/stacked along axis 0 instead of axis -1.
+        onnx_model = parser.parse_model(
+            """
+            <ir_version: 10, opset_import: [ "": 21 ]>
+            g (float[3] init, float[3, 3] x0, float[3, 3] x1)
+                => (float[3] final, float[3, 3] y0, float[3, 3] y1)
+            {
+                final, y0, y1 = Scan <
+                    num_scan_inputs = 2,
+                    scan_input_axes = [0, -1],
+                    scan_input_directions = [0, 1],
+                    scan_output_axes = [0, -1],
+                    scan_output_directions = [0, 1],
+                    body = scan_body (float[3] s_in, float[3] a_in, float[3] b_in)
+                        => (float[3] s_out, float[3] out0, float[3] out1)
+                    {
+                        ab = Add(a_in, b_in)
+                        s_out = Add(s_in, ab)
+                        out0 = Identity(s_out)
+                        out1 = Identity(a_in)
+                    }
+                > (init, x0, x1)
+            }
+            """
+        )
+        check_model(onnx_model)
+
+        init = np.zeros(3, dtype=np.float32)
+        x0 = np.arange(1, 10, dtype=np.float32).reshape(3, 3)
+        x1 = (np.arange(1, 10, dtype=np.float32) * 10).reshape(3, 3)
+        final, y0, y1 = ReferenceEvaluator(onnx_model).run(
+            None, {"init": init, "x0": x0, "x1": x1}
+        )
+
+        # Iteration t in 0..2 reads row x0[t, :] and reversed column x1[:, 2 - t].
+        expected_steps = [x0[t, :] + x1[:, 2 - t] for t in range(3)]
+        expected_y0 = np.cumsum(np.stack(expected_steps, axis=0), axis=0)
+        expected_final = expected_y0[-1]
+        # out1 prepends (direction=1) rows of x0 and stacks along axis -1.
+        expected_y1 = np.stack([x0[2], x0[1], x0[0]], axis=-1)
+
+        assert_allclose(final, expected_final)
+        assert_allclose(y0, expected_y0)
+        assert_allclose(y1, expected_y1)
+
+    def test_scan_invalid_attributes_and_mismatched_lengths(self):
+        # Mismatched runtime sequence lengths across dynamic scan inputs must fail.
+        onnx_model = parser.parse_model(
+            """
+            <ir_version: 10, opset_import: [ "": 21 ]>
+            g (float[2] init, float[M, 2] x0, float[2, N] x1) => (float[2] final)
+            {
+                final = Scan <
+                    num_scan_inputs = 2,
+                    scan_input_axes = [0, 1],
+                    body = scan_body (float[2] s_in, float[2] a_in, float[2] b_in)
+                        => (float[2] s_out)
+                    {
+                        ab = Add(a_in, b_in)
+                        s_out = Add(s_in, ab)
+                    }
+                > (init, x0, x1)
+            }
+            """
+        )
+        sess = ReferenceEvaluator(onnx_model)
+        with pytest.raises(ValueError, match="matching sequence lengths"):
+            sess.run(
+                None,
+                {
+                    "init": np.zeros(2, dtype=np.float32),
+                    "x0": np.zeros((3, 2), dtype=np.float32),
+                    "x1": np.zeros((2, 5), dtype=np.float32),
+                },
+            )
+
+        bad_dir_model = parser.parse_model(
+            """
+            <ir_version: 10, opset_import: [ "": 21 ]>
+            g (float[2] init, float[3, 2] x) => (float[2] final)
+            {
+                final = Scan <
+                    num_scan_inputs = 1,
+                    scan_input_directions = [-1],
+                    body = scan_body (float[2] s_in, float[2] x_in)
+                        => (float[2] s_out)
+                    {
+                        s_out = Add(s_in, x_in)
+                    }
+                > (init, x)
+            }
+            """
+        )
+        with pytest.raises(ValueError, match="Invalid scan_input_directions"):
+            ReferenceEvaluator(bad_dir_model)
+
     @pytest.mark.parametrize(
         ("dilation", "kernel", "length"),
         [
