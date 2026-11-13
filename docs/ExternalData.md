@@ -52,6 +52,8 @@ onnx.save_model(onnx_model, "path/to/save/the/model.onnx", save_as_external_data
 
 ## onnx.checker for Models with External Data
 
+For what the checker verifies about external data, and how to check a model whose external data files are not available, see [Checking models with external data](docsgen/source/api/checker.md#checking-models-with-external-data).
+
 ### Models with External Data (<2GB)
 
 Current checker supports checking models with external data. Specify either loaded onnx model or model path to the checker.
@@ -66,22 +68,6 @@ import onnx
 onnx.checker.check_model("path/to/the/model.onnx")
 # onnx.checker.check_model(loaded_onnx_model) will fail if given >2GB model
 ```
-
-### Checking a model without its external data
-
-By default, the checker verifies that each external data file exists, is a regular file inside the model directory, and holds enough data for its tensors. With `check_external_data_files=False`, it does not access the files and checks only what the model itself says about them: every externally stored tensor has a `location` that is a relative path naming a file inside the model directory, `offset` and `length` are non-negative integers whose sum fits a file, and an explicit `length` is large enough for the tensor's shape and type. This checks a model whose external data has not been downloaded:
-
-```python
-import onnx
-
-onnx.checker.check_model("path/to/the/model.onnx", check_external_data_files=False)
-```
-
-On the command line, `check-model --no-check-external-data-files path/to/the/model.onnx` does the same.
-
-Check the model from its path: locations are relative to the model directory, so a model checked in memory, for example one loaded with `load_external_data=False`, fails in both modes when it has external data.
-
-The checker never reads external data, so it cannot check the order and range of sparse tensor indices that are stored externally. With `check_external_data_files=False`, only the type, rank and dimensions of such indices are checked; by default, they are rejected. Indices stored inline are checked as usual.
 
 ## TensorProto: data_location and external_data fields
 

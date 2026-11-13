@@ -54,11 +54,12 @@ This is defense-in-depth alongside Layer 3's post-open hardlink check. It provid
 
 ## Protected Entry Points
 
-All Python entry points use the C++ `open_external_data()` function. In **read mode** it applies all four layers (pre-open validation via `resolve_external_data_location` for Layers 1, 2, 4, then Layer 3 post-open). In **write mode** it applies Layers 1 and 3 only — Layers 2 and 4 are skipped because the file may not yet exist. The C++ checker calls `resolve_external_data_location` directly without opening files, so Layer 3 does not apply there.
+All Python entry points use the C++ `open_external_data()` function. In **read mode** it applies all four layers (pre-open validation via `resolve_external_data_location` for Layers 1, 2, 4, then Layer 3 post-open). In **write mode** it applies Layers 1 and 3 only — Layers 2 and 4 are skipped because the file may not yet exist. The C++ checker calls `resolve_external_data_location` directly without opening files, so Layer 3 does not apply there. With `check_external_data_files=False`, the checker does not call it at all: it applies only lexical checks to each location (relative, no `..` component, names a file and, on Windows, no root directory or other drive), so Layers 1, 2 and 4 do not run and a symlink or hardlink in the model directory goes undetected.
 
 | Entry Point | File | Mode | Layers |
 |---|---|---|---|
 | `resolve_external_data_location` | `onnx/checker.cc` | read | 1, 2, 4 |
+| `check_model(..., check_external_data_files=False)` | `onnx/checker.cc` | none (no file access) | none (lexical checks only) |
 | `open_external_data` | `onnx/checker.cc` | read | 1, 2, 3, 4 |
 | `open_external_data` | `onnx/checker.cc` | write | 1, 3 |
 | `load_external_data_for_tensor` | `onnx/external_data_helper.py` | read | 1, 2, 3, 4 (via `open_external_data`) |
