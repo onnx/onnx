@@ -15715,6 +15715,23 @@ This version of the operator has been available since version 13 of the default 
   which is arranged into a `q + (r-1)`-dimensional tensor, with the `q` dimensions taking the
   place of the original `axis` that is being indexed into.
 
+  An embedding lookup uses `Gather(table, token_ids, axis=0)`: a table of
+  shape `[V,H]` and integer token IDs of shape `[N]` produce embeddings of
+  shape `[N,H]`. `N` may be symbolic even when the table dimensions are fixed.
+  For packed weights, first decode a flat UINT8 payload with
+  `DequantizePacked(packed_table, shape=[V,H], ...)`; see
+  [DequantizePacked](Operators.md#DequantizePacked) for block alignment and
+  optional selected-row decode fusion constraints.
+  For a typed FP8 table of shape `[V,H]`, first use
+  `DequantizeLinear(fp8_table, scales, axis=1, block_size=B)` with scale shape
+  `[V,ceil(H/B)]`, or a scalar scale with `block_size` omitted for per-tensor
+  scaling; the zero point may be omitted. A backend may fuse dequantization
+  and Gather to decode only selected rows, preserving scale indexing, output
+  conversion, and Gather index semantics (including negative indices).
+  Fusion and low memory use are not guaranteed: unfused execution can expand
+  the whole floating-point table. Other consumers must be accounted for
+  before eliminating it.
+
   The following few examples illustrate how `Gather` works for specific shapes of `data`,
   `indices`, and given value of `axis`:
   | data shape | indices shape | axis | output shape | output equation |
@@ -34579,6 +34596,41 @@ This version of the operator has been available since version 29 of the default 
   `y[j+16]=d*((q[j]>>4)-8)` for j=0,...,15. Thus 36 bytes containing two
   blocks can be decoded with `format="gguf:q4_0", shape=[2,32]`.
 
+  ### Static weight decode patterns (informative)
+
+  The following compositions use a flat UINT8 packed weight tensor and literal
+  weight dimensions in `shape`. Token counts may remain symbolic: inferring the
+  decoded weight shape does not require the payload values at runtime.
+  In these examples, `H` and `K` are multiples of the format's elements per block;
+  the letters in `shape` stand for fixed integer attribute values, not symbols.
+
+  **Embedding lookup:** decode the table with `shape=[V,H]`, then apply
+  `Gather(table, token_ids, axis=0)`. With integer `token_ids` of shape `[N]`,
+  the result has shape `[N,H]`, where `N` may be symbolic. Because rows consist
+  of independently decodable, aligned blocks, a backend may fuse the decode
+  and Gather to read and decode only the selected rows without materializing
+  the full floating-point table.
+
+  **Selected-expert projection:** decode the weight bank with `shape=[E,O,K]`,
+  then apply `GroupedMatMul(input, weights, expert_ids, transB=1)`, with no bias.
+  For floating-point `input` of shape `[M,K]` and integer `expert_ids` of shape
+  `[M,S]` with values in `[0,E)`, the result has shape `[M,S,O]`.
+  The input type must match `output_dtype`; `M` and `S` may be symbolic.
+  Each expert consists of independently decodable, block-aligned rows.
+  A backend may fuse the decode and GroupedMatMul to compute the selected
+  expert projections directly from packed storage without materializing the
+  entire floating-point weight bank. This is one projection, not a complete
+  mixture-of-experts layer.
+
+  These graphs semantically decode floating-point weights before the consuming
+  operator. DequantizePacked alone does not promise lazy execution, fusion,
+  native quantized arithmetic, or low memory use. Unfused execution can expand
+  the entire table or bank, which may be prohibitively large. Any fusion must
+  preserve the specified FLOAT decoding arithmetic, output conversion, and
+  consumer semantics; arbitrary lower-precision accumulation is not implied
+  to be equivalent. Other consumers of the decoded tensor must be accounted
+  for before eliminating that intermediate.
+
 #### Version
 
 This version of the operator has been available since version 29 of the default ONNX operator set.
@@ -34871,6 +34923,27 @@ This version of the operator has been available since version 29 of the default 
 
   Quantized weights can be dequantized with DequantizeLinear before this operator.
   The dequantized weights must have the shape specified by `transB`.
+
+  For static packed expert weights, use
+  `weights = DequantizePacked(packed_weights, shape=[G,N,K], ...)` followed by
+  `GroupedMatMul(input, weights, group_indices, transB=1)`.
+  Here the weight dimensions are literal attribute values; `M` and `S` may
+  remain symbolic. See [DequantizePacked](Operators.md#DequantizePacked) for
+  block alignment and optional selected-expert decode fusion constraints.
+  This composition represents one projection, not a complete mixture-of-experts layer.
+
+  For FP8 weights stored as a typed tensor of shape `[G,N,K]`, use
+  `weights = DequantizeLinear(fp8_weights, scales, axis=2, block_size=B)`
+  for blocks of `B` elements along `K`. The scale shape is
+  `[G,N,ceil(K/B)]`; for per-tensor scaling, use a scalar scale and omit
+  `block_size`. The zero point may be omitted. The decoded weights and `input`
+  must have the same floating-point type. A backend may fuse dequantization
+  and this operator to avoid materializing unselected expert weights, but must
+  preserve DequantizeLinear and GroupedMatMul semantics, including scale
+  indexing and output conversion. Fusion, native FP8 arithmetic, and lower
+  memory use are not guaranteed; arbitrary lower-precision accumulation is
+  not implied to be equivalent. Other consumers must be accounted for before
+  eliminating the decoded weights.
 
 #### Version
 

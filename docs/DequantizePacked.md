@@ -29,6 +29,11 @@ Their concatenated values are reshaped to `shape` and converted once to
 `output_dtype`. FLOAT16 and BFLOAT16 conversion uses round-to-nearest,
 ties-to-even, as in Cast.
 
+For informative static-weight compositions with Gather (embedding lookup) and
+GroupedMatMul (selected-expert projection), including optional backend fusion
+and its semantic constraints, see
+[Static weight decode patterns](Operators.md#DequantizePacked).
+
 ## Format identifiers
 
 A `format` is an ONNX-defined, case-sensitive identifier for a fixed packed
