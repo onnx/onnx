@@ -42,7 +42,7 @@ class ConvInteger(OpRun):
             W -= (
                 w_zero_point
                 if w_zero_point.ndim == 0
-                else np.expand_dims(w_zero_point, (1, 2, 3))
+                else np.expand_dims(w_zero_point, tuple(range(1, W.ndim)))
             )
 
         return (
