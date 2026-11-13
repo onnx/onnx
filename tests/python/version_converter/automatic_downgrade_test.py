@@ -74,6 +74,28 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             [onnx.TensorProto.INT64, onnx.TensorProto.INT64],
         )
 
+    def test_Pack(self) -> None:
+        self._test_op_downgrade(
+            "Pack",
+            29,
+            [[2, 8]],
+            [[2, 3]],
+            [onnx.TensorProto.UINT8],
+            [onnx.TensorProto.UINT8],
+            attrs={"bits": 3},
+        )
+
+    def test_Unpack(self) -> None:
+        self._test_op_downgrade(
+            "Unpack",
+            29,
+            [[2, 3], []],
+            [[2, 8]],
+            [onnx.TensorProto.UINT8, onnx.TensorProto.INT64],
+            [onnx.TensorProto.UINT8],
+            attrs={"bits": 3},
+        )
+
     @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
     @pytest.mark.parametrize("reduction", [None, "none", "add", "mul", "min", "max"])
     def test_scatter_29_to_28(self, op, reduction) -> None:

@@ -1533,6 +1533,8 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Log1p);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, GatherND);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, ScatterElements);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, ScatterND);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Pack);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Unpack);
 
 // Iterate over schema from ai.onnx version 29
 class OpSet_Onnx_ver29 {
@@ -1551,6 +1553,8 @@ class OpSet_Onnx_ver29 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, GatherND)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, ScatterElements)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, ScatterND)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Pack)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Unpack)>());
   }
 };
 
