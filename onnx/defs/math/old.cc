@@ -1834,15 +1834,33 @@ static bool BuildContextDependentFunctionBodySCE_opset12(
     const OpSchema& schema,
     FunctionProto& functionProto) {
   std::vector<FunctionBodyHelper::NodeDef> body;
-  body.reserve(9);
+  body.reserve(17);
 
   // Using stable implementation of LogSoftmax
-  body.push_back({{"Shape3D"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneInt64Tensor_old({0, 0, -1}))}});
+  body.push_back({{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneInt64Tensor_old(int64_t{0}))}});
+  body.push_back({{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneInt64Tensor_old(int64_t{1}))}});
+  body.push_back({{"const_two"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneInt64Tensor_old(int64_t{2}))}});
+  body.push_back(
+      {{"const_max"},
+       "Constant",
+       {},
+       {MakeAttribute(
+           "value", ToDimensionOneInt64Tensor_old(std::vector<int64_t>{std::numeric_limits<int64_t>::max()}))}});
+  body.push_back({{"X_shape"}, "Shape", {"scores"}});
+  body.push_back({{"NC"}, "Slice", {"X_shape", "const_zero", "const_two"}});
+  body.push_back({{"Spatial_shape"}, "Slice", {"X_shape", "const_two", "const_max"}});
+  body.push_back(
+      {{"Spatial_shape_with_one"},
+       "Concat",
+       {"Spatial_shape", "const_one"},
+       {MakeAttribute("axis", static_cast<int64_t>(0))}});
+  body.push_back(
+      {{"D"}, "ReduceProd", {"Spatial_shape_with_one"}, {MakeAttribute("keepdims", static_cast<int64_t>(1))}});
+  body.push_back({{"Shape3D"}, "Concat", {"NC", "D"}, {MakeAttribute("axis", static_cast<int64_t>(0))}});
   body.push_back({{"X_NCD"}, "Reshape", {"scores", "Shape3D"}});
   body.push_back({{"X_NDC"}, "Transpose", {"X_NCD"}, {MakeAttribute("perm", std::vector<int64_t>({0, 2, 1}))}});
   body.push_back({{"X_LogSM"}, "LogSoftmax", {"X_NDC"}, {MakeAttribute("axis", static_cast<int64_t>(2))}});
   body.push_back({{"X_LogSM_NCD"}, "Transpose", {"X_LogSM"}, {MakeAttribute("perm", std::vector<int64_t>({0, 2, 1}))}});
-  body.push_back({{"X_shape"}, "Shape", {"scores"}});
   body.push_back({{"X_Log"}, "Reshape", {"X_LogSM_NCD", "X_shape"}});
 
   // Review(mzs): Ideally we want to reuse the output from Log for sub-graph

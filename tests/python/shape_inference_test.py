@@ -25,6 +25,7 @@ from onnx import (
     checker,
     defs,
     helper,
+    inliner,
     numpy_helper,
 )
 from onnx.defs import (
@@ -11635,6 +11636,66 @@ class TestShapeInference(TestShapeInferenceHelper):
             self._inferred(
                 graph,
             )
+
+    @pytest.mark.parametrize("batch_size", [0, 2])
+    @pytest.mark.parametrize("spatial_shape", [(), (5,), (2, 3)])
+    @pytest.mark.parametrize(
+        "opset_version",
+        sorted({29, onnx.defs.onnx_opset_version()}),
+    )
+    def test_softmax_cross_entropy_expanded_zero_batch(
+        self, batch_size: int, spatial_shape: tuple[int, ...], opset_version: int
+    ) -> None:
+        labels_shape = (batch_size, *spatial_shape)
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "SoftmaxCrossEntropyLoss",
+                        ["scores", "labels"],
+                        ["loss"],
+                        reduction="none",
+                    )
+                ],
+                "sce_zero_batch",
+                [
+                    make_tensor_value_info(
+                        "scores", TensorProto.FLOAT, (batch_size, 3, *spatial_shape)
+                    ),
+                    make_tensor_value_info("labels", TensorProto.INT64, labels_shape),
+                ],
+                [
+                    make_tensor_value_info(
+                        "loss", TensorProto.FLOAT, (None,) * len(labels_shape)
+                    )
+                ],
+            ),
+            opset_imports=[make_opsetid(ONNX_DOMAIN, opset_version)],
+            ir_version=onnx.IR_VERSION,
+        )
+
+        checker.check_model(model)
+
+        expanded = inliner.inline_selected_functions(
+            model,
+            [("", "SoftmaxCrossEntropyLoss")],
+            inline_schema_functions=True,
+        )
+
+        assert not any(
+            node.op_type == "SoftmaxCrossEntropyLoss" for node in expanded.graph.node
+        )
+
+        checker.check_model(expanded)
+
+        inferred = onnx.shape_inference.infer_shapes(expanded, strict_mode=True)
+
+        output_shape = inferred.graph.output[0].type.tensor_type.shape
+
+        assert len(output_shape.dim) == len(labels_shape)
+        for dim, expected in zip(output_shape.dim, labels_shape, strict=True):
+            assert dim.HasField("dim_value")
+            assert dim.dim_value == expected
 
     def test_softmax_cross_entropy_none(self) -> None:
         graph = self._make_graph(
