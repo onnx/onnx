@@ -8,6 +8,8 @@ import atheris
 
 with atheris.instrument_imports():
     import onnx
+    from onnx import parser, printer
+    from onnx.fuzz._text import supports_text_round_trip
 
 
 def TestOneInput(data):
@@ -17,8 +19,21 @@ def TestOneInput(data):
         _ = len(model.graph.input)
         _ = len(model.graph.output)
         onnx.checker.check_model(model)
+        if not supports_text_round_trip(model):
+            return
+        text = printer.to_text(model)
     except Exception:
         return
+    # The text form of a valid model must parse back to the same text.
+    try:
+        reparsed = parser.parse_model(text)
+    except parser.ParseError as error:
+        error.add_note(text)
+        raise AssertionError("Printed text of a valid model does not parse") from error
+    assert printer.to_text(reparsed) == text, (
+        text,
+        "Printed text changed after parsing it back",
+    )
 
 
 def main():
