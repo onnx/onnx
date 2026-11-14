@@ -5859,6 +5859,79 @@ class TestReferenceEvaluator:
         assert got.shape == expected.shape
         assert_array_equal(got.astype(np.float64), expected.astype(np.float64))
 
+    @pytest.mark.parametrize("dtype", [np.float16, ml_dtypes.bfloat16])
+    @pytest.mark.parametrize("exclusive", [0, 1])
+    @pytest.mark.parametrize("reverse", [0, 1])
+    def test_cumsum_low_precision_accumulation(self, dtype, exclusive, reverse):
+        x = np.array([2047, 1, 1, 1, 1], dtype=dtype)
+        axis = np.array(0, dtype=np.int32)
+        xf = x.astype(np.float32)
+        if reverse:
+            xf = xf[::-1]
+        if exclusive:
+            expected_f32 = np.concatenate([[0.0], np.cumsum(xf[:-1], dtype=np.float32)])
+        else:
+            expected_f32 = np.cumsum(xf, dtype=np.float32)
+        if reverse:
+            expected_f32 = expected_f32[::-1]
+        expected = expected_f32.astype(dtype)
+
+        tensor_type = onnx.helper.np_dtype_to_tensor_dtype(x.dtype)
+        X = make_tensor_value_info("X", tensor_type, list(x.shape))
+        A = make_tensor_value_info("axis", TensorProto.INT32, [])
+        Y = make_tensor_value_info("Y", tensor_type, list(x.shape))
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "CumSum",
+                        ["X", "axis"],
+                        ["Y"],
+                        exclusive=exclusive,
+                        reverse=reverse,
+                    )
+                ],
+                "cumsum_low_precision",
+                [X, A],
+                [Y],
+            ),
+            opset_imports=[make_opsetid("", 14)],
+        )
+        check_model(model)
+        got = ReferenceEvaluator(model).run(None, {"X": x, "axis": axis})[0]
+        assert got.dtype == x.dtype
+        assert_array_equal(got.astype(np.float32), expected.astype(np.float32))
+
+    @pytest.mark.parametrize("dtype", [np.float16, ml_dtypes.bfloat16])
+    def test_sum_low_precision_accumulation(self, dtype):
+        val = 60000 if dtype == np.float16 else 1e38
+        a = np.full((2, 2), val, dtype=dtype)
+        b = np.full((2, 2), val, dtype=dtype)
+        c = np.full((2, 2), -val, dtype=dtype)
+        expected = (
+            a.astype(np.float32) + b.astype(np.float32) + c.astype(np.float32)
+        ).astype(dtype)
+
+        tensor_type = onnx.helper.np_dtype_to_tensor_dtype(a.dtype)
+        inputs_vi = [
+            make_tensor_value_info(name, tensor_type, [2, 2])
+            for name in ("A", "B", "C")
+        ]
+        Y = make_tensor_value_info("Y", tensor_type, [2, 2])
+        model = make_model(
+            make_graph(
+                [make_node("Sum", ["A", "B", "C"], ["Y"])],
+                "sum_low_precision",
+                inputs_vi,
+                [Y],
+            ),
+            opset_imports=[make_opsetid("", 13)],
+        )
+        check_model(model)
+        got = ReferenceEvaluator(model).run(None, {"A": a, "B": b, "C": c})[0]
+        assert got.dtype == a.dtype
+        assert_array_equal(got.astype(np.float32), expected.astype(np.float32))
+
     @pytest.mark.parametrize("op", ["ReduceLogSum", "ReduceLogSumExp"])
     @pytest.mark.parametrize("opset", [13, 18, onnx_opset_version()])
     def test_reduce_log_sum_ops_reject_integer_input(self, op, opset):
