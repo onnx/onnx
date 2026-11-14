@@ -5895,10 +5895,15 @@ class TestReferenceEvaluator:
         assert_array_equal(got.astype(np.float64), expected.astype(np.float64))
 
     @pytest.mark.parametrize("dtype", [np.float16, ml_dtypes.bfloat16])
+    @pytest.mark.parametrize("case", ["saturation", "overflow"])
     @pytest.mark.parametrize("exclusive", [0, 1])
     @pytest.mark.parametrize("reverse", [0, 1])
-    def test_cumsum_low_precision_accumulation(self, dtype, exclusive, reverse):
-        x = np.array([2047, 1, 1, 1, 1], dtype=dtype)
+    def test_cumsum_low_precision_accumulation(self, dtype, case, exclusive, reverse):
+        if case == "saturation":
+            x = np.array([2047, 1, 1, 1, 1], dtype=dtype)
+        else:
+            val = 60000 if dtype == np.float16 else 2e38
+            x = np.array([val, val, -val, -val], dtype=dtype)
         axis = np.array(0, dtype=np.int32)
         xf = x.astype(np.float32)
         if reverse:
@@ -5909,7 +5914,8 @@ class TestReferenceEvaluator:
             expected_f32 = np.cumsum(xf, dtype=np.float32)
         if reverse:
             expected_f32 = expected_f32[::-1]
-        expected = expected_f32.astype(dtype)
+        with np.errstate(over="ignore"):
+            expected = expected_f32.astype(dtype)
 
         tensor_type = onnx.helper.np_dtype_to_tensor_dtype(x.dtype)
         X = make_tensor_value_info("X", tensor_type, list(x.shape))
@@ -5933,7 +5939,36 @@ class TestReferenceEvaluator:
             opset_imports=[make_opsetid("", 14)],
         )
         check_model(model)
-        got = ReferenceEvaluator(model).run(None, {"X": x, "axis": axis})[0]
+        with np.errstate(over="ignore"):
+            got = ReferenceEvaluator(model).run(None, {"X": x, "axis": axis})[0]
+        assert got.dtype == x.dtype
+        assert_array_equal(got.astype(np.float32), expected.astype(np.float32))
+
+    @pytest.mark.parametrize("dtype", [np.float16, ml_dtypes.bfloat16])
+    @pytest.mark.parametrize("opset", [11, 18])
+    def test_reduce_sum_low_precision_accumulation(self, dtype, opset):
+        val = 60000 if dtype == np.float16 else 2e38
+        x = np.array([[2047, 1, 1, 1], [val, val, -val, 0]], dtype=dtype)
+        expected = np.sum(x.astype(np.float32), axis=1, keepdims=True).astype(dtype)
+
+        tensor_type = onnx.helper.np_dtype_to_tensor_dtype(x.dtype)
+        X = make_tensor_value_info("X", tensor_type, list(x.shape))
+        Y = make_tensor_value_info("Y", tensor_type, list(expected.shape))
+        if opset < 13:
+            node = make_node("ReduceSum", ["X"], ["Y"], axes=[1], keepdims=1)
+            inputs_vi = [X]
+            feeds = {"X": x}
+        else:
+            A = make_tensor_value_info("axes", TensorProto.INT64, [1])
+            node = make_node("ReduceSum", ["X", "axes"], ["Y"], keepdims=1)
+            inputs_vi = [X, A]
+            feeds = {"X": x, "axes": np.array([1], dtype=np.int64)}
+        model = make_model(
+            make_graph([node], "reduce_sum_low_precision", inputs_vi, [Y]),
+            opset_imports=[make_opsetid("", opset)],
+        )
+        check_model(model)
+        got = ReferenceEvaluator(model).run(None, feeds)[0]
         assert got.dtype == x.dtype
         assert_array_equal(got.astype(np.float32), expected.astype(np.float32))
 
