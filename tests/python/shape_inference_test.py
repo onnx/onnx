@@ -15028,6 +15028,87 @@ class TestShapeInference(TestShapeInferenceHelper):
         assert inferred.graph.output[0].type.tensor_type.elem_type == TensorProto.FLOAT
         assert len(inferred.graph.output[0].type.tensor_type.shape.dim) == 0
 
+    def test_function_caller_graph_lexical_scope(self):
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: [ "" : 18, "local" : 1 ]>
+            main (bool cond, float[3] X, float[7] A, float[12] V) => (
+                float[?] Y_caller,
+                float[?] Y_callee,
+                float[?] Y_omitted,
+                float[?, ?] Y_reshaped
+            ) {
+                T = Constant <value = float[3, 4] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}> ()
+                Y_caller, Y_callee = local.both <
+                    sub = caller_branch () => (float[?] out) {
+                        out = Identity(X)
+                    }
+                > (A, cond)
+                Y_omitted = local.omitted_formal <
+                    sub = omitted_branch () => (float[?] out) {
+                        out = Clip(X)
+                    }
+                > ("", cond)
+                Y_reshaped = local.reshape_via_sub <
+                    sub = reshape_branch () => (float[?, ?] out) {
+                        s = Shape(T)
+                        out = Reshape(V, s)
+                    }
+                > (V, cond)
+            }
+
+            <opset_import: [ "" : 18 ], domain: "local">
+            both <
+                sub,
+                body: graph = callee_branch () => (float[?] out) {
+                    out = Identity(X)
+                }
+            > (X, cond) => (Y_caller, Y_callee) {
+                Y_caller = If <then_branch: graph = @sub, else_branch: graph = @sub> (cond)
+                Y_callee = If <then_branch: graph = @body, else_branch: graph = @body> (cond)
+            }
+
+            <opset_import: [ "" : 18 ], domain: "local">
+            omitted_formal <sub> (X, cond) => (Y) {
+                Y = If <then_branch: graph = @sub, else_branch: graph = @sub> (cond)
+            }
+
+            <opset_import: [ "" : 18 ], domain: "local">
+            reshape_via_sub <sub> (V, cond) => (Y) {
+                Y = If <then_branch: graph = @sub, else_branch: graph = @sub> (cond)
+            }
+            """
+        )
+        onnx.checker.check_model(model, full_check=True)
+        inferred = onnx.shape_inference.infer_shapes(
+            model, check_type=True, strict_mode=True, data_prop=True
+        )
+        dims = [
+            [d.dim_value for d in output.type.tensor_type.shape.dim]
+            for output in inferred.graph.output
+        ]
+        assert dims == [[3], [7], [3], [3, 4]]
+
+        mismatched = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: [ "" : 18, "local" : 1 ]>
+            main (bool cond, float[3] X, float[7] A) => (float[7] Y) {
+                Y = local.callee <
+                    sub = caller_branch () => (float[?] out) {
+                        out = Identity(X)
+                    }
+                > (A, cond)
+            }
+
+            <opset_import: [ "" : 18 ], domain: "local">
+            callee <sub> (X, cond) => (Y) {
+                Y = If <then_branch: graph = @sub, else_branch: graph = @sub> (cond)
+            }
+            """
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.checker.check_model(mismatched, full_check=True)
+
     @pytest.mark.parametrize("version", [10, *all_versions_for("ConvTranspose")])
     def test_conv_transpose_undersized_weight_raises(self, version: int) -> None:
         # Weight rank < 3 violates ConvTranspose spec (C x M/group x k1...kn).

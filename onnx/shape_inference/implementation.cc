@@ -370,6 +370,65 @@ void BindValuesOnReturn(
   }
 }
 
+void RecordNestedGraphScopes(
+    const GraphProto& src_graph,
+    const GraphProto& dst_graph,
+    GraphScopeMap& graph_scopes,
+    std::vector<const GraphProto*>& bound_graphs) {
+  const int num_nodes = std::min(src_graph.node_size(), dst_graph.node_size());
+  for (int i = 0; i < num_nodes; ++i) {
+    const auto& src_node = src_graph.node(i);
+    const auto& dst_node = dst_graph.node(i);
+    const int num_attrs = std::min(src_node.attribute_size(), dst_node.attribute_size());
+    for (int j = 0; j < num_attrs; ++j) {
+      const auto& src_attr = src_node.attribute(j);
+      const auto& dst_attr = dst_node.attribute(j);
+      if (src_attr.has_g() && dst_attr.has_g()) {
+        auto it = graph_scopes.find(&src_attr.g());
+        if (it != graph_scopes.end()) {
+          graph_scopes[&dst_attr.g()] = it->second;
+          bound_graphs.push_back(&dst_attr.g());
+        }
+        RecordNestedGraphScopes(src_attr.g(), dst_attr.g(), graph_scopes, bound_graphs);
+      }
+      const int num_graphs = std::min(src_attr.graphs_size(), dst_attr.graphs_size());
+      for (int k = 0; k < num_graphs; ++k) {
+        auto it = graph_scopes.find(&src_attr.graphs(k));
+        if (it != graph_scopes.end()) {
+          graph_scopes[&dst_attr.graphs(k)] = it->second;
+          bound_graphs.push_back(&dst_attr.graphs(k));
+        }
+        RecordNestedGraphScopes(src_attr.graphs(k), dst_attr.graphs(k), graph_scopes, bound_graphs);
+      }
+    }
+  }
+}
+
+void RecordCallSiteGraphScopes(
+    const AttributeProto& src_attr,
+    const AttributeProto& dst_attr,
+    GraphInferenceContext* caller_context,
+    GraphScopeMap& graph_scopes,
+    std::vector<const GraphProto*>& bound_graphs) {
+  if (caller_context == nullptr) {
+    return;
+  }
+  auto record_top_level_graph = [&](const GraphProto& src_graph, const GraphProto& dst_graph) {
+    auto it = graph_scopes.find(&src_graph);
+    GraphInferenceContext* lexical_scope = (it != graph_scopes.end()) ? it->second : caller_context;
+    graph_scopes[&dst_graph] = lexical_scope;
+    bound_graphs.push_back(&dst_graph);
+    RecordNestedGraphScopes(src_graph, dst_graph, graph_scopes, bound_graphs);
+  };
+  if (src_attr.has_g() && dst_attr.has_g()) {
+    record_top_level_graph(src_attr.g(), dst_attr.g());
+  }
+  const int num_graphs = std::min(src_attr.graphs_size(), dst_attr.graphs_size());
+  for (int k = 0; k < num_graphs; ++k) {
+    record_top_level_graph(src_attr.graphs(k), dst_attr.graphs(k));
+  }
+}
+
 // ShapeInferenceImplBase drives type-and-shape inference over a GraphProto or FunctionProto.
 // A single instance is used to process one top-level graph, or one function-body invocation
 // (a "callee" scope): ProcessCall()/InferShapeForFunctionNodeInternal() construct a brand-new
@@ -631,13 +690,10 @@ class ShapeInferenceImplBase {
     }
   }
 
-  void Process(const NodeProto& n, internal::AttributeBinder& attribute_binder) {
-    NodeProto copy_n(n);
-    attribute_binder.VisitNode(copy_n);
-    Process(copy_n);
-  }
-
-  void Process(const FunctionProto& func_proto, InferenceContext& ctx) {
+  void Process(
+      const FunctionProto& func_proto,
+      InferenceContext& ctx,
+      GraphInferenceContext* caller_graph_inference_context = nullptr) {
     // This method processes a single function-body invocation. Per the class-level comment
     // above, a fresh ShapeInferenceImplBase instance is created for each such invocation, so
     // unbound_value_names must still be in its initial, empty state at this point (it is
@@ -693,15 +749,37 @@ class ShapeInferenceImplBase {
       }
     }
 
+    internal::AttributeSet default_attrs;
     for (const auto& default_value : func_proto.attribute_proto()) {
       const std::string& name = default_value.name();
       const AttributeProto* value = ctx.getAttribute(name);
-      attr_map[name] = (value != nullptr) ? value : &default_value;
+      if (value != nullptr) {
+        attr_map[name] = value;
+      } else {
+        attr_map[name] = &default_value;
+        default_attrs.insert(&default_value);
+      }
     }
 
-    internal::AttributeBinder attribute_binder(attr_map);
+    std::vector<const GraphProto*> bound_graphs;
+    internal::AttributeBinder attribute_binder(
+        attr_map,
+        default_attrs,
+        [this, caller_graph_inference_context, &bound_graphs](
+            const AttributeProto& src_attr, AttributeProto& dst_attr) {
+          RecordCallSiteGraphScopes(src_attr, dst_attr, caller_graph_inference_context, *graph_scopes, bound_graphs);
+        });
     for (const auto& n : func_proto.node()) {
-      Process(n, attribute_binder);
+      NodeProto copy_n(n);
+      bound_graphs.clear();
+      ScopeExit cleanup_bound_graphs([this, &bound_graphs]() noexcept {
+        for (const auto* g : bound_graphs) {
+          graph_scopes->erase(g);
+        }
+        bound_graphs.clear();
+      });
+      attribute_binder.VisitNode(copy_n);
+      Process(copy_n);
     }
 
     for (int i = 0; i < func_proto.output_size(); ++i) {
@@ -729,7 +807,8 @@ class ShapeInferenceImplBase {
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
       DataValueMap* generated_shape_data_by_name_in = nullptr,
       const int64_t ir_version_in = IR_VERSION,
-      std::shared_ptr<std::unordered_set<const FunctionProto*>> active_functions_in = nullptr)
+      std::shared_ptr<std::unordered_set<const FunctionProto*>> active_functions_in = nullptr,
+      std::shared_ptr<GraphScopeMap> graph_scopes_in = nullptr)
       : inferred_types(graph),
         value_types_by_name(outer_scope_value_types_by_name_in),
         opset_imports(opset_imports_in),
@@ -742,6 +821,7 @@ class ShapeInferenceImplBase {
         active_functions(
             active_functions_in ? std::move(active_functions_in)
                                 : std::make_shared<std::unordered_set<const FunctionProto*>>()),
+        graph_scopes(graph_scopes_in ? std::move(graph_scopes_in) : std::make_shared<GraphScopeMap>()),
         graph_inference_context{
             value_types_by_name,
             opset_imports,
@@ -749,7 +829,8 @@ class ShapeInferenceImplBase {
             model_local_functions_map,
             schema_registry,
             generated_shape_data_by_name,
-            ir_version} {
+            ir_version,
+            graph_scopes} {
     if (options.enable_data_propagation && generated_shape_data_by_name == nullptr) {
       fail_shape_inference(
           "Container for generated shape data cannot be nullptr when enable_data_propagation option is set.");
@@ -787,6 +868,7 @@ class ShapeInferenceImplBase {
   DataValueMap* generated_shape_data_by_name;
   int64_t ir_version;
   std::shared_ptr<std::unordered_set<const FunctionProto*>> active_functions;
+  std::shared_ptr<GraphScopeMap> graph_scopes;
   GraphInferenceContext graph_inference_context;
 
   std::unordered_map<std::string, TypeProto*> undefined_value_types_by_name;
@@ -826,8 +908,8 @@ void InferShapesImpl(
     const ModelLocalFunctionsMap& model_local_functions_map,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     DataValueMap* generated_shape_data_by_name = nullptr,
-    const int64_t ir_version = IR_VERSION // default the latest one
-) {
+    const int64_t ir_version = IR_VERSION, // default the latest one
+    std::shared_ptr<GraphScopeMap> graph_scopes = nullptr) {
   DataValueMap empty;
   if (generated_shape_data_by_name == nullptr) {
     generated_shape_data_by_name = &empty;
@@ -841,7 +923,9 @@ void InferShapesImpl(
       model_local_functions_map,
       schema_registry,
       generated_shape_data_by_name,
-      ir_version);
+      ir_version,
+      /*active_functions_in=*/nullptr,
+      std::move(graph_scopes));
   base.Process(*g);
   base.FinalizeShapeInference();
 }
@@ -923,7 +1007,9 @@ static void InferShapeForFunctionNodeInternal(
     const std::unordered_map<std::string, const FunctionProto*>& model_local_functions_map,
     SymbolTable* symbol_table,
     DataValueMap* generated_shape_data_by_name,
-    std::shared_ptr<std::unordered_set<const FunctionProto*>> active_functions) {
+    std::shared_ptr<std::unordered_set<const FunctionProto*>> active_functions,
+    GraphInferenceContext* caller_graph_inference_context = nullptr,
+    std::shared_ptr<GraphScopeMap> graph_scopes = nullptr) {
   ShapeInferenceImplBase base(
       nullptr, // no graph
       {}, // outer_scope_value_types_by_name
@@ -934,8 +1020,9 @@ static void InferShapeForFunctionNodeInternal(
       schema_registry,
       generated_shape_data_by_name,
       IR_VERSION,
-      std::move(active_functions));
-  base.Process(func_proto, ctx);
+      std::move(active_functions),
+      std::move(graph_scopes));
+  base.Process(func_proto, ctx, caller_graph_inference_context);
   base.FinalizeShapeInference();
 }
 
@@ -961,7 +1048,9 @@ void ShapeInferenceImplBase::ProcessCall(const NodeProto& caller, const Function
       model_local_functions_map,
       symbol_table,
       &callee_value_map,
-      active_functions);
+      active_functions,
+      &graph_inference_context,
+      graph_scopes);
   if (generated_shape_data_by_name != nullptr) {
     BindValuesOnReturn(callee_value_map, callee, *generated_shape_data_by_name, caller);
   }
@@ -1201,6 +1290,12 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
   // future: pass inputData into InferShapes either directly, or indirectly by
   // updating initializers that match subgraph inputs.
   (void)input_data;
+  DataValueMap subgraph_shape_data;
+  DataValueMap* subgraph_shape_data_ptr = nullptr;
+  if (context_->generated_shape_data_by_name != nullptr) {
+    subgraph_shape_data = *context_->generated_shape_data_by_name;
+    subgraph_shape_data_ptr = &subgraph_shape_data;
+  }
   InferShapesImpl(
       g_,
       *context_->outer_scope_value_types_by_name, // never null
@@ -1209,7 +1304,9 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       symbol_table,
       context_->model_local_functions,
       context_->schema_registry,
-      context_->generated_shape_data_by_name);
+      subgraph_shape_data_ptr,
+      context_->ir_version,
+      context_->graph_scopes);
 
   std::vector<const TypeProto*> graph_output_types;
   graph_output_types.reserve(g_->output().size());
