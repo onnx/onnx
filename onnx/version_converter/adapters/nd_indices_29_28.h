@@ -13,6 +13,11 @@ class NDIndices_29_28 final : public Adapter {
   explicit NDIndices_29_28(const std::string& op_name) : Adapter(op_name, OpSetID(29), OpSetID(28)) {}
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    const Symbol reduction{"reduction"};
+    ONNX_ASSERTM(
+        node->kind() != Symbol("ScatterND") || !node->hasAttribute(reduction) || node->s(reduction) != "mean",
+        "Scatter reduction 'mean' cannot be downgraded to opset 28. "
+        "Keep opset 29 or decompose the mean into scatter sums and counts.")
     Value* indices = node->inputs()[1];
     if (indices->elemType() != TensorProto_DataType_INT64) {
       // Widening preserves every int32 index, including negative indices.

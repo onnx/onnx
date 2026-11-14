@@ -53,6 +53,7 @@ sdist.include = [
     "VERSION_NUMBER",
     "sbom.cdx.json",
     "cmake/**",
+    "docs/DequantizePacked.md",
     "tests/**",
     "tools/**",
     "onnx/**",

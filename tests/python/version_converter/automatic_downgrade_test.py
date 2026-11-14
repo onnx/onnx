@@ -56,6 +56,89 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         mode = "strict_downgrade" if strict_check else "downgrade"
         self._test_op_conversion(op, *args, **kwargs, mode=mode)
 
+    def test_Pack(self) -> None:
+        self._test_op_downgrade(
+            "Pack",
+            29,
+            [[2, 8]],
+            [[2, 3]],
+            [onnx.TensorProto.UINT8],
+            [onnx.TensorProto.UINT8],
+            attrs={"bits": 3},
+        )
+
+    def test_Unpack(self) -> None:
+        self._test_op_downgrade(
+            "Unpack",
+            29,
+            [[2, 3], []],
+            [[2, 8]],
+            [onnx.TensorProto.UINT8, onnx.TensorProto.INT64],
+            [onnx.TensorProto.UINT8],
+            attrs={"bits": 3},
+        )
+
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    @pytest.mark.parametrize("reduction", [None, "none", "add", "mul", "min", "max"])
+    def test_scatter_29_to_28(self, op, reduction) -> None:
+        self._test_op_downgrade(
+            op,
+            28,
+            [[2], [2] if op == "ScatterElements" else [2, 1], [2]],
+            [[2]],
+            [onnx.TensorProto.FLOAT, onnx.TensorProto.INT64, onnx.TensorProto.FLOAT],
+            [onnx.TensorProto.FLOAT],
+            attrs={} if reduction is None else {"reduction": reduction},
+            strict_check=True,
+        )
+
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    def test_scatter_mean_29_to_28_fails(self, op) -> None:
+        index_shape = "2" if op == "ScatterElements" else "2, 1"
+        self._test_model_conversion_fails(
+            28,
+            f"""
+                <ir_version: 13, opset_import: ["" : 29]>
+                scatter (float[2] data, int64[{index_shape}] indices,
+                         float[2] updates) => (float[2] output) {{
+                    output = {op}<reduction = "mean">(data, indices, updates)
+                }}
+            """,
+        )
+
+    def test_Expm1(self) -> None:
+        self._test_op_downgrade("Expm1", 29)
+
+    def test_Expm1_cannot_downgrade_to_28(self) -> None:
+        model = onnx.parser.parse_model("""
+            <ir_version: 10, opset_import: ["": 29]>
+            expm1 (float[2] x) => (float[2] y) {
+                y = Expm1(x)
+            }
+        """)
+        self._test_model_conversion_fails(28, model)
+
+    def test_dequantizepacked(self) -> None:
+        self._test_op_downgrade(
+            "DequantizePacked",
+            29,
+            [[18]],
+            [[32]],
+            input_types=[onnx.TensorProto.UINT8],
+            attrs={"format": "gguf:q4_0", "shape": [32]},
+        )
+
+    def test_dequantizepacked_before_introduction_fails(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=28,
+            model="""
+                <ir_version: 13, opset_import: ["" : 29]>
+                gguf (uint8[18] x) => (float[32] y) {
+                    y = DequantizePacked<format="gguf:q4_0", shape=[32]>(x)
+                }
+            """,
+        )
+
     def test_LogCumSumExp(self) -> None:
         self._test_op_downgrade(
             "LogCumSumExp", 29, [[2, 3]], [[2, 3]], attrs={"axis": -1}
@@ -440,6 +523,29 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
                 Z = BitShift <direction = "RIGHT"> (X, Y)
             }
         """,
+        )
+
+    @pytest.mark.parametrize("attrs", [{}, {"dilation": 1}])
+    def test_CausalConvWithState_unit_dilation_downgrade(self, attrs) -> None:
+        self._test_op_downgrade(
+            "CausalConvWithState",
+            27,
+            [[2, 4, 8], [4, 1, 4]],
+            [[2, 4, 8], [2, 4, 3]],
+            attrs=attrs,
+        )
+
+    def test_CausalConvWithState_dilated_downgrade_fails(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=28,
+            model="""
+            <ir_version: 10, opset_import: ["" : 29]>
+            g (float[2,4,8] input, float[4,1,4] weight)
+                => (float[2,4,8] output, float[2,4,6] present)
+            {
+                output, present = CausalConvWithState <dilation=2> (input, weight)
+            }
+            """,
         )
 
     def test_CausalConvWithState_downgrade_fails(self) -> None:

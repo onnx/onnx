@@ -48,6 +48,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#DFT">DFT</a>|<a href="Changelog.md#DFT-20">20</a>, <a href="Changelog.md#DFT-17">17</a>|
 |<a href="#DeformConv">DeformConv</a>|<a href="Changelog.md#DeformConv-22">22</a>, <a href="Changelog.md#DeformConv-19">19</a>|
 |<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-28">28</a>, <a href="Changelog.md#DequantizeLinear-25">25</a>, <a href="Changelog.md#DequantizeLinear-24">24</a>, <a href="Changelog.md#DequantizeLinear-23">23</a>, <a href="Changelog.md#DequantizeLinear-21">21</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
+|<a href="#DequantizePacked">DequantizePacked</a>|<a href="Changelog.md#DequantizePacked-29">29</a>|
 |<a href="#Det">Det</a>|<a href="Changelog.md#Det-22">22</a>, <a href="Changelog.md#Det-11">11</a>|
 |<a href="#Div">Div</a>|<a href="Changelog.md#Div-14">14</a>, <a href="Changelog.md#Div-13">13</a>, <a href="Changelog.md#Div-7">7</a>, <a href="Changelog.md#Div-6">6</a>, <a href="Changelog.md#Div-1">1</a>|
 |<a href="#Dropout">Dropout</a>|<a href="Changelog.md#Dropout-22">22</a>, <a href="Changelog.md#Dropout-13">13</a>, <a href="Changelog.md#Dropout-12">12</a>, <a href="Changelog.md#Dropout-10">10</a>, <a href="Changelog.md#Dropout-7">7</a>, <a href="Changelog.md#Dropout-6">6</a>, <a href="Changelog.md#Dropout-1">1</a>|
@@ -56,6 +57,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Erf">Erf</a>|<a href="Changelog.md#Erf-13">13</a>, <a href="Changelog.md#Erf-9">9</a>|
 |<a href="#Exp">Exp</a>|<a href="Changelog.md#Exp-13">13</a>, <a href="Changelog.md#Exp-6">6</a>, <a href="Changelog.md#Exp-1">1</a>|
 |<a href="#Expand">Expand</a>|<a href="Changelog.md#Expand-13">13</a>, <a href="Changelog.md#Expand-8">8</a>|
+|<a href="#Expm1">Expm1</a>|<a href="Changelog.md#Expm1-29">29</a>|
 |<a href="#EyeLike">EyeLike</a>|<a href="Changelog.md#EyeLike-22">22</a>, <a href="Changelog.md#EyeLike-9">9</a>|
 |<a href="#Flatten">Flatten</a>|<a href="Changelog.md#Flatten-25">25</a>, <a href="Changelog.md#Flatten-24">24</a>, <a href="Changelog.md#Flatten-23">23</a>, <a href="Changelog.md#Flatten-21">21</a>, <a href="Changelog.md#Flatten-13">13</a>, <a href="Changelog.md#Flatten-11">11</a>, <a href="Changelog.md#Flatten-9">9</a>, <a href="Changelog.md#Flatten-1">1</a>|
 |<a href="#Floor">Floor</a>|<a href="Changelog.md#Floor-13">13</a>, <a href="Changelog.md#Floor-6">6</a>, <a href="Changelog.md#Floor-1">1</a>|
@@ -129,7 +131,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#STFT">STFT</a>|<a href="Changelog.md#STFT-17">17</a>|
 |<a href="#Scan">Scan</a>|<a href="Changelog.md#Scan-25">25</a>, <a href="Changelog.md#Scan-24">24</a>, <a href="Changelog.md#Scan-23">23</a>, <a href="Changelog.md#Scan-21">21</a>, <a href="Changelog.md#Scan-19">19</a>, <a href="Changelog.md#Scan-16">16</a>, <a href="Changelog.md#Scan-11">11</a>, <a href="Changelog.md#Scan-9">9</a>, <a href="Changelog.md#Scan-8">8</a>|
 |<a href="#Scatter">Scatter</a> (deprecated)|<a href="Changelog.md#Scatter-11">11</a>, <a href="Changelog.md#Scatter-9">9</a>|
-|<a href="#ScatterElements">ScatterElements</a>|<a href="Changelog.md#ScatterElements-18">18</a>, <a href="Changelog.md#ScatterElements-16">16</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-11">11</a>|
+|<a href="#ScatterElements">ScatterElements</a>|<a href="Changelog.md#ScatterElements-29">29</a>, <a href="Changelog.md#ScatterElements-18">18</a>, <a href="Changelog.md#ScatterElements-16">16</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-11">11</a>|
 |<a href="#ScatterND">ScatterND</a>|<a href="Changelog.md#ScatterND-29">29</a>, <a href="Changelog.md#ScatterND-18">18</a>, <a href="Changelog.md#ScatterND-16">16</a>, <a href="Changelog.md#ScatterND-13">13</a>, <a href="Changelog.md#ScatterND-11">11</a>|
 |<a href="#SequenceAt">SequenceAt</a>|<a href="Changelog.md#SequenceAt-11">11</a>|
 |<a href="#SequenceConstruct">SequenceConstruct</a>|<a href="Changelog.md#SequenceConstruct-11">11</a>|
@@ -172,7 +174,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-22">22</a>, <a href="Changelog.md#Bernoulli-15">15</a>|22|
 |<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|17|
 |<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-25">25</a>, <a href="Changelog.md#CastLike-24">24</a>, <a href="Changelog.md#CastLike-23">23</a>, <a href="Changelog.md#CastLike-21">21</a>, <a href="Changelog.md#CastLike-19">19</a>, <a href="Changelog.md#CastLike-15">15</a>|25|
-|<a href="#CausalConvWithState">CausalConvWithState</a>|<a href="Changelog.md#CausalConvWithState-27">27</a>|27|
+|<a href="#CausalConvWithState">CausalConvWithState</a>|<a href="Changelog.md#CausalConvWithState-29">29</a>, <a href="Changelog.md#CausalConvWithState-27">27</a>|29|
 |<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-28">28</a>, <a href="Changelog.md#Celu-12">12</a>|28|
 |<a href="#CenterCropPad">CenterCropPad</a>|<a href="Changelog.md#CenterCropPad-18">18</a>|18|
 |<a href="#Clip">Clip</a>|<a href="Changelog.md#Clip-13">13</a>, <a href="Changelog.md#Clip-12">12</a>, <a href="Changelog.md#Clip-11">11</a>, <a href="Changelog.md#Clip-6">6</a>, <a href="Changelog.md#Clip-1">1</a>|13|
@@ -198,6 +200,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-22">22</a>, <a href="Changelog.md#Mish-18">18</a>|22|
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-22">22</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|22|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|16|
+|<a href="#Pack">Pack</a>|<a href="Changelog.md#Pack-29">29</a>|29|
 |<a href="#RMSNormalization">RMSNormalization</a>|<a href="Changelog.md#RMSNormalization-23">23</a>|23|
 |<a href="#Range">Range</a>|<a href="Changelog.md#Range-27">27</a>, <a href="Changelog.md#Range-11">11</a>|27|
 |<a href="#ReduceL1">ReduceL1</a>|<a href="Changelog.md#ReduceL1-18">18</a>, <a href="Changelog.md#ReduceL1-13">13</a>, <a href="Changelog.md#ReduceL1-11">11</a>, <a href="Changelog.md#ReduceL1-1">1</a>|18|
@@ -218,6 +221,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#SwiGLU">SwiGLU</a>|<a href="Changelog.md#SwiGLU-28">28</a>|28|
 |<a href="#Swish">Swish</a>|<a href="Changelog.md#Swish-24">24</a>|24|
 |<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-22">22</a>, <a href="Changelog.md#ThresholdedRelu-10">10</a>|18|
+|<a href="#Unpack">Unpack</a>|<a href="Changelog.md#Unpack-29">29</a>|29|
 
 ### ai.onnx.preview
 |**Operator**|**Since version**||
@@ -8476,7 +8480,7 @@ for from_type, to_type in test_cases:
                 "9",
                 "1000000",
                 "1e-7",
-                "NaN",
+                "-1000000",
                 "INF",
                 "+INF",
                 "-INF",
@@ -8919,7 +8923,7 @@ for from_type, to_type in test_cases:
                 "9",
                 "1000000",
                 "1e-7",
-                "NaN",
+                "-1000000",
                 "INF",
                 "+INF",
                 "-INF",
@@ -9112,34 +9116,42 @@ for from_type, to_type in test_cases:
 
 ### <a name="CausalConvWithState"></a><a name="causalconvwithstate">**CausalConvWithState**</a>
 
-  Stateful causal 1D depthwise convolution.
+  Stateful causal one-dimensional depthwise convolution.
 
-  Used by Gated DeltaNet (Qwen3.5) and Mamba (Jamba, FalconMamba) as a preprocessing step.
-  Replaces the 3-op pattern (Concat + Conv + Slice) with a single fused operation.
+  `input` has shape `(B, C, L)`, `weight` has shape `(C, 1, K)`, and optional
+  `bias` has shape `(C)`: `B` is batch size, `C` is channel count, `L` is input
+  length, and `K` is kernel size. Let `d = dilation` (default 1) and
+  `H = (K - 1) * d`. Both `K` and `d` must be at least 1, and the effective
+  kernel size `H + 1` must fit in a signed 64-bit integer.
 
-  The convolution is causal (looks only at current and past positions) and depthwise
-  (each channel is convolved independently with its own kernel).
+  Both state tensors have shape `(B, C, H)` and store consecutive raw samples
+  in chronological order. Form `P` by concatenating `past_state` and `input`
+  along axis 2; use a zero tensor of shape `(B, C, H)` when `past_state` is absent.
+  For each batch `b`, channel `c`, and position `0 <= t < L`, compute
+  `z[b,c,t] = sum_{j=0}^{K-1} weight[c,0,j] * P[b,c,t+j*d] + bias[c]`,
+  with omitted bias treated as zero. The output has shape `(B, C, L)` and equals
+  `z` for activation 'none' (the default), or `z / (1 + exp(-z))` elementwise
+  for 'silu' and its alias 'swish'.
 
-  The input, weight, past_state, output, and present_state tensors are rank-3 with
-  shape (batch_size, channels, length). The optional bias input is rank-1 with
-  shape (channels). For higher-dimensional data, use Reshape nodes before and
-  after this operator to pack extra dimensions into the batch or channel axis.
-
-  Weight layout: (channels, 1, k) for depthwise convolution.
-  The carry state stores the last (k-1) positions for incremental decode.
-
-  The optional activation attribute supports fused SiLU/Swish activation.
-
+  The next state is `present_state = P[:, :, L:L+H]`, independent of activation.
+  When `L < H`, it retains the required past samples or initial zeros.
+  Passing this state to the next call preserves convolution across chunk boundaries.
+  For `K = 1`, state has shape `(B, C, 0)`. For `L = 0`, output has shape
+  `(B, C, 0)` and state is unchanged (all zeros if `past_state` is absent).
 
 #### Version
 
-This version of the operator has been available since version 27 of the default ONNX operator set.
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#CausalConvWithState-27">27</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>activation</tt> : string (default is none)</dt>
 <dd>Fused activation function. One of: 'silu', 'swish', 'none'. Default is 'none'.</dd>
+<dt><tt>dilation</tt> : int (default is 1)</dt>
+<dd>Spacing between kernel samples. Must be >= 1.</dd>
 </dl>
 
 #### Inputs (2 - 4)
@@ -9148,11 +9160,11 @@ This version of the operator has been available since version 27 of the default 
 <dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor with shape (batch_size, channels, length). Channels-first layout.</dd>
 <dt><tt>weight</tt> (differentiable) : T</dt>
-<dd>Depthwise convolution kernel with shape (channels, 1, k) where k is the kernel size. The middle dim of size 1 follows the ONNX `Conv` weight layout `(M, C/group, k1, ..., kn)`: since this op is always depthwise, `group = channels`, so `C/group = 1`. Keeping this layout makes the weight tensor a drop-in for a depthwise `Conv(group=channels)` weight, so `Conv` <-> `CausalConvWithState` rewrites require no reshape.</dd>
+<dd>Depthwise convolution kernel with shape (channels, 1, k), where k must be >= 1. Each channel is convolved independently with its corresponding kernel.</dd>
 <dt><tt>bias</tt> (optional, differentiable) : T</dt>
 <dd>Optional per-channel bias with shape (channels).</dd>
 <dt><tt>past_state</tt> (optional, non-differentiable) : T</dt>
-<dd>Carry state from previous step with shape (batch_size, channels, k - 1). If not provided, padding is zero.</dd>
+<dd>Raw chronological history with shape (batch_size, channels, (k - 1) * dilation). If not provided, history is zero.</dd>
 </dl>
 
 #### Outputs
@@ -9161,7 +9173,7 @@ This version of the operator has been available since version 27 of the default 
 <dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Convolution output with same shape as input.</dd>
 <dt><tt>present_state</tt> (non-differentiable) : T</dt>
-<dd>Updated carry state with shape (batch_size, channels, k - 1). Contains the last (k - 1) values of the effective padded/concatenated sequence along the causal axis, including any values from past_state or zero-padding when the current input is shorter than k - 1.</dd>
+<dd>The last (k - 1) * dilation raw samples of the concatenated history and input, with shape (batch_size, channels, (k - 1) * dilation).</dd>
 </dl>
 
 #### Type Constraints
@@ -9258,6 +9270,47 @@ expect(
     name="test_causal_conv_with_state_decode_step",
     opset_imports=[onnx.helper.make_opsetid("", 27)],
 )
+```
+
+</details>
+
+
+<details>
+<summary>dilated</summary>
+
+```python
+for dilation, length, k, with_state, activation in (
+    (2, 7, 3, False, "none"),
+    (3, 1, 4, True, "silu"),
+    (2, 0, 3, True, "none"),
+    (3, 2, 1, False, "swish"),
+):
+    input_ = np.arange(2 * length, dtype=np.float32).reshape(1, 2, length)
+    weight = np.arange(2 * k, dtype=np.float32).reshape(2, 1, k) / 10
+    bias = np.array([0.25, -0.5], dtype=np.float32)
+    history = (k - 1) * dilation
+    past = np.arange(2 * history, dtype=np.float32).reshape(1, 2, history)
+    node = onnx.helper.make_node(
+        "CausalConvWithState",
+        ["input", "weight", "bias", "past_state"]
+        if with_state
+        else ["input", "weight", "bias"],
+        ["output", "present_state"],
+        dilation=dilation,
+        activation=activation,
+    )
+    expected = _compute(
+        input_, weight, bias, past if with_state else None, activation, dilation
+    )
+    expect(
+        node,
+        inputs=[input_, weight, bias, past]
+        if with_state
+        else [input_, weight, bias],
+        outputs=list(expected),
+        name=f"test_causal_conv_with_state_dilated_d{dilation}_l{length}_k{k}",
+        opset_imports=[onnx.helper.make_opsetid("", 29)],
+    )
 ```
 
 </details>
@@ -13899,6 +13952,234 @@ expect(
 </details>
 
 
+### <a name="DequantizePacked"></a><a name="dequantizepacked">**DequantizePacked**</a>
+
+  Dequantizes the packed payload of one quantized tensor.
+  `x` is a one-dimensional UINT8 tensor containing exactly the tensor's bytes.
+  All multibyte fields are little-endian.
+
+  `format` selects the quantization format using an ONNX-defined, case-sensitive
+  string identifier. The `gguf:` prefix identifies the existing GGML/GGUF layouts.
+  Only the following fixed identifiers are supported; they accept no parameters:
+
+  | Identifier | Format | Elements | Bytes |
+  |---|---|---|---|
+  | gguf:q4_0 | Q4_0 | 32 | 18 |
+  | gguf:q4_1 | Q4_1 | 32 | 20 |
+  | gguf:q5_0 | Q5_0 | 32 | 22 |
+  | gguf:q5_1 | Q5_1 | 32 | 24 |
+  | gguf:q8_0 | Q8_0 | 32 | 34 |
+  | gguf:q8_1 | Q8_1 | 32 | 36 |
+  | gguf:q2_k | Q2_K | 256 | 84 |
+  | gguf:q3_k | Q3_K | 256 | 110 |
+  | gguf:q4_k | Q4_K | 256 | 144 |
+  | gguf:q5_k | Q5_K | 256 | 176 |
+  | gguf:q6_k | Q6_K | 256 | 210 |
+  | gguf:q8_k | Q8_K | 256 | 292 |
+  | gguf:iq2_xxs | IQ2_XXS | 256 | 66 |
+  | gguf:iq2_xs | IQ2_XS | 256 | 74 |
+  | gguf:iq3_xxs | IQ3_XXS | 256 | 98 |
+  | gguf:iq1_s | IQ1_S | 256 | 50 |
+  | gguf:iq4_nl | IQ4_NL | 32 | 18 |
+  | gguf:iq3_s | IQ3_S | 256 | 110 |
+  | gguf:iq2_s | IQ2_S | 256 | 82 |
+  | gguf:iq4_xs | IQ4_XS | 256 | 136 |
+  | gguf:iq1_m | IQ1_M | 256 | 56 |
+  | gguf:tq1_0 | TQ1_0 | 256 | 54 |
+  | gguf:tq2_0 | TQ2_0 | 256 | 66 |
+  | gguf:mxfp4 | MXFP4 | 32 | 17 |
+  | gguf:nvfp4 | NVFP4 | 64 | 36 |
+  | gguf:q1_0 | Q1_0 | 128 | 18 |
+  | gguf:q2_0 | Q2_0 | 64 | 18 |
+
+  The byte layouts, per-format decoding algorithms, and complete IQ codebooks
+  are defined in the in-tree
+  [DequantizePacked decoding specification](DequantizePacked.md).
+  The [online specification](https://github.com/onnx/onnx/blob/19b091202765d5d444acd9d9c25a0b81eef474b5/docs/DequantizePacked.md)
+  is also accessible from installed schema documentation.
+
+  `shape` gives the logical output dimensions in ONNX (row-major) order.
+  For a GGUF descriptor `[ne0, ne1, ...]`, use `shape=[..., ne1, ne0]`.
+  Decoding preserves the flattened element order.
+  Rank must be at least one. Dimensions are nonnegative literal sizes;
+  a zero dimension produces an empty tensor. The last dimension must be a
+  multiple of the format's elements per block, even for an empty tensor.
+  If B is elements per block and S is bytes per block, the input length must be
+  `product(shape[:-1]) * (shape[-1] / B) * S`.
+
+  Blocks are decoded in input order to FLOAT using the specified
+  arithmetic and codebooks. The concatenated values are reshaped to `shape`
+  and converted once to `output_dtype`. Decoding arithmetic uses FLOAT
+  precision for all output types. FLOAT16 and BFLOAT16 conversion uses
+  round-to-nearest, ties-to-even, as in Cast.
+
+  For example, a Q4_0 block is a little-endian FLOAT16 scale `d` followed
+  by 16 bytes `q`. It produces `y[j]=d*((q[j]&15)-8)` and
+  `y[j+16]=d*((q[j]>>4)-8)` for j=0,...,15. Thus 36 bytes containing two
+  blocks can be decoded with `format="gguf:q4_0", shape=[2,32]`.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>format</tt> : string (required)</dt>
+<dd>ONNX-defined, case-sensitive fixed quantization format identifier.</dd>
+<dt><tt>output_dtype</tt> : int (default is 1)</dt>
+<dd>ONNX TensorProto data type of the output: FLOAT, FLOAT16, BFLOAT16, or DOUBLE.</dd>
+<dt><tt>shape</tt> : list of ints (required)</dt>
+<dd>Logical output dimensions in ONNX order; rank at least one.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> : tensor(uint8)</dt>
+<dd>Consecutive quantization blocks with little-endian fields.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T</dt>
+<dd>Dequantized tensor with the specified shape and output_dtype.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(double)</dt>
+<dd>Floating-point output.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>empty</summary>
+
+```python
+node = helper.make_node(
+    "DequantizePacked", ["x"], ["y"], format="gguf:q2_k", shape=[0, 256]
+)
+expect(
+    node,
+    inputs=[np.empty(0, dtype=np.uint8)],
+    outputs=[np.empty((0, 256), dtype=np.float32)],
+    name="test_dequantizepacked_empty",
+)
+```
+
+</details>
+
+
+<details>
+<summary>iq4_nl</summary>
+
+```python
+node = helper.make_node(
+    "DequantizePacked",
+    ["x"],
+    ["y"],
+    format="gguf:iq4_nl",
+    shape=[32],
+    output_dtype=TensorProto.FLOAT16,
+)
+x = np.frombuffer(struct.pack("<e", 0.5) + bytes(range(16)), dtype=np.uint8)
+y = np.array(
+    [
+        -127,
+        -104,
+        -83,
+        -65,
+        -49,
+        -35,
+        -22,
+        -10,
+        1,
+        13,
+        25,
+        38,
+        53,
+        69,
+        89,
+        113,
+    ]
+    + [-127] * 16,
+    dtype=np.float16,
+) * np.float16(0.5)
+expect(
+    node, inputs=[x], outputs=[y], name="test_dequantizepacked_iq4_nl_float16"
+)
+```
+
+</details>
+
+
+<details>
+<summary>mxfp4</summary>
+
+```python
+node = helper.make_node(
+    "DequantizePacked", ["x"], ["y"], format="gguf:mxfp4", shape=[32]
+)
+x = np.array([127, *list(range(16))], dtype=np.uint8)
+y = np.array(
+    [0, 0.5, 1, 1.5, 2, 3, 4, 6, 0, -0.5, -1, -1.5, -2, -3, -4, -6] + [0] * 16,
+    dtype=np.float32,
+)
+expect(node, inputs=[x], outputs=[y], name="test_dequantizepacked_mxfp4")
+```
+
+</details>
+
+
+<details>
+<summary>q4_0</summary>
+
+```python
+node = helper.make_node(
+    "DequantizePacked", ["x"], ["y"], format="gguf:q4_0", shape=[2, 32]
+)
+x = np.frombuffer(
+    struct.pack("<e", 0.5)
+    + bytes(range(16))
+    + struct.pack("<e", -2)
+    + bytes([0xF0] * 16),
+    dtype=np.uint8,
+)
+y = np.array(
+    [
+        list(np.arange(-8, 8) * 0.5) + [-4] * 16,
+        [16] * 16 + [-14] * 16,
+    ],
+    dtype=np.float32,
+)
+expect(node, inputs=[x], outputs=[y], name="test_dequantizepacked_q4_0")
+```
+
+</details>
+
+
+<details>
+<summary>q5_1</summary>
+
+```python
+node = helper.make_node(
+    "DequantizePacked", ["x"], ["y"], format="gguf:q5_1", shape=[32]
+)
+x = np.frombuffer(
+    struct.pack("<eeI", 0.5, -1, 0xFFFF0000) + bytes(range(16)), dtype=np.uint8
+)
+y = np.array(list(np.arange(16) * 0.5 - 1) + [7] * 16, dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_dequantizepacked_q5_1")
+```
+
+</details>
+
+
 ### <a name="Det"></a><a name="det">**Det**</a>
 
   Det calculates determinant of a square matrix or batches of square matrices.
@@ -15229,6 +15510,148 @@ expect(
     outputs=[expanded],
     name="test_expand_dim_unchanged",
 )
+```
+
+</details>
+
+
+### <a name="Expm1"></a><a name="expm1">**Expm1**</a>
+
+  Computes `exp(x) - 1` element-wise, where `exp` is the exponential to base `e`.
+  The input may have any shape, including a scalar or an empty tensor. The output
+  has the same shape and element type as the input.
+
+  For finite nonzero `x`, the output is a floating-point approximation of the
+  real-valued function `exp(x) - 1` at the exact value represented by `x`.
+  The computation must preserve nonzero results representable in the output type
+  when an intermediate floating-point `exp(x)` would round to `1`. For example,
+  a FLOAT input `1e-8` produces a result approximately equal to `1e-8`, rather
+  than zero.
+
+  Special values are defined element-wise as follows:
+
+  | Input `x` | Output `y` |
+  | --- | --- |
+  | Positive zero | Positive zero |
+  | Negative zero | Negative zero |
+  | Negative infinity | `-1` |
+  | Positive infinity | Positive infinity |
+  | NaN | NaN |
+
+  The sign and payload of an output NaN are unspecified. Finite positive inputs
+  whose results overflow the output type produce positive infinity.
+
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>The exponential of the input minus one, computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>expm1</summary>
+
+```python
+node = onnx.helper.make_node("Expm1", ["x"], ["y"])
+for dtype in [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]:
+    x = np.array([[-10.0, -0.5, 0.0, 0.25], [0.5, 1.0, 3.0, 5.0]], dtype=dtype)
+    y = np.array([math.expm1(float(v)) for v in x.flat], dtype=dtype).reshape(
+        x.shape
+    )
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_expm1_{np.dtype(dtype).name}",
+        rtol=1e-2 if dtype == ml_dtypes.bfloat16 else 1e-3,
+    )
+```
+
+</details>
+
+
+<details>
+<summary>expm1_scalar_and_empty</summary>
+
+```python
+node = onnx.helper.make_node("Expm1", ["x"], ["y"])
+expect(
+    node,
+    inputs=[np.array(1.0, dtype=np.float32)],
+    outputs=[np.array(math.expm1(1), dtype=np.float32)],
+    name="test_expm1_scalar",
+)
+x = np.empty((0, 3), dtype=np.float32)
+expect(node, inputs=[x], outputs=[x], name="test_expm1_empty")
+```
+
+</details>
+
+
+<details>
+<summary>expm1_small_inputs</summary>
+
+```python
+node = onnx.helper.make_node("Expm1", ["x"], ["y"])
+for dtype, tiny in [
+    (np.float16, 2.0**-14),
+    (ml_dtypes.bfloat16, 2.0**-10),
+    (np.float32, 1e-8),
+    (np.float64, 1e-20),
+]:
+    x = np.array([-tiny, -0.0, 0.0, tiny], dtype=dtype)
+    y = np.array([math.expm1(float(v)) for v in x], dtype=dtype)
+    # Relative error allows backend variation, while atol=0 catches
+    # an incorrect zero caused by rounding the intermediate exp(x).
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_expm1_small_inputs_{np.dtype(dtype).name}",
+        rtol=1e-2 if dtype == ml_dtypes.bfloat16 else 1e-3,
+        atol=0,
+    )
+```
+
+</details>
+
+
+<details>
+<summary>expm1_special_values</summary>
+
+```python
+node = onnx.helper.make_node("Expm1", ["x"], ["y"])
+for dtype in [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]:
+    x = np.array([-0.0, 0.0, -np.inf, np.inf, np.nan], dtype=dtype)
+    y = np.array([-0.0, 0.0, -1.0, np.inf, np.nan], dtype=dtype)
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_expm1_special_values_{np.dtype(dtype).name}",
+    )
 ```
 
 </details>
@@ -22198,7 +22621,7 @@ node = onnx.helper.make_node(
 x = np.array([[-1, 0, 1]]).astype(np.float32)
 # expected output
 # [[-2.4076061 -1.407606  -0.407606 ]]
-y = logsoftmax(x)
+y = _log_softmax(x)
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_example_1")
 ```
 
@@ -22213,7 +22636,7 @@ x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]]).astype(np.float32)
 # expected output
 # [[-3.4401896  -2.4401896  -1.4401896  -0.44018966]
 # [-3.4401896  -2.4401896  -1.4401896  -0.44018966]]
-y = logsoftmax(x)
+y = _log_softmax(x)
 
 node = onnx.helper.make_node(
     "LogSoftmax",
@@ -22229,7 +22652,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
     axis=0,
 )
-y = logsoftmax(x, axis=0)
+y = _log_softmax(x, axis=0)
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_axis_0")
 
 node = onnx.helper.make_node(
@@ -22238,7 +22661,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
     axis=1,
 )
-y = logsoftmax(x, axis=1)
+y = _log_softmax(x, axis=1)
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_axis_1")
 
 node = onnx.helper.make_node(
@@ -22247,7 +22670,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
     axis=2,
 )
-y = logsoftmax(x, axis=2)
+y = _log_softmax(x, axis=2)
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_axis_2")
 
 node = onnx.helper.make_node(
@@ -22256,7 +22679,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
     axis=-1,
 )
-y = logsoftmax(x, axis=-1)
+y = _log_softmax(x, axis=-1)
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_negative_axis")
 
 # default axis is -1
@@ -22266,6 +22689,114 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_default_axis")
+```
+
+</details>
+
+
+<details>
+<summary>logsoftmax_empty_input</summary>
+
+```python
+node = onnx.helper.make_node("LogSoftmax", ["x"], ["y"], axis=1)
+x = np.empty((0, 3), dtype=np.float32)
+expect(node, inputs=[x], outputs=[x], name="test_logsoftmax_empty_input")
+```
+
+</details>
+
+
+<details>
+<summary>logsoftmax_large_finite_gap</summary>
+
+```python
+node = onnx.helper.make_node("LogSoftmax", ["x"], ["y"], axis=1)
+x = np.array([[0, -200]], dtype=np.float32)
+expect(
+    node,
+    inputs=[x],
+    outputs=[x],
+    name="test_logsoftmax_large_finite_gap",
+    rtol=1e-3,
+    atol=0,
+)
+```
+
+</details>
+
+
+<details>
+<summary>logsoftmax_single_class</summary>
+
+```python
+node = onnx.helper.make_node("LogSoftmax", ["x"], ["y"], axis=1)
+x = np.array([[[1, -2, 3]], [[4, 5, -6]]], dtype=np.float32)
+expect(
+    node,
+    inputs=[x],
+    outputs=[np.zeros_like(x)],
+    name="test_logsoftmax_single_class",
+    atol=0,
+)
+```
+
+</details>
+
+
+<details>
+<summary>logsoftmax_small_log_probability</summary>
+
+```python
+for dtype, margin in [
+    (np.float16, 10.0),
+    (np.float32, 18.0),
+    (np.float64, 40.0),
+]:
+    x = np.full((3, 3), -margin, dtype=dtype)
+    np.fill_diagonal(x, 0)
+    x = np.stack([x, x])
+    # Zero absolute tolerance catches a collapsed result; relative
+    # tolerance still allows differences between backend implementations.
+    # Compute the expected value analytically, independently of the helper.
+    normalizer = np.log1p(2 * np.exp(-margin))
+    expected = (x.astype(np.float64) - normalizer).astype(dtype)
+    for axis in [0, 1, -1]:
+        node = onnx.helper.make_node("LogSoftmax", ["x"], ["y"], axis=axis)
+        expect(
+            node,
+            inputs=[np.moveaxis(x, -1, axis)],
+            outputs=[np.moveaxis(expected, -1, axis)],
+            name=f"test_logsoftmax_small_log_probability_{np.dtype(dtype).name}_axis_{axis}",
+            rtol=1e-3,
+            atol=0,
+        )
+```
+
+</details>
+
+
+<details>
+<summary>logsoftmax_tied_maxima</summary>
+
+```python
+node = onnx.helper.make_node("LogSoftmax", ["x"], ["y"], axis=-1)
+x = np.array([[0, 0, -200], [4, 4, 4], [0, -np.inf, -np.inf]], dtype=np.float64)
+expected = np.array(
+    [
+        [-np.log(2), -np.log(2), -200 - np.log(2)],
+        [-np.log(3), -np.log(3), -np.log(3)],
+        [0, -np.inf, -np.inf],
+    ],
+    dtype=np.float64,
+)
+expect(
+    node,
+    inputs=[x],
+    outputs=[expected],
+    name="test_logsoftmax_tied_maxima",
+    rtol=1e-3,
+    atol=0,
+)
 ```
 
 </details>
@@ -28349,6 +28880,186 @@ slope = np.random.randn(5).astype(np.float32)
 y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * slope
 
 expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
+```
+
+</details>
+
+
+### <a name="Pack"></a><a name="pack">**Pack**</a>
+
+  Packs UINT8 codes into UINT8 (default) or UINT32 words along `axis` (default -1).
+  Input and output have the same rank, at least 1; axis must be in [-rank, rank-1].
+  The `output_type` selects storage words of word_bits = 8 or 32 bits.
+  Specify either `bits` in [1, 8], or both `radix` and `group_size`;
+  the two spellings are mutually exclusive. With `bits`, each element of `X`
+  must be in [0, 2^bits - 1].
+
+  When using `bits`, an input axis dimension N becomes B = ceil(N * bits / word_bits).
+  Each fixed combination of indices in the other dimensions defines an
+  independent sequence, called a row below; a rank-1 tensor has one row.
+
+  Within each row, codes are packed in increasing axis index order, with
+  the least significant bit of each code first. Number the bits of each code
+  and storage word starting at 0 for the least significant bit. For code index
+  `0 <= i < N` and bit index `0 <= k < bits`, bit `k` of input code `i` is stored
+  at bit `(i * bits + k) % word_bits` of output word `floor((i * bits + k) / word_bits)`.
+  When a code spans a word boundary, its remaining higher-order bits occupy
+  the low bits of the next word. Each row begins at bit 0 of a new word.
+  Unused high bits in the final word of each row are zero. Bit positions
+  are defined numerically, independently of host endianness; tensor raw data
+  uses ONNX's little-endian serialization.
+
+  All non-axis dimensions are preserved, including zero dimensions, and the
+  same output shape rule applies when any non-axis dimension is zero.
+  An input with `N = 0` produces an output with `B = 0`.
+
+  With default UINT8 storage, `bits = 3` packs `[0, 1, 2, 3, 4, 5, 6, 7]` into
+  `[136, 198, 250]`. With `bits = 5`, the rows `[[1, 2, 3], [31, 0, 16]]`
+  are packed into `[[65, 12], [31, 64]]`.
+  With UINT32 storage, `bits = 5` packs `[1, 2, 3]` into `[3137]`.
+
+  Grouped packing uses radix R in [2, 256] and positive group size G, with
+  R^G <= 2^63 - 1. Each input value must be in [0, R - 1]. Divide each row
+  into consecutive groups of G values; zero-pad the last group if incomplete.
+  Group [x0, ..., x(G-1)] becomes the integer sum(xj * R^j): the first digit
+  is least significant. Each group index occupies W = ceil(log2(R^G)) bits.
+  Pack these indices contiguously, least-significant bit first, with no
+  word alignment between groups. The output axis dimension is
+  ceil(ceil(N/G) * W / word_bits). Unused final word bits are zero.
+  R^G determines the precision of the integer arithmetic needed to form and
+  decode group indices: indices range from 0 to R^G - 1 and require W value
+  bits. Implementations must also accommodate intermediate values, including
+  R^G if computed explicitly. Prefer (R, G) pairs that can be implemented
+  using standard 32-bit or 64-bit integer arithmetic rather than requiring
+  arbitrary-precision arithmetic. This specification's R^G bound permits
+  exact signed 64-bit arithmetic for the base-radix group calculations.
+  One commonly used choice is (R, G) = (3, 5), packing five ternary codes
+  into one byte because 3^5 = 243.
+  The original bits spelling is exactly (R, G) = (2^bits, 1).
+  With UINT8 storage and R=3, G=5, [0, 1, 2, 0, 1] becomes [102], and [2, 2, 2, 2, 2]
+  becomes [242]. Partial group [1, 2] becomes [7].
+  Results for invalid inputs are unspecified; function decompositions need
+  not diagnose out-of-range codes.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>Axis along which independent sequences are packed. Negative axes are supported.</dd>
+<dt><tt>bits</tt> : int</dt>
+<dd>Number of bits per unsigned code. Mutually exclusive with radix/group_size.</dd>
+<dt><tt>group_size</tt> : int</dt>
+<dd>Codes per group. Positive; radix^group_size must fit in positive INT64.</dd>
+<dt><tt>output_type</tt> : int (default is 2)</dt>
+<dd>Packed storage type: TensorProto UINT8 (2) or UINT32 (12). Logical codes remain UINT8.</dd>
+<dt><tt>radix</tt> : int</dt>
+<dd>Base of grouped codes, in [2, 256]. Requires group_size; excludes bits.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>UINT8 tensor of rank at least 1, with codes below the selected radix.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : TStorage</dt>
+<dd>Packed tensor preserving every dimension except axis, which becomes ceil(ceil(N / group_size) * group_width / word_bits); bits implies group_size=1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8)</dt>
+<dd>Unsigned byte tensors.</dd>
+<dt><tt>TStorage</tt> : tensor(uint8), tensor(uint32)</dt>
+<dd>Unsigned storage word tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>pack_3bit</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=3)
+x = np.arange(8, dtype=np.uint8)
+y = np.array([0x88, 0xC6, 0xFA], dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_3bit")
+```
+
+</details>
+
+
+<details>
+<summary>pack_empty</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=3)
+x = np.empty((2, 0), dtype=np.uint8)
+expect(node, inputs=[x], outputs=[x], name="test_pack_empty")
+```
+
+</details>
+
+
+<details>
+<summary>pack_empty_rows</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=5)
+x = np.empty((2, 0, 9), dtype=np.uint8)
+y = np.empty((2, 0, 6), dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_empty_rows")
+```
+
+</details>
+
+
+<details>
+<summary>pack_rows_5bit</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=5)
+x = np.array([[1, 2, 3], [31, 0, 16]], dtype=np.uint8)
+y = np.array([[0x41, 0x0C], [0x1F, 0x40]], dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_rows_5bit")
+```
+
+</details>
+
+
+<details>
+<summary>pack_ternary</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], radix=3, group_size=5)
+x = np.array([[0, 1, 2, 0, 1], [2, 2, 2, 2, 2]], dtype=np.uint8)
+y = np.array([[102], [242]], dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_ternary")
+```
+
+</details>
+
+
+<details>
+<summary>pack_uint32_axis</summary>
+
+```python
+node = helper.make_node(
+    "Pack", ["X"], ["Y"], bits=5, axis=0, output_type=TensorProto.UINT32
+)
+x = np.full((7, 2), 31, dtype=np.uint8)
+y = np.array([[0xFFFFFFFF, 0xFFFFFFFF], [7, 7]], dtype=np.uint32)
+expect(node, inputs=[x], outputs=[y], name="test_pack_uint32_axis")
 ```
 
 </details>
@@ -37614,74 +38325,54 @@ expect(
 
 ### <a name="ScatterElements"></a><a name="scatterelements">**ScatterElements**</a>
 
-  ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
-  rank r >= 1 and an optional attribute axis that identifies an axis of `data`
-  (by default, the outer-most axis, that is axis 0). The output of the operation
-  is produced by creating a copy of the input `data`, and then updating its value
-  to values specified by `updates` at specific index positions specified by
-  `indices`. Its output shape is the same as the shape of `data`.
+  ScatterElements takes three inputs `data`, `indices`, and `updates` of the same
+  rank r >= 1. `indices` and `updates` must have the same shape; their sizes must
+  not exceed the sizes of `data` in dimensions other than `axis`.
+  `data` and `updates` must have the same element type.
+  The output has the same shape and element type as `data`.
 
-  For each entry in `updates`, the target index in `data` is obtained by combining
-  the corresponding entry in `indices` with the index of the entry itself: the
-  index-value for dimension = axis is obtained from the value of the corresponding
-  entry in `indices` and the index-value for dimension != axis is obtained from the
-  index of the entry itself.
+  For each entry in `updates`, the target coordinate is the entry's coordinate
+  with the coordinate along `axis` replaced by the corresponding value in `indices`.
+  For an axis of size s, index values must be in [-s, s-1].
+  A negative index i identifies the same element as i + s.
 
-  `reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
-  tensor into `output` at the specified `indices`.
-  In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2,
-  then indices[idx1] != indices[idx2]. For instance, in a 2-D tensor case, the update
-  corresponding to the [i][j] entry is performed as below:
-  ```
-  output[indices[i][j]][j] = updates[i][j] if axis = 0,
-  output[i][indices[i][j]] = updates[i][j] if axis = 1,
-  ```
-  When `reduction` is set to some reduction function `f`, the update corresponding to the [i][j] entry is performed as below:
-  ```
-  output[indices[i][j]][j] = f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
-  output[i][indices[i][j]] = f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
-  ```
-  where the `f` is `+`, `*`, `max` or `min` as specified.
+  When `reduction` is "none", each update replaces its target element. Multiple
+  updates must not address the same output element.
+  For other reductions, group all updates that address the same output element.
+  Also include the original `data` value exactly once in that group.
+  Elements not addressed by any update retain their original `data` values.
+  "add", "mul", "max", and "min" compute the sum, product, maximum,
+  and minimum of each group, respectively.
 
-  This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
+  For "mean", consider an output element addressed by N >= 1 updates.
+  Let x be its original `data` value and u_1, ..., u_N be those update values.
+  Its output value is:
+  ```
+  output = (x + u_1 + ... + u_N) / (N + 1)
+  ```
+  The "mean" reduction supports integer and floating-point tensors, but not
+  boolean, string, or complex tensors. Integer results are rounded toward
+  negative infinity. Floating-point results are converted to the input element
+  type after division.
 
-  (Opset 18 change): Adds max/min to the set of allowed reduction ops.
+  A floating-point mean is NaN if x, u_1, ..., u_N contain a NaN or infinities of
+  both signs. Otherwise, if any of these values is infinite, the mean is that infinity.
 
-  Example 1:
+  Example:
   ```
-  data = [
-      [0.0, 0.0, 0.0],
-      [0.0, 0.0, 0.0],
-      [0.0, 0.0, 0.0],
-  ]
-  indices = [
-      [1, 0, 2],
-      [0, 2, 1],
-  ]
-  updates = [
-      [1.0, 1.1, 1.2],
-      [2.0, 2.1, 2.2],
-  ]
-  output = [
-      [2.0, 1.1, 0.0]
-      [1.0, 0.0, 2.2]
-      [0.0, 2.1, 1.2]
-  ]
-  ```
-  Example 2:
-  ```
-  data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
-  indices = [[1, 3]]
-  updates = [[1.1, 2.1]]
-  axis = 1
-  output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+  data = [1.0, 2.0, 3.0, 4.0]
+  indices = [0, 1, 0, 1, 2, 1]
+  updates = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+  axis = 0
+  reduction = "mean"
+  output = [5.0 / 3.0, 3.5, 4.0, 4.0]
   ```
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 29 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ScatterElements-11">11</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-16">16</a>
+Other versions of this operator: <a href="Changelog.md#ScatterElements-11">11</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-16">16</a>, <a href="Changelog.md#ScatterElements-18">18</a>
 
 #### Attributes
 
@@ -37689,7 +38380,7 @@ Other versions of this operator: <a href="Changelog.md#ScatterElements-11">11</a
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>Which axis to scatter on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>reduction</tt> : string (default is none)</dt>
-<dd>Type of reduction to apply: none (default), add, mul, max, min. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul': reduction using the multiplication operation.'max': reduction using the maximum operation.'min': reduction using the minimum operation.</dd>
+<dd>Type of reduction to apply: none (default), add, mul, max, min, mean. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul': reduction using the multiplication operation. 'max': reduction using the maximum operation. 'min': reduction using the minimum operation. 'mean': arithmetic mean of all contributions to each output element.</dd>
 </dl>
 
 #### Inputs
@@ -37721,6 +38412,57 @@ Other versions of this operator: <a href="Changelog.md#ScatterElements-11">11</a
 
 
 #### Examples
+
+<details>
+<summary>scatter_elements_mean</summary>
+
+```python
+data = np.array([[1, 2, 3, 4]], dtype=np.float32)
+indices = np.array([[0, 1, 0, 1, -2, 1]], dtype=np.int64)
+updates = np.array([[1, 2, 3, 4, 5, 6]], dtype=np.float32)
+node = onnx.helper.make_node(
+    "ScatterElements",
+    ["data", "indices", "updates"],
+    ["y"],
+    axis=-1,
+    reduction="mean",
+)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[np.array([[5 / 3, 3.5, 4, 4]], dtype=np.float32)],
+    name="test_scatter_elements_mean",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>scatter_elements_mean_integer</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterElements",
+    ["data", "indices", "updates"],
+    ["y"],
+    reduction="mean",
+)
+data = np.array([-2, 8, 9], dtype=np.int64)
+indices = np.array([0, 0, 1], dtype=np.int64)
+updates = np.array([-3, -3, 5], dtype=np.int64)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[np.array([-3, 6, 9], dtype=np.int64)],
+    name="test_scatter_elements_mean_integer",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
 
 <details>
 <summary>scatter_elements_with_axis</summary>
@@ -37938,78 +38680,49 @@ expect(
 
 ### <a name="ScatterND"></a><a name="scatternd">**ScatterND**</a>
 
-  ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of rank q >= 1,
-  and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
-  is produced by creating a copy of the input `data`, and then updating its value to values
-  specified by `updates` at specific index positions specified by `indices`. Its output shape
-  is the same as the shape of `data`.
+  ScatterND takes `data` of rank r >= 1, `indices` of rank q >= 1, and `updates`
+  of rank q + r - k - 1, where k = indices.shape[-1] and 0 <= k <= r.
+  `data` and `updates` must have the same element type.
+  The output has the same shape and element type as `data`.
 
-  `indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
-  `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
-  Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
-  update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
-  update to a slice of the tensor. For each tuple component `i`, `0 <= i < k`, the index must satisfy
-  `-data.shape[i] <= indices[...,i] < data.shape[i]`. Negative indices count backwards from the end
-  of the corresponding dimension. An out-of-bounds index is an error.
+  Each entry in `indices` is a k-tuple indexing the first k dimensions of `data`.
+  For a dimension of size s, index values must be in [-s, s-1].
+  A negative index i identifies the same position as i + s.
+  Each tuple addresses a single element when k = r or a slice of the trailing
+  r - k dimensions otherwise. When k = 0, each tuple addresses the entire tensor.
+  The shape of `updates` must equal indices.shape[:-1] + data.shape[k:].
+  For every coordinate `i` in indices.shape[:-1], updates[i] is scattered to
+  output[tuple(indices[i])].
 
-  `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
-  first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
-  The remaining dimensions of `updates` correspond to the dimensions of the
-  replacement-slice-values. Each replacement-slice-value is a (r-k) dimensional tensor,
-  corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
-  must equal indices.shape[0:q-1] ++ data.shape[k:r], where ++ denotes the concatenation
-  of shapes.
+  When `reduction` is "none", updates replace the addressed elements or slices,
+  and multiple tuples must not address the same location.
+  For other reductions, group all updates addressing the same location and reduce
+  elementwise over each group, including the original `data` value exactly once.
+  Untouched elements retain their original `data` values.
+  "add", "mul", "max", and "min" compute the sum, product, maximum, and minimum,
+  respectively.
 
-  The `output` is calculated via the following equation:
-
+  For "mean", consider an output element addressed by N >= 1 updates.
+  Let x be its original `data` value and u_1, ..., u_N be those update values.
+  Its output value is:
   ```
-  output = np.copy(data)
-  update_indices = indices.shape[:-1]
-  for idx in np.ndindex(update_indices):
-      output[tuple(indices[idx])] = updates[idx]
+  output = (x + u_1 + ... + u_N) / (N + 1)
   ```
+  The "mean" reduction supports integer and floating-point tensors, but not
+  boolean, string, or complex tensors. Integer results are rounded toward
+  negative infinity. Floating-point results are converted to the input element
+  type after division.
 
-  The order of iteration in the above loop is not specified.
+  A floating-point mean is NaN if x, u_1, ..., u_N contain a NaN or infinities of
+  both signs. Otherwise, if any of these values is infinite, the mean is that infinity.
 
-  `reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
-  tensor into `output` at the specified `indices`.
-  When `reduction` is "none", no two index tuples may select the same output element or slice,
-  including through equivalent positive and negative indices. This ensures that the output value does not
-  depend on the iteration order.
-  When `reduction` is set to some reduction function `f`, `output` is calculated as follows:
-
+  Example:
   ```
-  output = np.copy(data)
-  update_indices = indices.shape[:-1]
-  for idx in np.ndindex(update_indices):
-      output[tuple(indices[idx])] = f(output[tuple(indices[idx])], updates[idx])
-  ```
-
-  where the `f` is `+`, `*`, `max` or `min` as specified.
-
-  (Opset 18 change): Adds max/min to the set of allowed reduction ops.
-
-  Example 1:
-  ```
-  data    = [1, 2, 3, 4, 5, 6, 7, 8]
-  indices = [[4], [3], [1], [7]]
-  updates = [9, 10, 11, 12]
-  output  = [1, 11, 3, 10, 9, 6, 7, 12]
-  ```
-
-  Example 2:
-  ```
-  data    = [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-              [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-              [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
-              [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
-  indices = [[0], [2]]
-  updates = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
-              [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]]
-  output  = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
-              [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-              [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
-              [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+  data = [[1.0, 2.0], [3.0, 4.0]]
+  indices = [[0], [0]]
+  updates = [[3.0, 4.0], [5.0, 6.0]]
+  reduction = "mean"
+  output = [[3.0, 4.0], [3.0, 4.0]]
   ```
 
   Opset 29 adds support for int32 indices; int64 indices remain supported.
@@ -38024,7 +38737,7 @@ Other versions of this operator: <a href="Changelog.md#ScatterND-11">11</a>, <a 
 
 <dl>
 <dt><tt>reduction</tt> : string (default is none)</dt>
-<dd>Type of reduction to apply: none (default), add, mul, max, min. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul':  reduction using the multiplication operation. 'max': reduction using the maximum operation. 'min': reduction using the minimum operation.</dd>
+<dd>Type of reduction to apply: none (default), add, mul, max, min, mean. 'none': no reduction applied. 'add': reduction using the addition operation. 'mul': reduction using the multiplication operation. 'max': reduction using the maximum operation. 'min': reduction using the minimum operation. 'mean': arithmetic mean of all contributions to each output element.</dd>
 </dl>
 
 #### Inputs
@@ -38235,6 +38948,56 @@ expect(
     inputs=[data, indices, updates],
     outputs=[output],
     name="test_scatternd_max_with_element_indices",
+)
+```
+
+</details>
+
+
+<details>
+<summary>scatternd_mean</summary>
+
+```python
+data = np.array([[1, 2], [3, 4]], dtype=np.float32)
+indices = np.array([[0], [-2]], dtype=np.int64)
+updates = np.array([[3, 4], [5, 6]], dtype=np.float32)
+node = onnx.helper.make_node(
+    "ScatterND",
+    ["data", "indices", "updates"],
+    ["y"],
+    reduction="mean",
+)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[np.array([[3, 4], [3, 4]], dtype=np.float32)],
+    name="test_scatternd_mean",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>scatternd_mean_integer</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    ["data", "indices", "updates"],
+    ["y"],
+    reduction="mean",
+)
+data = np.array([[-2, 8], [9, 10]], dtype=np.int64)
+indices = np.array([[0, 0], [0, 0], [0, 1]], dtype=np.int64)
+updates = np.array([-3, -3, 5], dtype=np.int64)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[np.array([[-3, 6], [9, 10]], dtype=np.int64)],
+    name="test_scatternd_mean_integer",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
 )
 ```
 
@@ -40506,6 +41269,31 @@ expect(
 
 
 <details>
+<summary>softmaxcrossentropy_large_finite_gap</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SoftmaxCrossEntropyLoss",
+    ["x", "labels"],
+    ["loss", "log_prob"],
+    reduction="none",
+)
+x = np.array([[0, -200]], dtype=np.float32)
+labels = np.array([1], dtype=np.int64)
+expect(
+    node,
+    inputs=[x, labels],
+    outputs=[np.array([200], dtype=np.float32), x],
+    name="test_sce_large_finite_gap",
+    rtol=1e-3,
+    atol=0,
+)
+```
+
+</details>
+
+
+<details>
 <summary>softmaxcrossentropy_mean</summary>
 
 ```python
@@ -41331,6 +42119,81 @@ expect(
 
 
 <details>
+<summary>softmaxcrossentropy_single_class</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SoftmaxCrossEntropyLoss",
+    ["x", "labels"],
+    ["loss", "log_prob"],
+    reduction="none",
+)
+x = np.array([[10], [-20]], dtype=np.float32)
+labels = np.zeros(2, dtype=np.int64)
+expect(
+    node,
+    inputs=[x, labels],
+    outputs=[np.zeros(2, dtype=np.float32), np.zeros_like(x)],
+    name="test_sce_single_class",
+    atol=0,
+)
+```
+
+</details>
+
+
+<details>
+<summary>softmaxcrossentropy_small_loss</summary>
+
+```python
+for dtype, margin in [
+    (np.float16, 10.0),
+    (np.float32, 18.0),
+    (np.float64, 40.0),
+]:
+    x = np.full((3, 3), -margin, dtype=dtype)
+    np.fill_diagonal(x, 0)
+    # Zero absolute tolerance catches a collapsed result; relative
+    # tolerance still allows differences between backend implementations.
+    # Independent analytical values ensure a regression cannot change
+    # both the implementation and its expected outputs together.
+    normalizer = np.log1p(2 * np.exp(-margin))
+    log_prob = (x.astype(np.float64) - normalizer).astype(dtype)
+    loss = np.array([normalizer, 2 * normalizer, 0], dtype=dtype)
+    x = np.repeat(x[..., None, None], 2, axis=-1)
+    log_prob = np.repeat(log_prob[..., None, None], 2, axis=-1)
+    loss = np.repeat(loss[..., None, None], 2, axis=-1)
+    labels = np.repeat(
+        np.array([0, 1, -1], dtype=np.int64)[..., None, None], 2, axis=-1
+    )
+    weights = np.array([1, 2, 3], dtype=dtype)
+    for reduction in ["none", "sum", "mean"]:
+        node = onnx.helper.make_node(
+            "SoftmaxCrossEntropyLoss",
+            ["x", "labels", "weights"],
+            ["loss", "log_prob"],
+            reduction=reduction,
+            ignore_index=-1,
+        )
+        expected_loss = loss
+        if reduction == "sum":
+            expected_loss = loss.sum()
+        elif reduction == "mean":
+            expected_loss = (loss.sum() / 6).astype(dtype)
+        expect(
+            node,
+            inputs=[x, labels, weights],
+            outputs=[expected_loss, log_prob],
+            name=f"test_sce_small_loss_{np.dtype(dtype).name}_{reduction}",
+            rtol=1e-3,
+            atol=0,
+        )
+```
+
+</details>
+
+
+<details>
 <summary>softmaxcrossentropy_sum</summary>
 
 ```python
@@ -41391,6 +42254,39 @@ expect(
     inputs=[x, labels],
     outputs=[loss, log_prob],
     name="test_sce_sum_log_prob",
+)
+```
+
+</details>
+
+
+<details>
+<summary>softmaxcrossentropy_tied_maxima</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SoftmaxCrossEntropyLoss",
+    ["x", "labels"],
+    ["loss", "log_prob"],
+    reduction="none",
+)
+x = np.array([[0, 0, -200], [4, 4, 4]], dtype=np.float64)
+labels = np.array([1, 2], dtype=np.int64)
+loss = np.array([np.log(2), np.log(3)], dtype=np.float64)
+log_prob = np.array(
+    [
+        [-np.log(2), -np.log(2), -200 - np.log(2)],
+        [-np.log(3), -np.log(3), -np.log(3)],
+    ],
+    dtype=np.float64,
+)
+expect(
+    node,
+    inputs=[x, labels],
+    outputs=[loss, log_prob],
+    name="test_sce_tied_maxima",
+    rtol=1e-3,
+    atol=0,
 )
 ```
 
@@ -45818,6 +46714,192 @@ expect(
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_bfloat16_sorted_without_axis",
 )
+```
+
+</details>
+
+
+### <a name="Unpack"></a><a name="unpack">**Unpack**</a>
+
+  Unpacks UINT8 or UINT32 storage words into UINT8 unsigned integer codes
+  independently along `axis` (default -1). Input and output have the same
+  rank, at least 1. Negative axes are supported; axis must be in [-rank, rank-1].
+  The input type determines word_bits: 8 for UINT8, 32 for UINT32.
+  Specify either `bits` in [1, 8], or both `radix` and `group_size`;
+  the two spellings are mutually exclusive.
+  The input `count` must be a nonnegative scalar INT64 tensor specifying the
+  number of output codes along axis, excluding padding. With `bits`, each
+  element of `Y` is in [0, 2^bits - 1].
+
+  When using `bits`, the input axis dimension B must equal ceil(count * bits / word_bits).
+  The output axis dimension is count; all other dimensions are preserved.
+  Each fixed combination of indices in the other dimensions defines an
+  independent sequence, called a row below; a rank-1 tensor has one row.
+
+  Within each row, input words are read in increasing axis index order,
+  starting with the least significant bit of each word. Consecutive groups of
+  `bits` bits form output codes in order, with the first bit of each group as
+  the code's least significant bit. Number the bits of each word and code
+  starting at 0 for the least significant bit. For code index
+  `0 <= i < count` and bit index `0 <= k < bits`, bit `k` of output code `i` is
+  read from bit `(i * bits + k) % word_bits` of input word `floor((i * bits + k) / word_bits)`.
+  When a code spans a word boundary, its higher-order bits are read from
+  the low bits of the next word. Each row begins at bit 0 of a new word.
+  Unused high bits in the final input word of each row are padding and are ignored.
+  Bit positions are defined numerically, independently of host endianness;
+  tensor raw data uses ONNX's little-endian serialization.
+
+  All non-axis dimensions are preserved, including zero dimensions, and the
+  same shape requirements apply when any non-axis dimension is zero.
+  With `count = 0`, both input and output must have an empty selected axis.
+
+  With UINT8 storage, `bits = 3` and `count = 8` unpack `[136, 198, 250]` into
+  `[0, 1, 2, 3, 4, 5, 6, 7]`. With `bits = 3` and `count = 2`, `[255]`
+  is unpacked into `[7, 7]`.
+
+  Grouped unpacking uses radix R in [2, 256] and positive group size G, with
+  R^G <= 2^63 - 1. Read consecutive W = ceil(log2(R^G)) bit group indices,
+  least-significant bit first, without word alignment between groups.
+  R^G determines the precision of the integer arithmetic required for both
+  packing and unpacking: valid group indices require W value bits, and any
+  explicitly computed R^G or other intermediate must also fit. Prefer
+  (R, G) pairs supported by standard 32-bit or 64-bit integer arithmetic.
+  The R^G bound above permits exact signed 64-bit base-radix calculations.
+  A commonly used choice is (R, G) = (3, 5): five ternary codes per byte.
+  Every group index must be less than R^G; encodings outside this range
+  are invalid. Expand each index into G base-R digits, least significant
+  digit first, then trim to count values per row. The input axis dimension
+  must equal ceil(ceil(count/G) * W / word_bits). Unused digits of the last group
+  and unused high bits of the last word are ignored. Each output code is
+  in [0, R - 1]. The original bits spelling is (R, G) = (2^bits, 1).
+  With UINT8 storage and R=3, G=5, [102] with count=5 becomes [0, 1, 2, 0, 1];
+  [7] with count=2 becomes [1, 2].
+  Results for invalid inputs are unspecified; function decompositions need
+  not diagnose invalid indices or incorrect input sizes.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>Axis along which independent sequences are unpacked. Negative axes are supported.</dd>
+<dt><tt>bits</tt> : int</dt>
+<dd>Number of bits per unsigned code. Mutually exclusive with radix/group_size.</dd>
+<dt><tt>group_size</tt> : int</dt>
+<dd>Codes per group. Positive; radix^group_size must fit in positive INT64.</dd>
+<dt><tt>radix</tt> : int</dt>
+<dd>Base of grouped codes, in [2, 256]. Requires group_size; excludes bits.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : TStorage</dt>
+<dd>UINT8 or UINT32 tensor of rank at least 1, with the exact packed word count along axis.</dd>
+<dt><tt>count</tt> : tensor(int64)</dt>
+<dd>Scalar INT64 tensor giving the logical output length along axis. Must be nonnegative.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>UINT8 tensor preserving every dimension except axis, which becomes count. Each element is below the selected radix.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8)</dt>
+<dd>Unsigned byte tensors.</dd>
+<dt><tt>TStorage</tt> : tensor(uint8), tensor(uint32)</dt>
+<dd>Unsigned storage word tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>unpack_3bit</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=3)
+x = np.array([0x88, 0xC6, 0xFA], dtype=np.uint8)
+count = np.array(8, dtype=np.int64)
+y = np.arange(8, dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_3bit")
+```
+
+</details>
+
+
+<details>
+<summary>unpack_empty</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=3)
+x = np.empty((2, 0), dtype=np.uint8)
+count = np.array(0, dtype=np.int64)
+expect(node, inputs=[x, count], outputs=[x], name="test_unpack_empty")
+```
+
+</details>
+
+
+<details>
+<summary>unpack_empty_rows</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=5)
+x = np.empty((2, 0, 6), dtype=np.uint8)
+count = np.array(9, dtype=np.int64)
+y = np.empty((2, 0, 9), dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_empty_rows")
+```
+
+</details>
+
+
+<details>
+<summary>unpack_rows_5bit</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=5)
+x = np.array([[0x41, 0x0C], [0x1F, 0x40]], dtype=np.uint8)
+count = np.array(3, dtype=np.int64)
+y = np.array([[1, 2, 3], [31, 0, 16]], dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_rows_5bit")
+```
+
+</details>
+
+
+<details>
+<summary>unpack_ternary</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], radix=3, group_size=5)
+x = np.array([[102], [242]], dtype=np.uint8)
+count = np.array(5, dtype=np.int64)
+y = np.array([[0, 1, 2, 0, 1], [2, 2, 2, 2, 2]], dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_ternary")
+```
+
+</details>
+
+
+<details>
+<summary>unpack_uint32_axis</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=5, axis=0)
+x = np.full((2, 2), 0xFFFFFFFF, dtype=np.uint32)
+count = np.array(7, dtype=np.int64)
+y = np.full((7, 2), 31, dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_uint32_axis")
 ```
 
 </details>

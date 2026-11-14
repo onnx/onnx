@@ -9,6 +9,7 @@ import pytest
 from onnx import (
     TensorProto,
     checker,
+    defs,
     helper,
     numpy_helper,
     shape_inference,
@@ -187,6 +188,110 @@ def test_scatternd_reductions_and_downgrade(dtype, reduction, empty):
         checker.check_model(converted, full_check=True)
         output = ReferenceEvaluator(converted).run(None, feeds)[0]
         np.testing.assert_array_equal(output, expected)
+
+
+def test_scatternd_schema_versions():
+    versions = [
+        schema.since_version
+        for schema in defs.get_all_schemas_with_history()
+        if schema.name == "ScatterND" and schema.domain == ""
+    ]
+    assert versions.count(18) == versions.count(29) == 1
+    previous = defs.get_schema("ScatterND", 18)
+    latest = defs.get_schema("ScatterND", 29)
+    assert previous.inputs[1].type_str == "tensor(int64)"
+    assert "'mean'" not in previous.attributes["reduction"].description
+    assert "'mean'" in latest.attributes["reduction"].description
+    assert "include_self" not in latest.attributes
+    assert latest.inputs[1].type_str == "Tind"
+    assert set(
+        next(
+            constraint.allowed_type_strs
+            for constraint in latest.type_constraints
+            if constraint.type_param_str == "Tind"
+        )
+    ) == {"tensor(int32)", "tensor(int64)"}
+
+
+@pytest.mark.parametrize("index_dtype", [np.int32, np.int64])
+@pytest.mark.parametrize("value_dtype", [np.float64, np.int64, np.uint64])
+@pytest.mark.parametrize("whole_tensor", [False, True])
+def test_scatternd_mean_indices(index_dtype, value_dtype, whole_tensor):
+    if value_dtype == np.uint64:
+        values = [np.iinfo(np.uint64).max] * 3
+        expected = values[0]
+    else:
+        values = [-2, -3, -3]
+        expected = -8 / 3 if value_dtype == np.float64 else -3
+    if whole_tensor:
+        data = np.array([values[0]], dtype=value_dtype)
+        indices = np.empty((2, 0), dtype=index_dtype)
+        updates = np.array(values[1:], dtype=value_dtype).reshape(2, 1)
+    else:
+        data = np.array([[values[0]], [7]], dtype=value_dtype)
+        indices = np.array([[0], [-2]], dtype=index_dtype)
+        updates = np.array(values[1:], dtype=value_dtype).reshape(2, 1)
+    model = _model(
+        "ScatterND",
+        data.shape,
+        indices.shape,
+        helper.np_dtype_to_tensor_dtype(np.dtype(index_dtype)),
+        reduction="mean",
+    )
+    value_type = helper.np_dtype_to_tensor_dtype(np.dtype(value_dtype))
+    for value in (model.graph.input[0], model.graph.input[2], model.graph.output[0]):
+        value.type.tensor_type.elem_type = value_type
+    inferred = shape_inference.infer_shapes(model, check_type=True, strict_mode=True)
+    checker.check_model(inferred, full_check=True)
+    result = ReferenceEvaluator(inferred).run(
+        None, {"data": data, "indices": indices, "updates": updates}
+    )[0]
+    assert result.dtype == data.dtype
+    if value_dtype == np.float64:
+        np.testing.assert_allclose(result.flat[0], expected)
+    else:
+        assert result.flat[0] == expected
+    if not whole_tensor:
+        assert result[1, 0] == data[1, 0]
+    with pytest.raises(RuntimeError, match="mean"):
+        version_converter.convert_version(inferred, 28)
+    assert [node.op_type for node in inferred.graph.node] == ["ScatterND"]
+
+
+@pytest.mark.parametrize("dtype", [np.int32, np.int64])
+@pytest.mark.parametrize(
+    "values, expected",
+    [
+        ([np.finfo(np.float64).max] * 3, np.finfo(np.float64).max),
+        ([-np.finfo(np.float64).max] * 3, -np.finfo(np.float64).max),
+        ([np.finfo(np.float64).max] * 2 + [-np.inf], -np.inf),
+        ([-np.finfo(np.float64).max] * 2 + [np.inf], np.inf),
+        ([np.inf, -np.inf, 1], np.nan),
+        ([np.nan, 1, 2], np.nan),
+    ],
+)
+def test_scatternd_mean_indices_nonfinite(dtype, values, expected):
+    model = _model(
+        "ScatterND",
+        [2],
+        [2, 1],
+        helper.np_dtype_to_tensor_dtype(np.dtype(dtype)),
+        reduction="mean",
+    )
+    for value in (model.graph.input[0], model.graph.input[2], model.graph.output[0]):
+        value.type.tensor_type.elem_type = TensorProto.DOUBLE
+    inferred = shape_inference.infer_shapes(model, check_type=True, strict_mode=True)
+    checker.check_model(inferred, full_check=True)
+    result = ReferenceEvaluator(inferred).run(
+        None,
+        {
+            "data": np.array([values[0], -0.0]),
+            "indices": np.array([[0], [-2]], dtype=dtype),
+            "updates": np.array(values[1:], dtype=np.float64),
+        },
+    )[0]
+    np.testing.assert_allclose(result, [expected, -0.0], equal_nan=True)
+    assert np.signbit(result[1])
 
 
 @pytest.mark.parametrize("initializer", [False, True])
