@@ -15,6 +15,8 @@
 
 namespace ONNX_NAMESPACE {
 
+ONNX_OPERATOR_SET_SCHEMA(CausalConvWithState, 27, defs::nn::utils::CausalConvWithStateSchema(false));
+
 // For GlobalPool operations.
 static void globalPoolTypeShapeInference_opset2(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);

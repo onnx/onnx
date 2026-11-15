@@ -21,9 +21,9 @@ class ImageDecoder(OpRun):
             ) from e
         img = PIL.Image.open(io.BytesIO(encoded.tobytes()))
         if pixel_format == "BGR":
-            decoded = np.array(img)[:, :, ::-1]
+            decoded = np.array(img.convert("RGB"))[:, :, ::-1]
         elif pixel_format == "RGB":
-            decoded = np.array(img)
+            decoded = np.array(img.convert("RGB"))
         elif pixel_format == "Grayscale":
             img = img.convert("L")
             decoded = np.array(img)
