@@ -22,8 +22,9 @@ def _compute_negative_log_likelihood_loss(
 
     # float16 and bfloat16 are computed in float32: the sums of the losses and
     # of the weights overflow float16 (max 65504) once there are more targets
-    # than that, and bfloat16 stops accumulating at 256.
-    xc = x.astype(np.float32) if x.dtype in (np.float16, ml_dtypes.bfloat16) else x
+    # than that, and bfloat16 stops accumulating at 256. Only the gathered
+    # losses and weights are promoted, not the whole input.
+    cdtype = np.float32 if x.dtype in (np.float16, ml_dtypes.bfloat16) else x.dtype
 
     # initialize the positional weights when required
     gather_weight = None
@@ -34,32 +35,32 @@ def _compute_negative_log_likelihood_loss(
         # use np.int32 to make it compatible with x86 machines
         gather_weight = np.take(
             weight, np.array(target, dtype=np.int32), mode="clip"
-        ).astype(xc.dtype)
+        ).astype(cdtype)
         # set `ignore_index`'s loss weight to 0.
         # The loss tensor will be multiplied by this weight tensor,
         # so `ignore_index`'s loss value will be eliminated.
         if ignore_index is not None:
             gather_weight = np.where(target == ignore_index, 0, gather_weight).astype(
-                dtype=xc.dtype
+                dtype=cdtype
             )
     elif ignore_index is not None:
-        gather_weight = np.where(target == ignore_index, 0, 1).astype(dtype=xc.dtype)
+        gather_weight = np.where(target == ignore_index, 0, 1).astype(dtype=cdtype)
 
     # if input is 4-d and above, make it 3-d
     if len(input_shape) != 3:
-        xc = xc.reshape((N, C, -1))
+        x = x.reshape((N, C, -1))
         target = target.reshape((N, -1))
 
     # Get a dimension from the reshaped input.
     # If the original input shape is [N, C, H, W],
     # the D here should be H * W because we reshape
     # [N, C, H, W] to [N, C, H * W].
-    D = xc.shape[2]
-    neg_gather_element_input = np.zeros((N, D), dtype=xc.dtype)
+    D = x.shape[2]
+    neg_gather_element_input = np.zeros((N, D), dtype=cdtype)
     for i in range(N):
         for d in range(D):
             if target[i][d] != ignore_index:
-                neg_gather_element_input[i][d] = -xc[i][target[i][d]][d]
+                neg_gather_element_input[i][d] = -x[i][target[i][d]][d]
 
     loss = neg_gather_element_input
 
