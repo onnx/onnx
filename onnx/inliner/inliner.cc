@@ -778,8 +778,7 @@ class Renamer::Impl {
   }
 
   void RenameNode(NodeProto& node) {
-    // Use the InliningRenamer's ProcessNode method which handles graph-value attributes
-    renamer_.ProcessNode(node);
+    renamer_.VisitNode(node);
   }
 };
 

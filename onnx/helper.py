@@ -379,7 +379,8 @@ def make_tensor(
         name: tensor name
         data_type: a value such as onnx.TensorProto.FLOAT
         dims: shape
-        vals: values
+        vals: values. For STRING tensors, str values are UTF-8 encoded and bytes
+            values are stored unchanged.
         raw: if True, vals contains the serialized content of the tensor,
             otherwise, vals should be a list of values of the type defined by ``data_type``.
 
@@ -439,9 +440,8 @@ def make_tensor(
     assert not raw, "Bug: raw should be False at this point."
 
     if data_type == TensorProto.STRING:
-        vals = np.array(vals).flatten()
-        if len(vals) != 0:
-            vals = np.vectorize(_to_bytes)(vals)  # Convert to bytes
+        vals = np.array(vals, dtype=object).flatten()
+        vals = np.vectorize(_to_bytes, otypes=[object])(vals)
     elif data_type in {
         TensorProto.FLOAT8E4M3FN,
         TensorProto.FLOAT8E4M3FNUZ,
