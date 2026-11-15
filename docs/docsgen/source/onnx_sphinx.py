@@ -407,6 +407,9 @@ def get_markdown_doc(
         rep = {
             "[the doc](IR.md)": f"[ONNX IR]({main_docs_url}docs/IR.md)",
             "[the doc](Broadcasting.md)": f"[Broadcasting in ONNX]({main_docs_url}docs/Broadcasting.md)",
+            "[DequantizePacked decoding specification](DequantizePacked.md)": (
+                "[DequantizePacked decoding specification](../repo-docs/DequantizePacked.md)"
+            ),
         }
         for key, value in rep.items():
             doc = doc.replace(key, value)
@@ -682,14 +685,14 @@ def get_onnx_example(op_name, domain):
         try:
             mod = importlib.import_module(m)
             module = m
-        except ImportError:  # noqa: PERF203
+        except ImportError:
             continue
     if module is None:
         for m in fallback_modules:
             try:
                 mod = importlib.import_module(m)
                 module = m
-            except ImportError:  # noqa: PERF203
+            except ImportError:
                 continue
     if module is None:
         # Unable to find an example for 'op_name'.

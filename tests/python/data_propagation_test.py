@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import pytest
-from shape_inference_test import TestShapeInferenceHelper
+from shape_inference_test_utils import TestShapeInferenceHelper
 
 import onnx.parser
 from onnx import TensorProto

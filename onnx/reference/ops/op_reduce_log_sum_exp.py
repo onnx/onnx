@@ -9,6 +9,10 @@ from onnx.reference.ops._op import OpRunReduceNumpy
 
 
 def compute_log_sum_exp(data, axes, keepdims):
+    dtype = data.dtype
+    if dtype == np.float16:
+        # The exponential sum can overflow float16 even when its logarithm is finite.
+        data = data.astype(np.float32)
     mx = data.max(axis=axes, keepdims=True)
     shift = np.where(np.isfinite(mx), mx, np.zeros_like(mx))
     with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
@@ -18,7 +22,7 @@ def compute_log_sum_exp(data, axes, keepdims):
         res = np.log(mxs) + shift
     if not keepdims:
         res = np.squeeze(res, axis=axes)
-    return (res,)
+    return (res.astype(dtype, copy=False),)
 
 
 def _check_integer_input(data):

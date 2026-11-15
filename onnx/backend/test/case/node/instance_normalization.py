@@ -56,3 +56,28 @@ class InstanceNormalization(Base):
 
         # output size: (2, 3, 4, 5)
         expect(node, inputs=[x, s, bias], outputs=[y], name="test_instancenorm_epsilon")
+
+    @staticmethod
+    def export_float16_large_values() -> None:
+        node = onnx.helper.make_node(
+            "InstanceNormalization",
+            inputs=["x", "s", "bias"],
+            outputs=["y"],
+        )
+        # input size: (1, 1, 256)
+        x = np.arange(0, 512, 2).reshape(1, 1, 256).astype(np.float16)
+        s = np.array([1.0]).astype(np.float16)
+        bias = np.array([0.0]).astype(np.float16)
+        # The variance (about 21845) is representable in float16, but squaring
+        # values up to 510 overflows it, so compute in float32.
+        x32 = x.astype(np.float32)
+        mean = np.mean(x32, axis=2, keepdims=True)
+        var = np.var(x32, axis=2, keepdims=True)
+        y = ((x32 - mean) / np.sqrt(var + 1e-5)).astype(np.float16)
+
+        expect(
+            node,
+            inputs=[x, s, bias],
+            outputs=[y],
+            name="test_instancenorm_float16_large_values",
+        )

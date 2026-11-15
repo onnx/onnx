@@ -3,9 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import inspect
 import math
 import random
+import warnings
 from typing import Any
+from unittest import mock
 
 import ml_dtypes
 import numpy as np
@@ -136,6 +139,22 @@ class TestHelperAttributeFunctions:
         attr = helper.make_attribute("ints", [1, 2])
         assert attr.name == "ints"
         assert list(attr.ints) == [1, 2]
+        checker.check_attribute(attr)
+
+    # Recent protobuf 6.x releases warn about bools in int fields, protobuf>=7 rejects them
+    @pytest.mark.filterwarnings("error::DeprecationWarning")
+    def test_attr_repeated_bool(self) -> None:
+        attr = helper.make_attribute("bools", [True, False, True])
+        assert attr.name == "bools"
+        assert attr.type == AttributeProto.INTS
+        assert list(attr.ints) == [1, 0, 1]
+        checker.check_attribute(attr)
+
+    @pytest.mark.filterwarnings("error::DeprecationWarning")
+    def test_attr_repeated_mixed_bools_and_ints(self) -> None:
+        attr = helper.make_attribute("mixed", [True, 2, False])
+        assert attr.type == AttributeProto.INTS
+        assert list(attr.ints) == [1, 2, 0]
         checker.check_attribute(attr)
 
     def test_attr_repeated_mixed_floats_and_ints(self) -> None:
@@ -362,6 +381,19 @@ class TestHelperNodeFunctions:
         assert graph.doc_string == ""
         assert graph.value_info[0] == value_info[0]
 
+    def test_graph_copies_initializers_individually(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        graph = mock.MagicMock(spec=GraphProto())
+        monkeypatch.setattr(helper, "GraphProto", lambda: graph)
+        tensor = helper.make_tensor("weight", TensorProto.FLOAT, [1], [1.0])
+
+        result = helper.make_graph([], "test", [], [], initializer=[tensor])
+
+        assert result is graph
+        graph.initializer.extend.assert_not_called()
+        graph.initializer.add.return_value.CopyFrom.assert_called_once_with(tensor)
+
     def test_graph_docstring(self) -> None:
         graph = helper.make_graph([], "my graph", [], [], None, "my docs")
         assert graph.name == "my graph"
@@ -461,6 +493,63 @@ class TestHelperTensorFunctions:
             raw=False,
         )
         assert string_list == list(tensor.string_data)
+
+    @pytest.mark.parametrize(
+        ("dims", "vals", "expected"),
+        [
+            ((), [b"\xffa\x00"], [b"\xffa\x00"]),
+            ((), b"\xffa\x00", [b"\xffa\x00"]),
+            ((), np.array(b"\xffa\x00", dtype=object), [b"\xffa\x00"]),
+            ((), "\u00e9\x00", [b"\xc3\xa9\x00"]),
+            (
+                (4,),
+                [b"", b"\x00", b"\xffa\x00", b"a\x00b\x00\x00"],
+                [b"", b"\x00", b"\xffa\x00", b"a\x00b\x00\x00"],
+            ),
+            (
+                (2, 2),
+                [[b"\x00", b"\xffa\x00"], [b"a\x00b\x00", b""]],
+                [b"\x00", b"\xffa\x00", b"a\x00b\x00", b""],
+            ),
+            (
+                (2, 2),
+                np.array([[b"\x00", b"\xffa\x00"], [b"a\x00b\x00", b""]], dtype=object),
+                [b"\x00", b"\xffa\x00", b"a\x00b\x00", b""],
+            ),
+            (
+                (3,),
+                ["\u00e9\x00", "\u4e2d", ""],
+                [b"\xc3\xa9\x00", b"\xe4\xb8\xad", b""],
+            ),
+            (
+                (2,),
+                [b"\xffa\x00", "\u00e9\x00"],
+                [b"\xffa\x00", b"\xc3\xa9\x00"],
+            ),
+            (
+                (2,),
+                np.array(["\u00e9\x00", "\u4e2d"], dtype=object),
+                [b"\xc3\xa9\x00", b"\xe4\xb8\xad"],
+            ),
+            (
+                (2,),
+                np.array(["\u00e9", "\u4e2d"]),
+                [b"\xc3\xa9", b"\xe4\xb8\xad"],
+            ),
+            ((2,), np.array([b"abc", b"d"], dtype="S3"), [b"abc", b"d"]),
+            ((), [b""], [b""]),
+            ((0,), [], []),
+            ((2, 0), np.empty((2, 0), dtype=object), []),
+        ],
+    )
+    def test_make_string_tensor_preserves_values(self, dims, vals, expected) -> None:
+        tensor = helper.make_tensor("test", TensorProto.STRING, dims, vals)
+
+        assert list(tensor.string_data) == expected
+        assert list(tensor.dims) == list(dims)
+        checker.check_tensor(tensor)
+        restored = TensorProto.FromString(tensor.SerializeToString())
+        assert list(restored.string_data) == expected
 
     def test_make_bfloat16_tensor(self) -> None:
         # numpy doesn't support bf16, so we have to compute the correct result manually
@@ -934,6 +1023,20 @@ class TestHelperOptionalAndSequenceFunctions:
 
 
 class TestPrintableGraph:
+    def test_deprecation_warning_and_metadata(self) -> None:
+        graph = helper.make_graph([], "empty", [], [])
+        original = helper.printable_graph.__wrapped__
+        with warnings.catch_warnings(record=True, action="always") as caught:
+            result = helper.printable_graph(graph)
+        assert result == original(graph)
+        assert len(caught) == 1
+        assert caught[0].category is DeprecationWarning
+        assert caught[0].filename == __file__
+        assert str(caught[0].message) == helper.printable_graph.__deprecated__
+        assert helper.printable_graph.__name__ == original.__name__
+        assert helper.printable_graph.__doc__ == original.__doc__
+        assert inspect.signature(helper.printable_graph) == inspect.signature(original)
+
     def test_initializer_with_matching_graph_input(self) -> None:
         add = helper.make_node("Add", ["X", "Y_Initializer"], ["Z"])
         value_info = [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1])]
@@ -1116,24 +1219,6 @@ def test_make_tensor_raw(tensor_dtype: int, vals_as_bytes: bool) -> None:
 
 
 class TestHelperMappingFunctions:
-    # TODO (#4554): remove these tests about catching warnings after the deprecation period
-    # Test these new functions should not raise any deprecation warnings
-    @pytest.mark.filterwarnings("error::DeprecationWarning")
-    def test_tensor_dtype_to_np_dtype_not_throw_warning(self) -> None:
-        _ = helper.tensor_dtype_to_np_dtype(TensorProto.FLOAT)
-
-    @pytest.mark.filterwarnings("error::DeprecationWarning")
-    def test_tensor_dtype_to_storage_tensor_dtype_not_throw_warning(self) -> None:
-        _ = helper.tensor_dtype_to_storage_tensor_dtype(TensorProto.FLOAT)
-
-    @pytest.mark.filterwarnings("error::DeprecationWarning")
-    def test_tensor_dtype_to_field_not_throw_warning(self) -> None:
-        _ = helper.tensor_dtype_to_field(TensorProto.FLOAT)
-
-    @pytest.mark.filterwarnings("error::DeprecationWarning")
-    def test_np_dtype_to_tensor_dtype_not_throw_warning(self) -> None:
-        _ = helper.np_dtype_to_tensor_dtype(np.dtype("float32"))
-
     def test_tensor_dtype_to_np_dtype_bfloat16(self) -> None:
         assert (
             helper.tensor_dtype_to_np_dtype(TensorProto.BFLOAT16) == ml_dtypes.bfloat16
@@ -1176,3 +1261,18 @@ class TestAttrTypeToStr:
     def test_attr_type_to_str_undefined(self):
         result = helper._attr_type_to_str(9999)
         assert result == "UNDEFINED"
+
+
+class TestStripDocString:
+    def test_strip_doc_string_clears_nested_doc_strings(self) -> None:
+        node = helper.make_node("Relu", ["x"], ["y"], doc_string="node doc")
+        graph = helper.make_graph([node], "g", [], [], doc_string="graph doc")
+        model = helper.make_model(graph, doc_string="model doc")
+        helper.strip_doc_string(model)
+        assert model.doc_string == ""
+        assert model.graph.doc_string == ""
+        assert model.graph.node[0].doc_string == ""
+
+    def test_strip_doc_string_rejects_non_message(self) -> None:
+        with pytest.raises(TypeError):
+            helper.strip_doc_string("not a proto")  # type: ignore[arg-type]

@@ -75,6 +75,13 @@ function(add_onnx_hardening_flags target)
       target_compile_options(${target} PRIVATE -ftrivial-auto-var-init=zero)
     endif()
 
+    # Warn about any Unicode bidirectional control characters ("Trojan Source").
+    # GCC 12+ only; ONNX sources are written left-to-right.
+    check_cxx_compiler_flag(-Wbidi-chars=any COMPILER_SUPPORTS_BIDI_CHARS)
+    if(COMPILER_SUPPORTS_BIDI_CHARS)
+      target_compile_options(${target} PRIVATE -Wbidi-chars=any)
+    endif()
+
     # _FORTIFY_SOURCE requires optimization and conflicts with sanitizers
     if(NOT ONNX_USE_ASAN)
       target_compile_options(${target} PRIVATE
@@ -85,6 +92,12 @@ function(add_onnx_hardening_flags target)
 
     # C++ standard library assertions
     target_compile_definitions(${target} PRIVATE _GLIBCXX_ASSERTIONS)
+    # libc++ equivalent, e.g. on macOS (libc++ 18+; older versions ignore it).
+    # Keep a hardening mode the caller already selected.
+    if(NOT CMAKE_CXX_FLAGS MATCHES "_LIBCPP_HARDENING_MODE")
+      target_compile_definitions(${target} PRIVATE
+        _LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST)
+    endif()
 
     # Stack clash protection (Linux only - not supported on macOS)
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")

@@ -8,6 +8,73 @@
 
 namespace ONNX_NAMESPACE::defs::nn::utils {
 
+const std::vector<int64_t> kMeanVarianceNormalizationDefaultAxes = {0, 2, 3};
+
+static bool BuildMeanVarianceNormalizationFunctionBody(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto,
+    int functionOpsetVersion) {
+  ONNX_ASSERT(functionOpsetVersion == 13 || functionOpsetVersion == 18)
+  const auto* const input_type = ctx.getInputType(0);
+  if ((input_type == nullptr) || !input_type->has_tensor_type()) {
+    return false;
+  }
+  const int32_t elem_type = input_type->tensor_type().elem_type();
+  if (elem_type == TensorProto_DataType_UNDEFINED) {
+    return false;
+  }
+  const int32_t compute_type = elem_type == TensorProto_DataType_FLOAT16 || elem_type == TensorProto_DataType_BFLOAT16
+      ? TensorProto_DataType_FLOAT
+      : elem_type;
+
+  FunctionBuilder builder(functionProto);
+  builder.Add("XCompute = Cast (X)", "to", static_cast<int64_t>(compute_type))
+      .Const("ExponentFloat", ToTensor<float>(2.0f));
+  if (ctx.getAttribute("epsilon") == nullptr) {
+    builder.Add("EpsilonFloat = Constant()", "value_float", schema.attributes().at("epsilon").default_value.f());
+  } else {
+    builder.Add("EpsilonFloat = Constant <value_float: float = @epsilon>()");
+  }
+  builder.Add("Exponent = Cast (ExponentFloat)", "to", static_cast<int64_t>(compute_type))
+      .Add("Epsilon = Cast (EpsilonFloat)", "to", static_cast<int64_t>(compute_type));
+
+  if (functionOpsetVersion == 13) {
+    builder.Add("X_RM = ReduceMean <axes : ints = @axes> (XCompute)")
+        .Add("X_variance = Sub (XCompute, X_RM)")
+        .Add("X_variance_squared = Pow (X_variance, Exponent)")
+        .Add("Variance = ReduceMean <axes : ints = @axes> (X_variance_squared)");
+  } else {
+    builder.Add("axes = Constant <value_ints: ints = @axes>()")
+        .Add("X_RM = ReduceMean (XCompute, axes)")
+        .Add("X_variance = Sub (XCompute, X_RM)")
+        .Add("X_variance_squared = Pow (X_variance, Exponent)")
+        .Add("Variance = ReduceMean (X_variance_squared, axes)");
+  }
+
+  builder.Add("STD = Sqrt (Variance)")
+      .Add("Processed_STD = Add (STD, Epsilon)")
+      .Add("YCompute = Div (X_variance, Processed_STD)")
+      .Add("Y = Cast (YCompute)", "to", static_cast<int64_t>(elem_type));
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+bool BuildMeanVarianceNormalizationFunctionBody_opset13(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  return BuildMeanVarianceNormalizationFunctionBody(ctx, schema, functionProto, 13);
+}
+
+bool BuildMeanVarianceNormalizationFunctionBody_opset18(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  return BuildMeanVarianceNormalizationFunctionBody(ctx, schema, functionProto, 18);
+}
+
 std::vector<int64_t> getConvPoolStrides(InferenceContext& ctx, size_t n_input_dims) {
   std::vector<int64_t> strides;
   if (getRepeatedAttribute(ctx, "strides", strides)) {
@@ -124,52 +191,51 @@ void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
     updateOutputShape(ctx, 3, qk_matmul_shape);
   }
 
-  if (ctx.hasOutput(1) && ctx.hasOutput(2)) { // has present outputs
-    if (ctx.hasInput(4) && ctx.hasInput(5)) { // has past_key
-      // copy the type from query to present key and value
-      propagateElemTypeFromInputToOutput(ctx, 4, 1);
-      propagateElemTypeFromInputToOutput(ctx, 5, 2);
+  if ((ctx.hasOutput(1) && ctx.hasOutput(2)) && (ctx.hasInput(4) && ctx.hasInput(5))) // has present outputs
+  { // has past_key
+    // copy the type from query to present key and value
+    propagateElemTypeFromInputToOutput(ctx, 4, 1);
+    propagateElemTypeFromInputToOutput(ctx, 5, 2);
 
-      if (hasInputShape(ctx, 4) && hasInputShape(ctx, 5)) {
-        const auto& past_key_shape = getInputShape(ctx, 4);
-        const auto& past_key_dims = past_key_shape.dim();
-        const auto& past_value_shape = getInputShape(ctx, 5);
-        const auto& past_value_dims = past_value_shape.dim();
+    if (hasInputShape(ctx, 4) && hasInputShape(ctx, 5)) {
+      const auto& past_key_shape = getInputShape(ctx, 4);
+      const auto& past_key_dims = past_key_shape.dim();
+      const auto& past_value_shape = getInputShape(ctx, 5);
+      const auto& past_value_dims = past_value_shape.dim();
 
-        // past key has shape (batch_size, kv_num_heads, past_sequence_length, head_size)
-        if (past_key_dims.size() != 4) {
-          fail_shape_inference("The past_key input shall be 4 dimensions");
+      // past key has shape (batch_size, kv_num_heads, past_sequence_length, head_size)
+      if (past_key_dims.size() != 4) {
+        fail_shape_inference("The past_key input shall be 4 dimensions");
+      }
+      // past value has shape (batch_size, kv_num_heads, past_sequence_length, v_head_size)
+      if (past_value_dims.size() != 4) {
+        fail_shape_inference("The past_value input shall be 4 dimensions");
+      }
+
+      if (kv_sequence_length > 0 && past_key_dims[2].has_dim_value()) {
+        int64_t total_sequence_length = checkedAdd(kv_sequence_length, past_key_dims[2].dim_value());
+
+        ONNX_NAMESPACE::TensorShapeProto present_key_shape;
+        for (const auto& dim : past_key_dims) {
+          *present_key_shape.add_dim() = dim;
         }
-        // past value has shape (batch_size, kv_num_heads, past_sequence_length, v_head_size)
-        if (past_value_dims.size() != 4) {
-          fail_shape_inference("The past_value input shall be 4 dimensions");
+
+        ONNX_NAMESPACE::TensorShapeProto present_value_shape;
+        for (const auto& dim : past_value_dims) {
+          *present_value_shape.add_dim() = dim;
         }
 
-        if (kv_sequence_length > 0 && past_key_dims[2].has_dim_value()) {
-          int64_t total_sequence_length = checkedAdd(kv_sequence_length, past_key_dims[2].dim_value());
-
-          ONNX_NAMESPACE::TensorShapeProto present_key_shape;
-          for (const auto& dim : past_key_dims) {
-            *present_key_shape.add_dim() = dim;
-          }
-
-          ONNX_NAMESPACE::TensorShapeProto present_value_shape;
-          for (const auto& dim : past_value_dims) {
-            *present_value_shape.add_dim() = dim;
-          }
-
-          if (ctx.hasOutput(3)) { // has qk_matmul_output with bias
-            qk_matmul_shape.mutable_dim(3)->set_dim_value(total_sequence_length);
-            updateOutputShape(ctx, 3, qk_matmul_shape);
-          }
-
-          // shape of present key/value is (batch_size, kv_num_heads, total_sequence_length, head_size)
-          present_key_shape.mutable_dim(2)->set_dim_value(total_sequence_length);
-          present_value_shape.mutable_dim(2)->set_dim_value(total_sequence_length);
-
-          updateOutputShape(ctx, 1, present_key_shape);
-          updateOutputShape(ctx, 2, present_value_shape);
+        if (ctx.hasOutput(3)) { // has qk_matmul_output with bias
+          qk_matmul_shape.mutable_dim(3)->set_dim_value(total_sequence_length);
+          updateOutputShape(ctx, 3, qk_matmul_shape);
         }
+
+        // shape of present key/value is (batch_size, kv_num_heads, total_sequence_length, head_size)
+        present_key_shape.mutable_dim(2)->set_dim_value(total_sequence_length);
+        present_value_shape.mutable_dim(2)->set_dim_value(total_sequence_length);
+
+        updateOutputShape(ctx, 1, present_key_shape);
+        updateOutputShape(ctx, 2, present_value_shape);
       }
     }
   }

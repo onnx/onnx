@@ -1,0 +1,30 @@
+{
+  "@context": "https://openvex.dev/ns/v0.2.0",
+  "@id": "https://github.com/onnx/onnx/blob/main/.vex/onnx.openvex.json",
+  "author": "ONNX Project Contributors",
+  "timestamp": "2026-10-11T00:00:00Z",
+  "version": 1,
+  "statements": [
+    {
+      "vulnerability": {
+        "name": "CVE-2026-0994",
+        "aliases": [
+          "GHSA-7gcm-g887-7qv7"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/onnx",
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/protobuf"
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "The missing recursion depth accounting is in the google.protobuf.Any handling of google.protobuf.json_format. No ONNX protobuf message type contains a google.protobuf.Any field, so parsing ONNX JSON (onnx.load(..., format=\"json\")) never reaches that code; an \"@type\" key is rejected as an unknown field and nested ONNX messages remain subject to max_recursion_depth."
+    }
+  ]
+}

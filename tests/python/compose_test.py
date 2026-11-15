@@ -22,6 +22,7 @@ from onnx import (
     parser,
     version_converter,
 )
+from onnx.reference import ReferenceEvaluator
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -723,7 +724,10 @@ class TestComposeFunctions:
                     == out_g1.type.tensor_type.elem_type
                 )
                 expected_out_shape = _get_shape(out_g1)
-                expected_out_shape.insert(dim_idx, 1)
+                expected_out_shape.insert(
+                    dim_idx if dim_idx >= 0 else len(expected_out_shape) + dim_idx + 1,
+                    1,
+                )
                 assert _get_shape(out_g2) == expected_out_shape
 
         for dim_idx in [0, 2, -1, -3]:
@@ -736,6 +740,32 @@ class TestComposeFunctions:
         dim_idx = 0
         compose.expand_out_dim(m2, dim_idx, inplace=True)
         _check_model(m1, m2, dim_idx)
+
+    def test_expand_out_dim_negative_index(self) -> None:
+        """A negative dim_idx follows Unsqueeze semantics, so -1 appends a trailing dimension."""
+        m1 = _load_model(
+            """
+            <ir_version: 8, opset_import: [ "": 13]>
+            agraph (float[2, 3] X) => (float[2, 3] Y)
+            {
+                Y = Identity(X)
+            }
+            """
+        )
+        x = np.zeros((2, 3), dtype=np.float32)
+        for dim_idx, expected_shape in [
+            (0, [1, 2, 3]),
+            (1, [2, 1, 3]),
+            (2, [2, 3, 1]),
+            (-1, [2, 3, 1]),
+            (-2, [2, 1, 3]),
+            (-3, [1, 2, 3]),
+        ]:
+            m2 = compose.expand_out_dim(m1, dim_idx)
+            checker.check_model(m2, full_check=True)
+            assert _get_shape(m2.graph.output[0]) == expected_shape
+            (y,) = ReferenceEvaluator(m2).run(None, {"X": x})
+            assert list(y.shape) == expected_shape
 
     def _test_overlapping_names(
         self,

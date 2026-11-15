@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # Minimum CMake required
 cmake_minimum_required(VERSION 3.26)
 # Project
@@ -135,7 +139,7 @@ if(ONNX_DISABLE_EXCEPTIONS)
     string(REGEX REPLACE "/EHsc" "/EHs-c-" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     add_definitions(-D_HAS_EXCEPTIONS=0)
   else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
   endif()
 endif()
 
@@ -271,37 +275,42 @@ if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
     # in https://github.com/caffe2/caffe2/blob/b7d983f255ef5496474f1ea188edb5e0ac4
     # 42761/cmake/ProtoBuf.cmake#L82-L92 The following section is stolen from
     # cmake/ProtoBuf.cmake in Caffe2
-    find_program(Protobuf_PROTOC_EXECUTABLE
-                NAMES protoc
-                DOC "The Google Protocol Buffers Compiler")
-
-    # Only if protoc was found, seed the include directories and libraries. We
-    # assume that protoc is installed at PREFIX/bin. We use get_filename_component
-    # to resolve PREFIX.
-    if(Protobuf_PROTOC_EXECUTABLE)
-      set(ONNX_PROTOC_EXECUTABLE ${Protobuf_PROTOC_EXECUTABLE})
-      get_filename_component(_PROTOBUF_INSTALL_PREFIX
-                            ${Protobuf_PROTOC_EXECUTABLE} DIRECTORY)
-      get_filename_component(_PROTOBUF_INSTALL_PREFIX
-                            ${_PROTOBUF_INSTALL_PREFIX}/.. REALPATH)
-      find_library(Protobuf_PROTOC_LIBRARY
+    if(EXISTS "${ONNX_CUSTOM_PROTOC_EXECUTABLE}")
+      set(Protobuf_PROTOC_EXECUTABLE "${ONNX_CUSTOM_PROTOC_EXECUTABLE}")
+    else()
+      find_program(Protobuf_PROTOC_EXECUTABLE
                   NAMES protoc
-                  PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+                  DOC "The Google Protocol Buffers Compiler")
+    endif()
+
+    # A compiler is needed before discovering the external Protobuf libraries.
+    if(Protobuf_PROTOC_EXECUTABLE)
+      # A host protoc may live outside the target sysroot when cross-compiling.
+      # Let the toolchain locate target headers and libraries in that case.
+      if(NOT CMAKE_CROSSCOMPILING)
+        get_filename_component(_PROTOBUF_INSTALL_PREFIX
+                              ${Protobuf_PROTOC_EXECUTABLE} DIRECTORY)
+        get_filename_component(_PROTOBUF_INSTALL_PREFIX
+                              ${_PROTOBUF_INSTALL_PREFIX}/.. REALPATH)
+        find_library(Protobuf_PROTOC_LIBRARY
+                    NAMES protoc
+                    PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+                    NO_DEFAULT_PATH)
+        if(ONNX_USE_LITE_PROTO)
+          find_library(Protobuf_LITE_LIBRARY
+            NAMES protobuf-lite
+            PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+            NO_DEFAULT_PATH)
+        else()
+          find_library(Protobuf_LIBRARY
+            NAMES protobuf
+            PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+            NO_DEFAULT_PATH)
+        endif(ONNX_USE_LITE_PROTO)
+        find_path(Protobuf_INCLUDE_DIR google/protobuf/service.h
+                  PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
                   NO_DEFAULT_PATH)
-      if(ONNX_USE_LITE_PROTO)
-        find_library(Protobuf_LITE_LIBRARY
-          NAMES protobuf-lite
-          PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
-          NO_DEFAULT_PATH)
-      else()
-        find_library(Protobuf_LIBRARY
-          NAMES protobuf
-          PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
-          NO_DEFAULT_PATH)
-      endif(ONNX_USE_LITE_PROTO)
-      find_path(Protobuf_INCLUDE_DIR google/protobuf/service.h
-                PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
-                NO_DEFAULT_PATH)
+      endif()
       if(ONNX_USE_PROTOBUF_SHARED_LIBS)
         set(Protobuf_USE_STATIC_LIBS OFF)
       else()
@@ -309,6 +318,7 @@ if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
       endif()
       find_package(Protobuf)
       if(Protobuf_FOUND)
+        set(ONNX_PROTOC_EXECUTABLE "${Protobuf_PROTOC_EXECUTABLE}")
         set(PROTOBUF_DIR "${_PROTOBUF_INSTALL_PREFIX}")
         set(Build_Protobuf OFF)
         if("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
@@ -620,12 +630,27 @@ add_dependencies(onnx_proto onnx_proto_gen)
 add_dependencies(onnx_proto onnx_proto_headers)
 
 # Core library. Hand-written sources come from target_sources(onnx ...) in the
-# subdirectories; the protobuf objects are pulled in from onnx_proto.
-add_library(onnx $<TARGET_OBJECTS:onnx_proto>)
+# subdirectories. onnx links onnx_proto rather than embedding its objects:
+# both targets are installed and exported, so embedding puts a second copy of
+# the generated descriptors into any process that ends up with both libraries.
+# Protobuf aborts on the second registration of the same file name with
+# "File already exists in database: onnx/onnx-ml.proto".
+add_library(onnx)
 add_subdirectory(onnx)
+target_link_libraries(onnx PUBLIC onnx_proto)
 add_dependencies(onnx onnx_proto)
 set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
 add_onnx_global_defines(onnx)
+if(BUILD_SHARED_LIBS)
+  # A shared onnx needs the shared onnx_proto, which is installed next to it.
+  # Without a search path of its own, an installed libonnx only finds it via
+  # system paths or LD_LIBRARY_PATH.
+  if(APPLE)
+    set_property(TARGET onnx APPEND PROPERTY INSTALL_RPATH "@loader_path")
+  elseif(UNIX)
+    set_property(TARGET onnx APPEND PROPERTY INSTALL_RPATH "$ORIGIN")
+  endif()
+endif()
 
 if(ONNX_BUILD_PYTHON)
   if(BUILD_SHARED_LIBS)

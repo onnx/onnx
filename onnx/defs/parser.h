@@ -8,8 +8,10 @@
 #pragma once
 
 #include <algorithm>
+#include <charconv>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <unordered_map>
 
 #include "onnx/common/common.h"
@@ -18,10 +20,6 @@
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
-
-// Locale-independent string-to-float/double conversion (defined in parser.cc).
-ONNX_API float LocaleIndependentStof(const std::string& s);
-ONNX_API double LocaleIndependentStod(const std::string& s);
 
 using IdList = google::protobuf::RepeatedPtrField<std::string>;
 
@@ -105,10 +103,6 @@ class PrimitiveTypeNameMap : public StringIntMap<PrimitiveTypeNameMap> {
     map_["float6e2m3"] = TensorProto_DataType_FLOAT6E2M3;
     map_["float6e3m2"] = TensorProto_DataType_FLOAT6E3M2;
   }
-
-  static bool IsTypeName(const std::string& dtype) {
-    return Lookup(dtype) != 0;
-  }
 };
 
 class AttributeTypeNameMap : public StringIntMap<AttributeTypeNameMap> {
@@ -186,10 +180,6 @@ class KeyWordMap {
 // Locale-independent ASCII classification, so that the text format does not
 // vary with the process locale. Accepts char or the int returned by
 // ParserBase::NextChar; non-ASCII bytes classify as false either way.
-constexpr bool IsSpace(int c) {
-  return c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r';
-}
-
 constexpr bool IsAlpha(int c) {
   return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 }
@@ -233,17 +223,11 @@ class ParserBase {
     if (input_.empty())
       return std::string();
     // Special case: a parse-error at end of input starts from the last character.
-    size_t p = (pos_ < input_.size()) ? pos_ : input_.size() - 1;
-    while ((p > 0) && IsSpace(input_[p]))
-      --p;
-    while ((p > 0) && (input_[p] != '\n'))
-      --p;
-    // Start at character after '\n' unless we are at start of input
-    size_t context_start = (p > 0) ? (p + 1) : 0;
-    size_t context_end = context_start;
-    while ((context_end < input_.size()) && (input_[context_end] != '\n'))
-      ++context_end;
-    return std::string(input_.substr(context_start, context_end - context_start));
+    const auto last = input_.find_last_not_of(" \t\n\v\f\r", std::min(pos_, input_.size() - 1));
+    const auto newline = input_.rfind('\n', last == std::string_view::npos ? 0 : last);
+    // Preserve the first-line context when the only preceding newline is at offset zero.
+    const auto context = input_.substr(newline != std::string_view::npos && newline > 0 ? newline + 1 : 0);
+    return std::string(context.substr(0, context.find('\n')));
   }
 
   template <typename... Args>
@@ -257,8 +241,7 @@ class ParserBase {
 
   void SkipWhiteSpace() {
     do {
-      while (!AtEnd() && IsSpace(Cur()))
-        ++pos_;
+      pos_ = std::min(input_.find_first_not_of(" \t\n\v\f\r", pos_), input_.size());
       if (AtEnd() || (Cur() != '#'))
         return;
       // Skip rest of the line; the loop then consumes the newline as whitespace.
@@ -298,7 +281,21 @@ class ParserBase {
 
   struct Literal {
     LiteralType type{LiteralType::UNDEFINED};
-    std::string value;
+    std::string_view value; // Borrows the parser input.
+
+    void DecodeString(std::string& target) const {
+      target.assign(value);
+      size_t output = target.find('\\');
+      if (output == std::string::npos)
+        return;
+      size_t input = output;
+      while (input < target.size()) {
+        if (target[input] == '\\')
+          ++input;
+        target[output++] = target[input++];
+      }
+      target.resize(output);
+    }
   };
 
   Common::Status Parse(Literal& result);
@@ -308,7 +305,14 @@ class ParserBase {
     CHECK_PARSER_STATUS(Parse(literal))
     if (literal.type != LiteralType::INT_LITERAL)
       return ParseError("Integer value expected, but not found.");
-    val = std::stoll(literal.value);
+    int64_t parsed = 0;
+    const char* end = literal.value.data() + literal.value.size();
+    // from_chars uses an explicit end pointer, not a NUL terminator.
+    // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
+    const auto result = std::from_chars(literal.value.data(), end, parsed);
+    if (result.ec != std::errc{} || result.ptr != end)
+      return ParseError("Integer literal is invalid or out of range: ", literal.value);
+    val = parsed;
     return Common::Status::OK();
   }
 
@@ -317,37 +321,20 @@ class ParserBase {
     CHECK_PARSER_STATUS(Parse(literal))
     if (literal.type != LiteralType::INT_LITERAL)
       return ParseError("Integer value expected, but not found.");
-    val = std::stoull(literal.value);
+    uint64_t parsed = 0;
+    const char* end = literal.value.data() + literal.value.size();
+    // from_chars rejects a leading '-' for unsigned types, including "-0".
+    // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
+    const auto result = std::from_chars(literal.value.data(), end, parsed);
+    if (result.ec != std::errc{} || result.ptr != end)
+      return ParseError("Unsigned integer literal is invalid or out of range: ", literal.value);
+    val = parsed;
     return Common::Status::OK();
   }
 
-  Common::Status Parse(float& val) {
-    Literal literal;
-    CHECK_PARSER_STATUS(Parse(literal))
-    switch (literal.type) {
-      case LiteralType::INT_LITERAL:
-      case LiteralType::FLOAT_LITERAL:
-        val = LocaleIndependentStof(literal.value);
-        break;
-      default:
-        return ParseError("Unexpected literal type.");
-    }
-    return Common::Status::OK();
-  }
+  Common::Status Parse(float& val);
 
-  Common::Status Parse(double& val) {
-    Literal literal;
-    CHECK_PARSER_STATUS(Parse(literal))
-    switch (literal.type) {
-      case LiteralType::INT_LITERAL:
-      case LiteralType::FLOAT_LITERAL:
-        val = LocaleIndependentStod(literal.value);
-        break;
-      default:
-        return ParseError("Unexpected literal type.");
-    }
-    return Common::Status::OK();
-  }
+  Common::Status Parse(double& val);
 
   // Parse a string-literal enclosed within double-quotes.
   Common::Status Parse(std::string& val) {
@@ -355,7 +342,7 @@ class ParserBase {
     CHECK_PARSER_STATUS(Parse(literal))
     if (literal.type != LiteralType::STRING_LITERAL)
       return ParseError("String value expected, but not found.");
-    val = literal.value;
+    literal.DecodeString(val);
     return Common::Status::OK();
   }
 
@@ -482,6 +469,25 @@ class OnnxParser : public ParserBase {
   }
 
  private:
+  class RecursionDepthGuard {
+   public:
+    explicit RecursionDepthGuard(size_t& depth) : depth_(depth) {
+      ++depth_;
+    }
+
+    ~RecursionDepthGuard() {
+      --depth_;
+    }
+
+    RecursionDepthGuard(const RecursionDepthGuard&) = delete;
+    RecursionDepthGuard& operator=(const RecursionDepthGuard&) = delete;
+
+   private:
+    size_t& depth_;
+  };
+
+  static constexpr size_t kMaxRecursionDepth = 100;
+
   Common::Status Parse(std::string name, GraphProto& graph);
 
   Common::Status Parse(IdList& idlist);
@@ -513,6 +519,8 @@ class OnnxParser : public ParserBase {
   bool NextIsType();
 
   bool NextIsIdentifier();
+
+  size_t recursion_depth_ = 0;
 };
 
 } // namespace ONNX_NAMESPACE

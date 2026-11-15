@@ -83,6 +83,13 @@ repos:
         require_serial: true
         exclude: "^docs/docsgen/"
 
+      - id: notice-check
+        name: notice check (NOTICE matches sbom.cdx.json)
+        entry: pixi run python tools/check_notice.py
+        language: system
+        files: "^(NOTICE|sbom\\.cdx\\.json|tools/check_notice\\.py)$"
+        pass_filenames: false
+
       # REUSE license compliance
       - id: reuse
         name: reuse lint
