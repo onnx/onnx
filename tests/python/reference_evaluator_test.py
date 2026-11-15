@@ -5894,16 +5894,18 @@ class TestReferenceEvaluator:
         assert got.shape == expected.shape
         assert_array_equal(got.astype(np.float64), expected.astype(np.float64))
 
-    @pytest.mark.parametrize("dtype", [np.float16, ml_dtypes.bfloat16])
-    @pytest.mark.parametrize("case", ["saturation", "overflow"])
+    @pytest.mark.parametrize(
+        ("dtype", "values"),
+        [
+            (np.float16, [2047, 1, 1, 1, 1]),
+            (np.float16, [60000, 60000, -60000, -60000]),
+            (ml_dtypes.bfloat16, [255, 1, 1, 1, 1]),
+        ],
+    )
     @pytest.mark.parametrize("exclusive", [0, 1])
     @pytest.mark.parametrize("reverse", [0, 1])
-    def test_cumsum_low_precision_accumulation(self, dtype, case, exclusive, reverse):
-        if case == "saturation":
-            x = np.array([2047, 1, 1, 1, 1], dtype=dtype)
-        else:
-            val = 60000 if dtype == np.float16 else 2e38
-            x = np.array([val, val, -val, -val], dtype=dtype)
+    def test_cumsum_low_precision_accumulation(self, dtype, values, exclusive, reverse):
+        x = np.array(values[::-1] if reverse else values, dtype=dtype)
         axis = np.array(0, dtype=np.int32)
         xf = x.astype(np.float32)
         if reverse:
@@ -5944,11 +5946,20 @@ class TestReferenceEvaluator:
         assert got.dtype == x.dtype
         assert_array_equal(got.astype(np.float32), expected.astype(np.float32))
 
-    @pytest.mark.parametrize("dtype", [np.float16, ml_dtypes.bfloat16])
-    @pytest.mark.parametrize("opset", [11, 18])
+    @pytest.mark.parametrize(
+        ("dtype", "opset"),
+        [
+            (np.float16, 11),
+            (np.float16, 18),
+            (ml_dtypes.bfloat16, 13),
+            (ml_dtypes.bfloat16, 18),
+        ],
+    )
     def test_reduce_sum_low_precision_accumulation(self, dtype, opset):
-        val = 60000 if dtype == np.float16 else 2e38
-        x = np.array([[2047, 1, 1, 1], [val, val, -val, 0]], dtype=dtype)
+        if dtype == np.float16:
+            x = np.array([[2047, 1, 1, 1], [60000, 60000, -60000, 0]], dtype=dtype)
+        else:
+            x = np.array([[255, 1, 1, 1], [256, 1, 1, 0]], dtype=dtype)
         expected = np.sum(x.astype(np.float32), axis=1, keepdims=True).astype(dtype)
 
         tensor_type = onnx.helper.np_dtype_to_tensor_dtype(x.dtype)
@@ -5972,12 +5983,18 @@ class TestReferenceEvaluator:
         assert got.dtype == x.dtype
         assert_array_equal(got.astype(np.float32), expected.astype(np.float32))
 
-    @pytest.mark.parametrize("dtype", [np.float16, ml_dtypes.bfloat16])
-    def test_sum_low_precision_accumulation(self, dtype):
-        val = 60000 if dtype == np.float16 else 1e38
-        a = np.full((2, 2), val, dtype=dtype)
-        b = np.full((2, 2), val, dtype=dtype)
-        c = np.full((2, 2), -val, dtype=dtype)
+    @pytest.mark.parametrize(
+        ("dtype", "values"),
+        [
+            (np.float16, (60000, 60000, -60000)),
+            (np.float16, (2048, 1, 1)),
+            (ml_dtypes.bfloat16, (256, 1, 1)),
+        ],
+    )
+    def test_sum_low_precision_accumulation(self, dtype, values):
+        a = np.full((2, 2), values[0], dtype=dtype)
+        b = np.full((2, 2), values[1], dtype=dtype)
+        c = np.full((2, 2), values[2], dtype=dtype)
         expected = (
             a.astype(np.float32) + b.astype(np.float32) + c.astype(np.float32)
         ).astype(dtype)

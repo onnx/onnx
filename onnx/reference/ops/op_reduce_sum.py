@@ -11,9 +11,7 @@ from onnx.reference.ops._op import OpRunReduceNumpy
 
 def _reduce_sum(x, axes, keepdims):
     acc_dtype = (
-        np.float32
-        if x.dtype in (np.float16, np.dtype(ml_dtypes.bfloat16))
-        else x.dtype
+        np.float32 if x.dtype in (np.float16, np.dtype(ml_dtypes.bfloat16)) else x.dtype
     )
     res = np.sum(
         x.astype(acc_dtype, copy=False),
