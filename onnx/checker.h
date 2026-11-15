@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -16,11 +17,38 @@
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE::checker {
+
+// Stable identifiers of the rules a model can fail, reported by
+// ValidationError::code(). Messages may change between releases; these codes
+// do not. Rules without a code report an empty one. See docs/CheckerErrorCodes.md.
+namespace error_code {
+inline constexpr std::string_view kIrVersionMissing = "ir-version-missing";
+inline constexpr std::string_view kIrVersionUnsupported = "ir-version-unsupported";
+inline constexpr std::string_view kMetadataPropsDuplicateKey = "metadata-props-duplicate-key";
+inline constexpr std::string_view kRequiredFieldMissing = "required-field-missing";
+inline constexpr std::string_view kRequiredFieldEmpty = "required-field-empty";
+inline constexpr std::string_view kDataTypeRequiresNewerIrVersion = "data-type-requires-newer-ir-version";
+inline constexpr std::string_view kOpsetImportMissing = "opset-import-missing";
+inline constexpr std::string_view kOperatorNotRegistered = "operator-not-registered";
+inline constexpr std::string_view kOperatorDeprecated = "operator-deprecated";
+inline constexpr std::string_view kNodeSchemaMismatch = "node-schema-mismatch";
+inline constexpr std::string_view kInputNotDefined = "input-not-defined";
+inline constexpr std::string_view kNotSsa = "not-ssa";
+inline constexpr std::string_view kGraphOutputNotProduced = "graph-output-not-produced";
+inline constexpr std::string_view kExternalDataEntryInvalid = "external-data-entry-invalid";
+inline constexpr std::string_view kExternalDataLocationInvalid = "external-data-location-invalid";
+inline constexpr std::string_view kExternalDataFileMissing = "external-data-file-missing";
+inline constexpr std::string_view kExternalDataOutOfRange = "external-data-out-of-range";
+} // namespace error_code
+
 // std::string member means copy may throw when allocation fails
 // NOLINTNEXTLINE(bugprone-exception-copy-constructor-throws)
 class ValidationError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
+  // code must refer to a string that outlives the error, such as an error_code
+  // constant.
+  ValidationError(const std::string& message, std::string_view code) : std::runtime_error(message), code_(code) {}
   const char* what() const noexcept override {
     if (!expanded_message_.empty()) {
       return expanded_message_.c_str();
@@ -30,12 +58,19 @@ class ValidationError final : public std::runtime_error {
   void AppendContext(const std::string& context) {
     expanded_message_ = ONNX_NAMESPACE::MakeString(std::runtime_error::what(), "\n\n==> Context: ", context);
   }
+  // The error_code of the rule that failed, or empty if the rule has none.
+  std::string_view code() const noexcept {
+    return code_;
+  }
 
  private:
   std::string expanded_message_;
+  std::string_view code_;
 };
 
 #define fail_check(...) ONNX_THROW_EX(ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)))
+#define fail_check_with_code(code, ...) \
+  ONNX_THROW_EX(ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__), code))
 
 class CheckerContext final {
  public:
@@ -68,10 +103,18 @@ class CheckerContext final {
 
   void set_model_dir(const std::string& model_dir) {
     model_dir_ = model_dir;
+    // Only a model checked from a file path has a model directory. An
+    // in-memory model keeps the default (no directory), so its external
+    // data locations are never resolved against the working directory.
+    model_dir_from_path_ = true;
   }
 
   const std::string& get_model_dir() const {
     return model_dir_;
+  }
+
+  bool model_dir_from_path() const {
+    return model_dir_from_path_;
   }
 
   bool skip_opset_compatibility_check() const {
@@ -98,6 +141,7 @@ class CheckerContext final {
   bool is_main_graph_ = true;
   const ISchemaRegistry* schema_registry_ = OpSchemaRegistry::Instance();
   std::string model_dir_;
+  bool model_dir_from_path_ = false;
   bool skip_opset_compatibility_check_ = false;
   bool check_custom_domain_ = false;
 };

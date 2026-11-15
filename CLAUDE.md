@@ -21,7 +21,7 @@ Before committing, pushing, filing an issue, or opening a pull request, review [
 - Match existing code patterns and conventions — read surrounding code before making changes.
 - Keep PRs focused. Do not bundle unrelated changes or refactor code outside the scope of the task.
 - New operators must follow the process in `docs/AddNewOp.md`.
-- Do not introduce new dependencies as a matter of course. If one genuinely seems necessary, it must be MIT- or Apache-2.0-licensed, and should be raised with maintainers rather than added unilaterally.
+- Avoid adding new dependencies. A proposal for one must provide a compelling justification, explain why the standard library and existing dependencies are insufficient, and assess its maintenance, security, packaging, and cross-platform impact. Its license must be compatible with ONNX's Apache-2.0 distribution, and maintainers must approve the dependency before it is added.
 
 ## Build
 
@@ -83,3 +83,13 @@ Core validation (`checker`), shape inference, and version conversion are C++ exp
 **ONNX_ML flag** (on by default): controls traditional ML types (sequences, maps, sparse tensors). When enabled, builds use `onnx-ml.in.proto` instead of `onnx.in.proto`.
 
 Build artifacts go to `.setuptools-cmake-build/`.
+
+## PR descriptions
+
+Follow the structure of [`.github/pull_request_template.md`](.github/pull_request_template.md).
+Describe what the change does and why. Do not list the tests, lint runs, or build commands you ran:
+CI runs the tests and linters on every PR, so such lists add length without information.
+Mention testing only if it is not covered by CI (e.g., manual verification on a specific platform or with a downstream
+runtime).
+Include the checklist from the template verbatim and leave the box unchecked;
+only the human author may check it.

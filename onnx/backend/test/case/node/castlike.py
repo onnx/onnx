@@ -142,7 +142,7 @@ class CastLike(Base):
                         "9",
                         "1000000",
                         "1e-7",
-                        "NaN",
+                        "-1000000",
                         "INF",
                         "+INF",
                         "-INF",

@@ -25,6 +25,9 @@ applicable `topic:` or `module:` label, as enforced by
 names. For example, use `topic: documentation` for a documentation-only PR and
 add any other existing labels that materially apply to the change.
 
+## Linters and formatters
+
+PRs will not be merged if they do not pass this project's linting and formatting rules.
 We use pixi tasks for installing and linting
 
 ```sh

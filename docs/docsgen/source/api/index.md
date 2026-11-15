@@ -3,7 +3,10 @@
 # API Reference
 
 ```{tip}
-The [ir-py project](https://github.com/onnx/ir-py) provides alternative Pythonic APIs for creating and manipulating ONNX models without interaction with Protobuf.
+For creating and manipulating ONNX models with a higher-level, more ergonomic Python interface without direct Protobuf interaction, consider:
+- **[ir-py](https://github.com/onnx/ir-py)**: Modern in-memory IR and Python API for ONNX without raw Protobuf interaction.
+- **[spox](https://github.com/Quantco/spox)**: Statically typed, functional API for composing ONNX models.
+- **[ndonnx](https://github.com/Quantco/ndonnx)**: NumPy-compatible array interface that traces operations into ONNX graphs.
 ```
 
 ## Versioning
