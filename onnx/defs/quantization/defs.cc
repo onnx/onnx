@@ -249,7 +249,7 @@ static void InferQuantizeLinear29(InferenceContext& ctx) {
   // Otherwise, y_zero_point is provided but its type could not be inferred, and no output_dtype
   // attribute was specified: the output type cannot be determined, so it is left uninferred.
   if (hasInputShape(ctx, 0)) {
-    propagateShapeFromInputToOutput(ctx, 0, 0);
+    updateOutputShape(ctx, 0, getInputShape(ctx, 0));
   }
   ValidateQuantizationBlockShape(ctx);
 }
@@ -376,7 +376,7 @@ static void InferDequantizeLinear29(InferenceContext& ctx) {
     propagateElemTypeFromInputToOutput(ctx, 1, 0);
   }
   if (hasInputShape(ctx, 0)) {
-    propagateShapeFromInputToOutput(ctx, 0, 0);
+    updateOutputShape(ctx, 0, getInputShape(ctx, 0));
   }
 
   ValidateQuantizationBlockShape(ctx);

@@ -58,14 +58,15 @@ class _CommonDequantizeLinear(OpRun):
                         "x_zero_point is not null but should be zero for float8 types."
                     )
             dx = x.astype(np.float32)
-        y = dx * reshape(x_scale)
-        return (
-            y.astype(
-                tensor_dtype_to_np_dtype(output_dtype)
-                if output_dtype
-                else x_scale.dtype
-            ),
+        dtype = (
+            tensor_dtype_to_np_dtype(output_dtype) if output_dtype else x_scale.dtype
         )
+        if _block_shape is not None:
+            # The output type determines the multiplication precision.
+            y = dx.astype(dtype) * reshape(x_scale).astype(dtype)
+        else:
+            y = dx * reshape(x_scale)
+        return (y.astype(dtype),)
 
 
 class DequantizeLinear_19(_CommonDequantizeLinear):

@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
-from onnx import AttributeProto, TensorProto
+from onnx import AttributeProto, TensorProto, checker, parser
 from onnx.helper import make_attribute, make_node, tensor_dtype_to_np_dtype
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops._quant_utils import reshape_multi_axis
@@ -36,16 +36,51 @@ def _evaluate(x, scale, zero_point=None, *, opset=29, **attrs):
 
 def _oracle(x, scale, block_shape, zero_point=None, output_dtype=None):
     # Independent element indexing: no expansion or prototype helpers.
-    result = np.empty(x.shape, dtype=np.float32)
+    dtype = tensor_dtype_to_np_dtype(output_dtype) if output_dtype else scale.dtype
+    result = np.empty(x.shape, dtype=dtype)
     for index in np.ndindex(x.shape):
         grid_index = tuple(i // b for i, b in zip(index, block_shape, strict=True))
         value = np.float32(x[index])
         if zero_point is not None:
             value -= np.float32(zero_point[grid_index])
-        result[index] = value * scale[grid_index]
-    return result.astype(
-        tensor_dtype_to_np_dtype(output_dtype) if output_dtype else scale.dtype
-    )
+        result[index] = np.asarray(value, dtype=dtype) * np.asarray(
+            scale[grid_index], dtype=dtype
+        )
+    return result
+
+
+@pytest.mark.parametrize("output_dtype", [TensorProto.FLOAT16, TensorProto.BFLOAT16])
+def test_multi_axis_output_precision_and_explicit_cast(output_dtype):
+    output_type = TensorProto.DataType.Name(output_dtype).lower()
+    model = parser.parse_model(f"""
+        <ir_version: 13, opset_import: ["" : 29]>
+        g (float8e4m3fn[1, 1] X, float[1, 1] S)
+            => ({output_type}[1, 1] Y, {output_type}[1, 1] CastY) {{
+            Y = DequantizeLinear<block_shape = [2, 2], output_dtype = {output_dtype}>(X, S)
+            F = DequantizeLinear<block_shape = [2, 2], output_dtype = 1>(X, S)
+            CastY = Cast<to = {output_dtype}>(F)
+        }}
+    """)
+    checker.check_model(model, full_check=True)
+    x = np.array([[1.5]], dtype=ml_dtypes.float8_e4m3fn)
+    scale = np.array([[1.003]], dtype=np.float32)
+    direct, cast = ReferenceEvaluator(model).run(None, {"X": x, "S": scale})
+    dtype = tensor_dtype_to_np_dtype(output_dtype)
+    expected_direct = x.astype(dtype) * scale.astype(dtype)
+    expected_cast = (x.astype(np.float32) * scale).astype(dtype)
+    assert direct.dtype == cast.dtype == dtype
+    assert_array_equal(direct, expected_direct)
+    assert_array_equal(cast, expected_cast)
+    assert np.any(direct != cast)
+
+
+@pytest.mark.parametrize("scale_dtype", [np.float16, ml_dtypes.bfloat16])
+def test_multi_axis_default_output_precision(scale_dtype):
+    x = np.array([[1.5, -2.5]], dtype=ml_dtypes.float8_e4m3fn)
+    scale = np.array([[1.003]], dtype=scale_dtype)
+    got = _evaluate(x, scale, block_shape=[2, 2])
+    assert got.dtype == scale.dtype
+    assert_array_equal(got, _oracle(x, scale, [2, 2]))
 
 
 @pytest.mark.parametrize("opset", [21, 23, 24, 25, 28, 29])

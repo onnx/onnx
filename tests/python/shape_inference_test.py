@@ -8533,6 +8533,35 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.UINT8, (30, 4, 5))]
         )
 
+    @pytest.mark.parametrize(
+        ("opset", "multi_axis"), [(28, False), (29, False), (29, True)]
+    )
+    @pytest.mark.parametrize("output_dtype", [None, TensorProto.INT8])
+    def test_quantizelinear_unknown_zero_point_type(
+        self, opset, multi_axis, output_dtype
+    ) -> None:
+        attributes = []
+        if multi_axis:
+            attributes.append("block_shape = [3, 3]")
+        if output_dtype is not None:
+            attributes.append(f"output_dtype = {output_dtype}")
+        attribute_text = f"<{', '.join(attributes)}>" if attributes else ""
+        scale_shape = "2, 3" if multi_axis else ""
+        graph = parse_graph(f"""
+            g (float[5, 7] x, float[{scale_shape}] s, z) => (y) {{
+                y = QuantizeLinear{attribute_text}(x, s, z)
+            }}
+        """)
+        # Untyped formal parameters cannot determine the output element type,
+        # but must still allow the known input shape to propagate.
+        inferred = onnx.shape_inference.infer_shapes(
+            make_model(graph, opset_imports=[make_opsetid(ONNX_DOMAIN, opset)]),
+            strict_mode=True,
+        )
+        output = inferred.graph.output[0].type.tensor_type
+        assert output.elem_type == (output_dtype or TensorProto.UNDEFINED)
+        assert [dim.dim_value for dim in output.shape.dim] == [5, 7]
+
     def test_quantizelinear_default_zp(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (30, 4, 5)), ("y_scale", TensorProto.FLOAT, ())],
