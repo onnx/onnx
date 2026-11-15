@@ -24016,8 +24016,6 @@ expect(node, inputs=[x], outputs=[y], name="test_lppool_3d_default")
 
 ### <a name="MatMul"></a><a name="matmul">**MatMul**</a>
 
-  Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
-
   Both inputs must have rank at least 1. The inputs and output have the same element type `T`.
 
   For two-dimensional inputs with shapes `(M, K)` and `(K, N)`, the output has shape `(M, N)` and is computed as:

@@ -2265,8 +2265,6 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="MatMul-1"></a>**MatMul-1**</a>
 
-  Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
-
   Both inputs must have rank at least 1. The inputs and output have the same element type `T`.
 
   For two-dimensional inputs with shapes `(M, K)` and `(K, N)`, the output has shape `(M, N)` and is computed as:
@@ -8570,8 +8568,6 @@ This version of the operator has been available since version 9 of the default O
 </dl>
 
 ### <a name="MatMul-9"></a>**MatMul-9**</a>
-
-  Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 
   Both inputs must have rank at least 1. The inputs and output have the same element type `T`.
 
@@ -16639,8 +16635,6 @@ This version of the operator has been available since version 13 of the default 
 </dl>
 
 ### <a name="MatMul-13"></a>**MatMul-13**</a>
-
-  Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 
   Both inputs must have rank at least 1. The inputs and output have the same element type `T`.
 

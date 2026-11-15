@@ -1091,8 +1091,6 @@ where alpha = 1/6 and beta = 0.5, is applied to the tensor elementwise.
 )DOC";
 
 const char kDoc_MatMul_ver9[] = R"DOC(
-Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
-
 Both inputs must have rank at least 1. The inputs and output have the same element type `T`.
 
 For two-dimensional inputs with shapes `(M, K)` and `(K, N)`, the output has shape `(M, N)` and is computed as:
