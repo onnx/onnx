@@ -13,12 +13,7 @@ _HALF = 0.5
 
 
 def _round_half_away_from_zero(value: float) -> int:
-    """Round as C++ std::round does, half away from zero.
-
-    Python round() and numpy.round() implement banker's rounding, so they
-    cannot be used here, and floor(value + 0.5) is not equivalent for
-    negative coordinates.
-    """
+    """Match std::round without banker's rounding or rounding value + 0.5 early."""
     magnitude = abs(float(value))
     integer_part = math.floor(magnitude)
     rounded = integer_part + int(magnitude - integer_part >= _HALF)
@@ -61,10 +56,8 @@ class MaxRoiPool(OpRun):
             )
             bin_size_w = calculation_dtype(roi_width) / calculation_dtype(pooled_width)
 
-            # Bin bounds do not depend on the channel, so compute them once per
-            # ROI; the ROI offset is added in float64, which rounds only above
-            # 2**53. The window max stays per bin, since the windows have
-            # different shapes, but it covers all channels in one reduction.
+            # Preserve the calculation dtype for bin edges, then add the ROI
+            # offset in float64 to avoid losing integer precision in float32.
             edges_h = np.arange(pooled_height + 1, dtype=calculation_dtype)
             edges_w = np.arange(pooled_width + 1, dtype=calculation_dtype)
             hstart = np.clip(
@@ -99,4 +92,4 @@ class MaxRoiPool(OpRun):
                             hstart[ph] : hend[ph],
                             wstart[pw] : wend[pw],
                         ].max(axis=(1, 2))
-        return (Y.astype(X.dtype),)
+        return (Y,)
