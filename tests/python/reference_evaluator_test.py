@@ -8736,9 +8736,11 @@ class TestReferenceEvaluator:
             log_prob, expected_log_prob, rtol=4 * np.finfo(dtype).eps, atol=0
         )
 
-    @pytest.mark.parametrize("opset_version", [12, 13, 29])
+    @pytest.mark.parametrize(
+        "opset_version", sorted({12, 13, 14, 29, onnx.defs.onnx_opset_version()})
+    )
     @pytest.mark.parametrize("batch_size", [0, 2])
-    @pytest.mark.parametrize("spatial_shape", [(), (5,), (2, 3)])
+    @pytest.mark.parametrize("spatial_shape", [(), (5,), (2, 3), (5, 0), (0, 5), (0,)])
     @pytest.mark.parametrize("reduction", ["none", "sum", "mean"])
     @pytest.mark.parametrize("weighted", [False, True])
     def test_softmax_cross_entropy_zero_batch(
@@ -8751,8 +8753,11 @@ class TestReferenceEvaluator:
             make_tensor_value_info("scores", TensorProto.FLOAT, scores_shape),
             make_tensor_value_info("labels", TensorProto.INT64, labels_shape),
         ]
+        class_scores = np.arange(3, dtype=np.float32).reshape(
+            (1, 3) + (1,) * len(spatial_shape)
+        )
         feeds = {
-            "scores": np.zeros(scores_shape, dtype=np.float32),
+            "scores": np.broadcast_to(class_scores, scores_shape).copy(),
             "labels": np.ones(labels_shape, dtype=np.int64),
         }
         if weighted:
@@ -8797,11 +8802,15 @@ class TestReferenceEvaluator:
             for node in expanded.graph.node
             for attr in node.attribute
         )
-        expected_loss = np.full(labels_shape, np.log(3) * (2 if weighted else 1))
+        log_normalizer = np.log(np.exp(np.arange(3, dtype=np.float64)).sum())
+        expected_log_prob = np.broadcast_to(class_scores - log_normalizer, scores_shape)
+        expected_loss = np.full(
+            labels_shape, (log_normalizer - 1) * (2 if weighted else 1)
+        )
         if reduction == "sum":
             expected_loss = expected_loss.sum()
         elif reduction == "mean":
-            expected_loss = np.log(3) if batch_size else np.nan
+            expected_loss = log_normalizer - 1 if expected_loss.size else np.nan
         for candidate in (model, expanded):
             checker.check_model(candidate)
             onnx.shape_inference.infer_shapes(candidate, strict_mode=True)
@@ -8813,7 +8822,7 @@ class TestReferenceEvaluator:
             assert log_prob.shape == scores_shape
             assert log_prob.dtype == np.float32
             assert_allclose(loss, expected_loss, rtol=1e-6, equal_nan=True)
-            assert_allclose(log_prob, np.full(scores_shape, -np.log(3)), rtol=1e-6)
+            assert_allclose(log_prob, expected_log_prob, rtol=1e-6)
 
     def test_softmax_cross_entropy_weighted_mean_preserves_float16_dtype(self):
         x_info = make_tensor_value_info("X", TensorProto.FLOAT16, [1, 2])

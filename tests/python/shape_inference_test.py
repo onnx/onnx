@@ -11638,10 +11638,10 @@ class TestShapeInference(TestShapeInferenceHelper):
             )
 
     @pytest.mark.parametrize("batch_size", [0, 2])
-    @pytest.mark.parametrize("spatial_shape", [(), (5,), (2, 3)])
+    @pytest.mark.parametrize("spatial_shape", [(), (5,), (2, 3), (5, 0), (0, 5), (0,)])
     @pytest.mark.parametrize(
         "opset_version",
-        sorted({29, onnx.defs.onnx_opset_version()}),
+        sorted({12, 13, 14, 29, onnx.defs.onnx_opset_version()}),
     )
     def test_softmax_cross_entropy_expanded_zero_batch(
         self, batch_size: int, spatial_shape: tuple[int, ...], opset_version: int
@@ -11678,12 +11678,13 @@ class TestShapeInference(TestShapeInferenceHelper):
 
         expanded = inliner.inline_selected_functions(
             model,
-            [("", "SoftmaxCrossEntropyLoss")],
+            [("", "SoftmaxCrossEntropyLoss"), ("", "NegativeLogLikelihoodLoss")],
             inline_schema_functions=True,
         )
 
         assert not any(
-            node.op_type == "SoftmaxCrossEntropyLoss" for node in expanded.graph.node
+            node.op_type in {"SoftmaxCrossEntropyLoss", "NegativeLogLikelihoodLoss"}
+            for node in expanded.graph.node
         )
 
         checker.check_model(expanded)

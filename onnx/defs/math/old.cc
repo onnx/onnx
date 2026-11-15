@@ -1552,12 +1552,6 @@ static TensorProto ToDimensionOneInt64Tensor_old(int64_t value) {
   return t;
 }
 
-static TensorProto ToDimensionOneInt64Tensor_old(const std::vector<int64_t>& value) {
-  auto t = ToTensor(value);
-  t.add_dims(static_cast<int64_t>(value.size()));
-  return t;
-}
-
 static bool BuildContextDependentFunctionBody_opset12(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
@@ -1833,35 +1827,26 @@ static bool BuildContextDependentFunctionBodySCE_opset12(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
-  std::vector<FunctionBodyHelper::NodeDef> body;
-  body.reserve(17);
-
-  // Using stable implementation of LogSoftmax
-  body.push_back({{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneInt64Tensor_old(int64_t{0}))}});
-  body.push_back({{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneInt64Tensor_old(int64_t{1}))}});
-  body.push_back({{"const_two"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneInt64Tensor_old(int64_t{2}))}});
-  body.push_back(
-      {{"const_max"},
-       "Constant",
-       {},
-       {MakeAttribute(
-           "value", ToDimensionOneInt64Tensor_old(std::vector<int64_t>{std::numeric_limits<int64_t>::max()}))}});
-  body.push_back({{"X_shape"}, "Shape", {"scores"}});
-  body.push_back({{"NC"}, "Slice", {"X_shape", "const_zero", "const_two"}});
-  body.push_back({{"Spatial_shape"}, "Slice", {"X_shape", "const_two", "const_max"}});
-  body.push_back(
-      {{"Spatial_shape_with_one"},
-       "Concat",
-       {"Spatial_shape", "const_one"},
-       {MakeAttribute("axis", static_cast<int64_t>(0))}});
-  body.push_back(
-      {{"D"}, "ReduceProd", {"Spatial_shape_with_one"}, {MakeAttribute("keepdims", static_cast<int64_t>(1))}});
-  body.push_back({{"Shape3D"}, "Concat", {"NC", "D"}, {MakeAttribute("axis", static_cast<int64_t>(0))}});
-  body.push_back({{"X_NCD"}, "Reshape", {"scores", "Shape3D"}});
-  body.push_back({{"X_NDC"}, "Transpose", {"X_NCD"}, {MakeAttribute("perm", std::vector<int64_t>({0, 2, 1}))}});
-  body.push_back({{"X_LogSM"}, "LogSoftmax", {"X_NDC"}, {MakeAttribute("axis", static_cast<int64_t>(2))}});
-  body.push_back({{"X_LogSM_NCD"}, "Transpose", {"X_LogSM"}, {MakeAttribute("perm", std::vector<int64_t>({0, 2, 1}))}});
-  body.push_back({{"X_Log"}, "Reshape", {"X_LogSM_NCD", "X_shape"}});
+  FunctionBuilder builder(functionProto);
+  // Legacy Reshape copies zero dimensions, so bypass it for empty inputs.
+  // Legacy LogSoftmax flattens trailing dimensions: move classes last first.
+  builder.Const("scalar_zero", int64_t{0}).Const("Shape3D", std::vector<int64_t>{0, 0, -1}).Add(R"ONNX(
+        scores_size = Size (scores)
+        empty = Equal (scores_size, scalar_zero)
+        X_Log = If (empty) <
+          then_branch = empty_input () => (empty_output) {
+            empty_output = Identity (scores)
+          },
+          else_branch = nonempty_input () => (nonempty_output) {
+            X_NCD = Reshape (scores, Shape3D)
+            X_NDC = Transpose <perm = [0, 2, 1]> (X_NCD)
+            X_LogSM = LogSoftmax <axis = 2> (X_NDC)
+            X_LogSM_NCD = Transpose <perm = [0, 2, 1]> (X_LogSM)
+            X_shape = Shape (scores)
+            nonempty_output = Reshape (X_LogSM_NCD, X_shape)
+          }
+        >
+      )ONNX");
 
   // Review(mzs): Ideally we want to reuse the output from Log for sub-graph
   // output as well but looking at the graph resolve code it does not include
@@ -1871,29 +1856,15 @@ static bool BuildContextDependentFunctionBodySCE_opset12(
   // incorrect or there is a bug in function population code in ORTbut I will
   // dig further to be 100%. In the meantime we just replicate the log.
   if (ctx.hasOutput(1)) {
-    body.push_back({{"log_prob"}, "Identity", {"X_Log"}});
+    builder.Add("log_prob = Identity (X_Log)");
   }
 
-  std::vector<std::string> input_tensor_names{"X_Log", "labels"};
-  std::vector<FunctionBodyHelper::AttributeProtoWrapper> attributes{
-      MakeRefAttribute("reduction", AttributeProto::STRING)};
-  // Add weights as input if needed.
-  if (ctx.hasInput(2)) {
-    input_tensor_names.emplace_back("weights");
-  }
-
-  // add ignore_index attributes if needed.
+  std::string loss_node = "output = NegativeLogLikelihoodLoss <reduction : string = @reduction";
   if (ctx.getAttribute("ignore_index") != nullptr) {
-    attributes.emplace_back(MakeRefAttribute("ignore_index", AttributeProto::INT));
+    loss_node += ", ignore_index : int = @ignore_index";
   }
-
-  body.push_back({{"output"}, "NegativeLogLikelihoodLoss", input_tensor_names, attributes});
-
-  auto func_nodes = FunctionBodyHelper::BuildNodes(body);
-  for (const auto& node : func_nodes) {
-    auto* new_node = functionProto.add_node();
-    new_node->CopyFrom(node);
-  }
+  loss_node += ctx.hasInput(2) ? "> (X_Log, labels, weights)" : "> (X_Log, labels)";
+  builder.Add(loss_node.c_str());
 
   schema.BuildFunction(functionProto);
   return true;
