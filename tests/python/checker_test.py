@@ -588,9 +588,27 @@ class TestChecker:
         with pytest.raises(checker.ValidationError):
             checker.check_sparse_tensor(sparse)
 
+    def test_check_sparse_tensor_linear_index_with_large_dense_shape(self) -> None:
+        maximum = np.iinfo(np.int64).max
+        sparse = self.make_sparse([2, maximum], [13], [1], [maximum])
+        checker.check_sparse_tensor(sparse)
+
+        out_of_range = self.make_sparse([1, maximum], [13], [1], [maximum])
+        with pytest.raises(checker.ValidationError):
+            checker.check_sparse_tensor(out_of_range)
+
     def test_check_sparse_tensor_coo_format(self) -> None:
         sparse = self.make_sparse([10, 10], [13, 17, 19], [3, 2], [0, 9, 2, 7, 8, 1])
         checker.check_sparse_tensor(sparse)
+
+    def test_check_sparse_tensor_coo_order_with_large_dense_shape(self) -> None:
+        maximum = np.iinfo(np.int64).max
+        sorted_sparse = self.make_sparse([3, maximum], [13, 17], [2, 2], [0, 1, 2, 2])
+        checker.check_sparse_tensor(sorted_sparse)
+
+        descending = self.make_sparse([3, maximum], [13, 17], [2, 2], [2, 2, 0, 1])
+        with pytest.raises(checker.ValidationError):
+            checker.check_sparse_tensor(descending)
 
     def test_check_sparse_tensor_coo_format_invalid_index(self) -> None:
         sparse = self.make_sparse([10, 10], [13, 17, 19], [3, 2], [0, 9, 0, 27, 8, 1])
