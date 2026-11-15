@@ -251,18 +251,46 @@ static int64_t parse_external_data_integer(const StringStringEntryProto& entry, 
   return result;
 }
 
+// True if `pred` holds for a component of a lexically normalized path. '\\'
+// separates components on every platform, as it does on Windows, so that a
+// location such as "..\\data.bin" written on Linux or macOS cannot point outside
+// the model directory once it is read on Windows.
+template <typename Pred>
+static bool any_path_component(const std::filesystem::path& normalized_path, Pred pred) {
+  const std::string path_str = path_to_utf8(normalized_path);
+  std::string_view rest = path_str;
+  while (true) {
+    const auto end = rest.find_first_of("/\\");
+    if (pred(rest.substr(0, end))) {
+      return true;
+    }
+    if (end == std::string_view::npos) {
+      return false;
+    }
+    rest.remove_prefix(end + 1);
+  }
+}
+
 // True if a lexically normalized path still has a '..' component, so it points
 // outside the directory it is relative to. Names that merely contain two dots,
 // such as "model..weights.bin", do not count.
 static bool has_parent_directory_component(const std::filesystem::path& normalized_path) {
-  return std::any_of(normalized_path.begin(), normalized_path.end(), [](const std::filesystem::path& part) {
-    return part == std::filesystem::path("..");
+  return any_path_component(normalized_path, [](std::string_view part) { return part == ".."; });
+}
+
+// True if a path has a component made only of dots and spaces, such as "..." or
+// ".. ". Windows trims trailing dots and spaces from each component, so it reads
+// such a component as the current or parent directory.
+static bool has_dots_and_spaces_component(const std::filesystem::path& normalized_path) {
+  return any_path_component(normalized_path, [](std::string_view part) {
+    return !part.empty() && part.find_first_not_of(". ") == std::string_view::npos;
   });
 }
 
 // Checks what can be known about an external data location without the file
 // system: it must be a non-empty relative path that names a file and has no '..'
-// component. Returns the location in normalized form.
+// component. Returns the location in normalized form. Used both when reading
+// and when writing external data.
 static std::filesystem::path check_external_data_location_syntax(
     const std::string& base_dir,
     const std::string& location,
@@ -294,6 +322,14 @@ static std::filesystem::path check_external_data_location_syntax(
     fail_check(
         "Location of external TensorProto ( tensor name: ", tensor_name, ") should name a file, but it is: ", location);
   }
+  if (has_dots_and_spaces_component(relative_path)) {
+    fail_check(
+        "Location of external TensorProto ( tensor name: ",
+        tensor_name,
+        ") should name a file, but it has a component made only of dots and spaces, which Windows reads as the "
+        "current or parent directory: ",
+        location);
+  }
   return relative_path;
 }
 
@@ -312,71 +348,78 @@ static void check_external_data_location_in_model_dir(
   }
 }
 
-// Checks that the external data available for a tensor is large enough for its
-// declared shape and type.
-static void check_external_data_available(const TensorProto& tensor, int64_t nelem, std::uintmax_t available) {
-  const int64_t expected_bytes = expected_raw_data_bytes(tensor, nelem);
-  if (expected_bytes > 0 && available < static_cast<std::uintmax_t>(expected_bytes)) {
-    fail_check(
-        "External data of TensorProto (tensor name: ",
-        tensor.name(),
-        ") is ",
-        available,
-        " bytes, which is too small for the declared shape and type (",
-        expected_bytes,
-        " bytes required).");
-  }
-}
-
 // Checks offset and length against the size of the external data file, as the
 // Python loader does before reading it, and that the data they describe is large
-// enough for the tensor's declared shape and type.
+// enough for the tensor's declared shape and type. Without the file
+// (file_size is empty), offset, length and the data the tensor needs must still
+// fit in a file of the largest possible size, INT64_MAX bytes.
 static void check_external_data_size(
     const TensorProto& tensor,
     int64_t nelem,
-    const std::filesystem::path& data_path,
+    std::optional<std::uintmax_t> file_size,
     std::optional<int64_t> offset,
     std::optional<int64_t> length) {
-  const auto data_path_str = path_to_utf8(data_path);
-  // As in resolve_external_data_location, a location starting with '#' refers to
-  // in-memory data rather than a file.
-  if (data_path_str.empty() || data_path_str[0] == '#') {
-    return;
-  }
-  std::error_code ec;
-  const std::uintmax_t file_size = std::filesystem::file_size(data_path, ec);
-  if (ec) {
-    fail_check(
-        "Unable to get the size of external data file ",
-        data_path_str,
-        " (tensor name: ",
-        tensor.name(),
-        "): ",
-        ec.message());
-  }
   const auto start = static_cast<std::uintmax_t>(offset.value_or(0));
-  if (start > file_size) {
-    fail_check(
-        "External data offset (", start, ") exceeds file size (", file_size, ") for tensor ", tensor.name(), ".");
+  std::uintmax_t available = 0;
+  if (file_size.has_value()) {
+    if (start > *file_size) {
+      fail_check(
+          "External data offset (", start, ") exceeds file size (", *file_size, ") for tensor ", tensor.name(), ".");
+    }
+    available = *file_size - start;
+  } else {
+    // offset is a non-negative int64_t, so this does not wrap.
+    available = static_cast<std::uintmax_t>(std::numeric_limits<int64_t>::max()) - start;
   }
-  std::uintmax_t available = file_size - start;
   if (length.has_value()) {
     const auto requested = static_cast<std::uintmax_t>(*length);
     if (requested > available) {
-      fail_check(
-          "External data length (",
-          requested,
-          ") exceeds available data (",
-          available,
-          " bytes from offset ",
-          start,
-          ") for tensor ",
-          tensor.name(),
-          ".");
+      if (file_size.has_value()) {
+        fail_check(
+            "External data length (",
+            requested,
+            ") exceeds available data (",
+            available,
+            " bytes from offset ",
+            start,
+            ") for tensor ",
+            tensor.name(),
+            ".");
+      } else {
+        fail_check(
+            "External data offset (",
+            start,
+            ") plus length (",
+            requested,
+            ") of TensorProto (tensor name: ",
+            tensor.name(),
+            ") exceeds the largest possible file size.");
+      }
     }
     available = requested;
   }
-  check_external_data_available(tensor, nelem, available);
+  const int64_t expected_bytes = expected_raw_data_bytes(tensor, nelem);
+  if (expected_bytes > 0 && available < static_cast<std::uintmax_t>(expected_bytes)) {
+    if (file_size.has_value() || length.has_value()) {
+      fail_check(
+          "External data of TensorProto (tensor name: ",
+          tensor.name(),
+          ") is ",
+          available,
+          " bytes, which is too small for the declared shape and type (",
+          expected_bytes,
+          " bytes required).");
+    } else {
+      fail_check(
+          "External data offset (",
+          start,
+          ") plus the ",
+          expected_bytes,
+          " bytes the declared shape and type of TensorProto (tensor name: ",
+          tensor.name(),
+          ") require exceeds the largest possible file size.");
+    }
+  }
 }
 
 void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
@@ -505,29 +548,27 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     if (length_entry != nullptr) {
       length = parse_external_data_integer(*length_entry, tensor.name());
     }
+    // As in resolve_external_data_location, a location starting with '#' refers to
+    // in-memory data rather than a file.
+    const auto data_path_str = path_to_utf8(data_path);
+    if (data_path_str.empty() || data_path_str[0] == '#') {
+      return;
+    }
+    std::optional<std::uintmax_t> file_size;
     if (ctx.check_external_data_files()) {
-      check_external_data_size(tensor, nelem, data_path, offset, length);
-    } else {
-      // Without the file, offset and length can only be checked against each other
-      // and against the tensor's size. Use the model-directory-prefixed path for the
-      // '#' in-memory sentinel, as in check_external_data_size.
-      const auto location = path_to_utf8(data_path);
-      if (location.empty() || location[0] != '#') {
-        if (offset.has_value() && length.has_value() && *offset > std::numeric_limits<int64_t>::max() - *length) {
-          fail_check(
-              "External data offset (",
-              *offset,
-              ") plus length (",
-              *length,
-              ") of TensorProto (tensor name: ",
-              tensor.name(),
-              ") exceeds the largest possible file size.");
-        }
-        if (length.has_value()) {
-          check_external_data_available(tensor, nelem, static_cast<std::uintmax_t>(*length));
-        }
+      std::error_code ec;
+      file_size = std::filesystem::file_size(data_path, ec);
+      if (ec) {
+        fail_check(
+            "Unable to get the size of external data file ",
+            data_path_str,
+            " (tensor name: ",
+            tensor.name(),
+            "): ",
+            ec.message());
       }
     }
+    check_external_data_size(tensor, nelem, file_size, offset, length);
     return;
   }
   if (nelem == 0 && num_value_fields != 0) {
@@ -972,14 +1013,33 @@ void check_sparse_tensor(const SparseTensorProto& sparse_tensor_proto, const Che
     }
     // The order and range of the index values can only be checked from the values
     // themselves, and the checker does not read external data. Without the files,
-    // the shape checks above are all there is; with them, reject such indices
-    // rather than accept index values that were never checked.
+    // only the shape checks above and the NNZ bound below can run; with them,
+    // reject such indices rather than accept index values that were never checked.
     if (indices.data_location() == TensorProto::EXTERNAL) {
       if (ctx.check_external_data_files()) {
         fail_check(
             "Sparse tensor indices (",
             indices.name(),
             ") are stored externally, so the checker cannot check their order and range.");
+      }
+      // Indices that are distinct and in range, as the checks of inline indices
+      // require, address at most one value per element of the dense tensor.
+      int64_t dense_size = 1;
+      for (int i = 0; i < dense_rank; ++i) {
+        if (checked_mul_overflow(dense_size, sparse_tensor_proto.dims(i), &dense_size)) {
+          dense_size = std::numeric_limits<int64_t>::max();
+          break;
+        }
+      }
+      if (static_cast<uint64_t>(nnz) > static_cast<uint64_t>(dense_size)) {
+        fail_check(
+            "Sparse tensor (",
+            values.name(),
+            ") has ",
+            nnz,
+            " values, more than the number of elements of its dense shape (",
+            dense_size,
+            ").");
       }
       return;
     }
@@ -1817,20 +1877,11 @@ std::filesystem::path resolve_external_data_location(
   return data_path;
 }
 
+// A location that is written must pass the same lexical checks as one that is
+// read, so that saving never produces a model that cannot be loaded.
 static std::filesystem::path
 validate_write_location(const std::string& base_dir, const std::string& location, const std::string& tensor_name) {
-  auto file_path = utf8_to_path(location);
-  if (file_path.empty() || file_path.is_absolute()) {
-    fail_check("External data location for tensor ", tensor_name, " is empty or absolute: ", location);
-  }
-  auto rel = file_path.lexically_normal().make_preferred();
-  if (rel == std::filesystem::path(".")) {
-    fail_check("External data location for tensor ", tensor_name, " is invalid: ", location);
-  }
-  if (has_parent_directory_component(rel)) {
-    fail_check("External data location for tensor ", tensor_name, " contains '..': ", location);
-  }
-  return utf8_to_path(base_dir) / rel;
+  return utf8_to_path(base_dir) / check_external_data_location_syntax(base_dir, location, tensor_name);
 }
 
 #ifdef _WIN32

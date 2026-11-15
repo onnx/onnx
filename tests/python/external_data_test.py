@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import io
 import os
 import pathlib
 import shutil
@@ -1034,8 +1035,15 @@ class TestCheckExternalDataWithoutFiles:
             {"location": "data.bin", "offset": "4096", "length": "24"},
             # Data beyond what the shape needs is allowed, as for raw_data.
             {"location": "nested/data.bin", "length": "32"},
+            # The 24 bytes the shape needs end exactly at the largest file size.
+            {"location": "data.bin", "offset": str(2**63 - 1 - 24)},
         ],
-        ids=["location_only", "offset_and_length", "nested_location"],
+        ids=[
+            "location_only",
+            "offset_and_length",
+            "nested_location",
+            "offset_at_largest_file_size",
+        ],
     )
     def test_missing_file_passes(self, external_data: dict[str, str]) -> None:
         model_filename = self.create_test_model(external_data)
@@ -1089,6 +1097,11 @@ class TestCheckExternalDataWithoutFiles:
                 },
                 "largest possible file size",
             ),
+            # Without a length, the data the shape needs must fit after offset.
+            (
+                {"location": "data.bin", "offset": str(2**63 - 1 - 23)},
+                "largest possible file size",
+            ),
         ],
         ids=[
             "no_location",
@@ -1102,6 +1115,7 @@ class TestCheckExternalDataWithoutFiles:
             "length_not_an_integer",
             "length_too_small",
             "offset_plus_length_overflows",
+            "offset_plus_shape_overflows",
         ],
     )
     def test_invalid_metadata_fails(
@@ -1109,6 +1123,46 @@ class TestCheckExternalDataWithoutFiles:
     ) -> None:
         model_filename = self.create_test_model(external_data)
         with pytest.raises(checker.ValidationError, match=match):
+            checker.check_model(model_filename, check_external_data_files=False)
+
+    @pytest.mark.parametrize("check_files", [False, True])
+    @pytest.mark.parametrize(
+        ("location", "match"),
+        [
+            ("..\\data.bin", "points outside the directory"),
+            ("nested\\..\\..\\data.bin", "points outside the directory"),
+            ("...", "only of dots and spaces"),
+            ("nested/...", "only of dots and spaces"),
+            ("nested/.. ", "only of dots and spaces"),
+            (" ", "only of dots and spaces"),
+        ],
+        ids=[
+            "backslash_parent_directory",
+            "backslash_nested_parent_directory",
+            "three_dots",
+            "nested_three_dots",
+            "dots_and_trailing_space",
+            "space",
+        ],
+    )
+    def test_location_windows_reads_as_directory_fails(
+        self, location: str, match: str, check_files: bool
+    ) -> None:
+        # Windows separates components at '\\' and trims trailing dots and spaces
+        # from each of them, so it reads these locations as a directory or as a
+        # path outside the model directory. They are rejected on every platform.
+        model_filename = self.create_test_model({"location": location})
+        with pytest.raises(checker.ValidationError, match=match):
+            checker.check_model(model_filename, check_external_data_files=check_files)
+
+    def test_shape_too_large_without_length_fails(self) -> None:
+        model_filename = self.create_test_model({"location": "data.bin"})
+        model = onnx.load(model_filename, load_external_data=False)
+        # 2**62 FLOAT elements need 2**64 bytes, which overflows int64.
+        model.graph.initializer[0].dims[:] = [2**62]
+        with open(model_filename, "wb") as model_file:
+            model_file.write(model.SerializeToString())
+        with pytest.raises(checker.ValidationError, match="too large"):
             checker.check_model(model_filename, check_external_data_files=False)
 
     @pytest.mark.skipif(
@@ -1120,9 +1174,14 @@ class TestCheckExternalDataWithoutFiles:
             checker.check_model(model_filename, check_external_data_files=False)
 
     @pytest.mark.parametrize("check_files", [False, True])
-    def test_double_dot_in_filename_passes(self, check_files: bool) -> None:
-        model_filename = self.create_test_model({"location": "model..weights.bin"})
-        with open(os.path.join(self.temp_dir, "model..weights.bin"), "wb") as data_file:
+    @pytest.mark.parametrize(
+        "location", ["model..weights.bin", "..weights.bin", ".weights.bin"]
+    )
+    def test_double_dot_in_filename_passes(
+        self, location: str, check_files: bool
+    ) -> None:
+        model_filename = self.create_test_model({"location": location})
+        with open(os.path.join(self.temp_dir, location), "wb") as data_file:
             data_file.write(self.value.tobytes())
         checker.check_model(model_filename, check_external_data_files=check_files)
 
@@ -1201,6 +1260,21 @@ class TestCheckExternalDataWithoutFiles:
             with pytest.raises(checker.ValidationError, match="outside the directory"):
                 checker_cli.check_model()
 
+    def test_command_line_stdin_fails(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        # Locations are relative to the model directory, which standard input
+        # does not have.
+        stdin = io.TextIOWrapper(io.BytesIO())
+        monkeypatch.setattr("sys.stdin", stdin)
+        monkeypatch.setattr(
+            "sys.argv", ["check-model", "--no-check-external-data-files", "-"]
+        )
+        with pytest.raises(SystemExit):
+            checker_cli.check_model()
+        assert "not standard input" in capsys.readouterr().err
+        assert not stdin.buffer.closed
+
     @pytest.mark.parametrize("check_files", [False, True])
     def test_in_memory_sentinel_preserved(self, check_files: bool) -> None:
         model_filename = self.create_test_model(
@@ -1274,6 +1348,9 @@ class TestCheckExternalSparseIndicesWithoutFiles:
             ([2], np.int64, [0, 3], 48, "not positive"),
             ([2], np.int64, [2, 3], 8, "too small"),
             ([2, 2], np.int64, [2, 3], 16, "too small"),
+            # Two distinct indices cannot both be in range of a 1-element tensor.
+            ([2], np.int64, [1], 16, "more than the number of elements"),
+            ([2, 1], np.int64, [1], 16, "more than the number of elements"),
         ],
     )
     def test_invalid_metadata_fails(
@@ -1311,6 +1388,36 @@ class TestCheckExternalSparseIndicesWithoutFiles:
         )
         with pytest.raises(checker.ValidationError, match=match):
             checker.check_model(model, check_external_data_files=False)
+
+
+class TestSaveExternalDataLocation:
+    """Saving applies the same location checks as checking and loading, so it
+    never writes external data that cannot be loaded on another platform.
+    """
+
+    @pytest.mark.parametrize(
+        ("location", "match"),
+        [
+            ("..\\data.bin", "points outside the directory"),
+            ("data/", "should name a file"),
+            ("...", "only of dots and spaces"),
+            ("nested/.. ", "only of dots and spaces"),
+        ],
+        ids=[
+            "backslash_parent_directory",
+            "trailing_separator",
+            "three_dots",
+            "dots_and_trailing_space",
+        ],
+    )
+    def test_invalid_location_fails(
+        self, tmp_path: Path, location: str, match: str
+    ) -> None:
+        tensor = from_array(np.arange(6, dtype=np.float32), "weight")
+        set_external_data(tensor, location)
+        with pytest.raises(checker.ValidationError, match=match):
+            save_external_data(tensor, str(tmp_path))
+        assert list(tmp_path.iterdir()) == []
 
 
 class TestCheckExternalStringTensor:

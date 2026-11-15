@@ -14,7 +14,7 @@ By default, the checker verifies that each external data file exists, is a regul
 
 ### Checking a model without its external data
 
-With `check_external_data_files=False`, the checker does not access the external data files and checks only what the model itself says about them: every externally stored tensor has a `location` that is a relative path naming a file inside the model directory, `offset` and `length` are non-negative integers whose sum fits a file, and an explicit `length` is large enough for the tensor's shape and type. This checks a model whose external data has not been downloaded:
+With `check_external_data_files=False`, the checker does not access the external data files and checks only what the model itself says about them: every externally stored tensor has a `location` that is a relative path naming a file inside the model directory, `offset` and `length` are non-negative integers, an explicit `length` is large enough for the tensor's shape and type, and the data they describe fits in a file of the largest possible size. This checks a model whose external data has not been downloaded:
 
 ```python
 import onnx
@@ -26,7 +26,9 @@ On the command line, `check-model --no-check-external-data-files path/to/the/mod
 
 Without the files, the containment, symbolic link and hard link checks described in [External Data Security](../../../ExternalDataSecurity.md) cannot run, so a model that passes this check can still be rejected once its external data is present.
 
-The checker never reads external data, so it cannot check the order and range of sparse tensor indices that are stored externally. With `check_external_data_files=False`, only the type, rank and dimensions of such indices are checked; by default, they are rejected. Indices stored inline are checked as usual.
+The checker never reads external data, so it cannot check the order and range of sparse tensor indices that are stored externally. With `check_external_data_files=False`, only the type, rank and dimensions of such indices are checked, and that there are no more of them than the dense tensor has elements; by default, they are rejected. Indices stored inline are checked as usual.
+
+`check_external_data_files` does not affect `full_check=True`. Shape inference cannot read external data either, so in both modes it fails for an operator that needs the value of a constant input stored externally, such as the `repeats` input of `Tile`.
 
 ## CheckerContext
 

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import sys
 
 from onnx import NodeProto, checker, load
 
@@ -25,6 +26,11 @@ def check_model() -> None:
     else:
         # Check by path: external data locations are relative to the model
         # directory, and loading the model would read the external data.
+        if args.model_pb is sys.stdin.buffer:
+            parser.error(
+                "--no-check-external-data-files needs a model file path, "
+                "not standard input"
+            )
         args.model_pb.close()
         checker.check_model(args.model_pb.name, check_external_data_files=False)
 
