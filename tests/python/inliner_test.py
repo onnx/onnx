@@ -6,11 +6,137 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from onnx import checker, defs, inliner, parser
+from onnx import TensorProto, checker, defs, helper, inliner, parser
 from onnx.reference import ReferenceEvaluator
 
 
 class TestInliner:
+    @pytest.mark.parametrize("selected", [False, True])
+    def test_sharding_tensor_references(self, selected):
+        model = parser.parse_model(
+            """
+            <ir_version: 11, opset_import: ["" : 17, "local" : 1]>
+            g (float[2] A) => (float[2] out) {
+                local__1 = local.F(A)
+                out = local.F(local__1)
+            }
+            <domain: "local", opset_import: ["" : 17]>
+            F (X) => (Y) {
+                local = Identity(X)
+                Y = Identity(local)
+            }
+            """
+        )
+        for name in ("two_devices", "replicated"):
+            model.configuration.add(name=name, num_devices=2, device=["d0", "d1"])
+        for node in model.functions[0].node:
+            for name in ("two_devices", "replicated"):
+                config = node.device_configurations.add(
+                    configuration_id=name, pipeline_stage=1
+                )
+                for tensor_name in (*node.input, *node.output):
+                    spec = config.sharding_spec.add(
+                        tensor_name=tensor_name, device=[0, 1]
+                    )
+                    spec.index_to_device_group_map.add(key=0, value=[0, 1])
+                    spec.sharded_dim.add(axis=0).simple_sharding.add(
+                        dim_value=2, num_shards=2
+                    )
+        checker.check_model(model)
+
+        if selected:
+            inlined = inliner.inline_selected_functions(model, [("local", "F")])
+        else:
+            inlined = inliner.inline_local_functions(model)
+
+        assert not inlined.functions
+        assert len(inlined.graph.node) == 4
+        assert inlined.graph.node[0].input[0] == "A"
+        assert inlined.graph.node[-1].output[0] == "out"
+        assert inlined.graph.node[0].output[0] != "local__1"
+        for index, node in enumerate(inlined.graph.node):
+            original = model.functions[0].node[index % 2]
+            for config, original_config in zip(
+                node.device_configurations, original.device_configurations, strict=True
+            ):
+                expected = type(config)()
+                expected.CopyFrom(original_config)
+                for spec, tensor_name in zip(
+                    expected.sharding_spec, (*node.input, *node.output), strict=True
+                ):
+                    spec.tensor_name = tensor_name
+                assert config == expected
+        checker.check_model(inlined)
+
+    def test_sharding_tensor_references_in_subgraphs(self):
+        model = parser.parse_model(
+            """
+            <ir_version: 11, opset_import: ["" : 17, "local" : 1]>
+            g (bool cond, float[2] A) => (float[2] out) {
+                out = local.F(cond, A)
+            }
+            <domain: "local", opset_import: ["" : 17]>
+            F (C, X) => (Y) {
+                Y = If(C) <
+                    then_branch = then_graph () => (float[2] result) {
+                        local = Identity(X)
+                        result = If(C) <
+                            then_branch = inner_then () => (float[2] value) {
+                                value = Identity(local)
+                            },
+                            else_branch = inner_else () => (float[2] value) {
+                                value = Identity(local)
+                            }
+                        >
+                    },
+                    else_branch = else_graph () => (float[2] local) {
+                        local = Identity(X)
+                    }
+                >
+            }
+            """
+        )
+        model.configuration.add(name="two_devices", num_devices=2)
+        if_node = model.functions[0].node[0]
+        branches = {attr.name: attr.g for attr in if_node.attribute}
+        branches["else_branch"].initializer.append(
+            helper.make_tensor("X", TensorProto.FLOAT, [2], [1.0, 2.0])
+        )
+
+        def add_sharding(node):
+            config = node.device_configurations.add(configuration_id="two_devices")
+            for tensor_name in (*node.input, *node.output):
+                config.sharding_spec.add(tensor_name=tensor_name, device=[0, 1])
+            for attr in node.attribute:
+                if attr.HasField("g"):
+                    for child in attr.g.node:
+                        add_sharding(child)
+
+        add_sharding(if_node)
+        checker.check_model(model)
+        inlined = inliner.inline_local_functions(model)
+        renamed_if = inlined.graph.node[0]
+        renamed_branches = {attr.name: attr.g for attr in renamed_if.attribute}
+        assert renamed_branches["then_branch"].node[0].input[0] == "A"
+        shadowed = renamed_branches["else_branch"]
+        assert shadowed.node[0].input[0] == shadowed.initializer[0].name
+        assert shadowed.node[0].input[0] != "A"
+        outer_local = renamed_branches["then_branch"].node[0].output[0]
+        for attr in renamed_branches["then_branch"].node[1].attribute:
+            assert attr.g.node[0].input[0] == outer_local
+
+        def check_sharding(node):
+            specs = node.device_configurations[0].sharding_spec
+            assert [spec.tensor_name for spec in specs] == [*node.input, *node.output]
+            assert all(list(spec.device) == [0, 1] for spec in specs)
+            for attr in node.attribute:
+                if attr.HasField("g"):
+                    for child in attr.g.node:
+                        check_sharding(child)
+
+        check_sharding(renamed_if)
+        checker.check_model(inlined)
+
     def test_groupedmatmul_linked_transb(self):
         model = parser.parse_model(
             """

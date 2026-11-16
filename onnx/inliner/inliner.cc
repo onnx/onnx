@@ -254,6 +254,11 @@ class InliningRenamer : public internal::MutableVisitor {
     for (auto& y : *node.mutable_output()) {
       LookupOrRename(y, true);
     }
+    for (auto& configuration : *node.mutable_device_configurations()) {
+      for (auto& spec : *configuration.mutable_sharding_spec()) {
+        LookupOrRename(*spec.mutable_tensor_name(), false);
+      }
+    }
     return true; // Process attribute subgraphs in traversal
   }
 
