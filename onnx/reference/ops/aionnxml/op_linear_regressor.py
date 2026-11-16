@@ -13,7 +13,8 @@ class LinearRegressor(OpRunAiOnnxMl):
         self, x, coefficients=None, intercepts=None, targets=1, post_transform=None
     ):
         coefficients = np.array(coefficients).astype(x.dtype)
-        intercepts = np.array(intercepts).astype(x.dtype)
+        if intercepts is not None:
+            intercepts = np.array(intercepts).astype(x.dtype)
         n = coefficients.shape[0] // targets
         coefficients = coefficients.reshape(targets, n).T
         score = np.dot(x, coefficients)
