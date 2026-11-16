@@ -432,30 +432,75 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           version="${GITHUB_REF_NAME#rel-}"
-          if ! gh release view "v${version}" --repo "${{ github.repository }}" 2>/dev/null; then
+          repository="${{ github.repository }}"
+          if ! gh release view "v${version}" --repo "$repository" 2>/dev/null; then
             echo "ERROR: GitHub Release v${version} does not exist."
             echo "Create and publish the release tag before running this workflow."
             exit 1
           fi
+          tag_sha=$(gh api "repos/$repository/commits/v${version}" --jq '.sha')
+          if [ "$tag_sha" != "$GITHUB_SHA" ]; then
+            echo "ERROR: GitHub Release v${version} resolves to $tag_sha, but this workflow built $GITHUB_SHA."
+            exit 1
+          fi
+
+          tmpdir=$(mktemp -d)
+          trap 'rm -rf "$tmpdir"' EXIT
+          mkdir "$tmpdir/attestations" "$tmpdir/bundles"
+          assets=()
           for file in dist/*.whl dist/*.tar.gz; do
             [ -f "$file" ] || continue
             filename=$(basename "$file")
             abs_file="$(realpath "$file")"
-            gh release upload "v${version}" "$file" --clobber
             # gh attestation download writes to CWD; use a per-artifact tmpdir
             # so the digest-named output file can be renamed unambiguously.
-            tmpdir=$(mktemp -d)
-            (cd "$tmpdir" && gh attestation download "$abs_file" \
-              --repo "${{ github.repository }}")
-            bundle=$(ls "$tmpdir"/*.sigstore.bundle 2>/dev/null | head -1)
+            artifact_tmpdir="$tmpdir/attestations/$filename"
+            mkdir "$artifact_tmpdir"
+            (cd "$artifact_tmpdir" && gh attestation download "$abs_file" \
+              --repo "$repository")
+            bundle=$(ls "$artifact_tmpdir"/*.sigstore.bundle 2>/dev/null | head -1)
             if [ -n "$bundle" ]; then
-              mv "$bundle" "${filename}.sigstore.bundle"
-              gh release upload "v${version}" "${filename}.sigstore.bundle" --clobber
+              bundle_path="$tmpdir/bundles/${filename}.sigstore.bundle"
+              mv "$bundle" "$bundle_path"
+              assets+=("$file" "$bundle_path")
             else
               echo "ERROR: no bundle produced for $filename" && exit 1
             fi
-            rm -rf "$tmpdir"
           done
+
+          existing_assets=$(gh release view "v${version}" --repo "$repository" \
+            --json assets --jq '.assets[].name')
+          new_assets=()
+          for file in "${assets[@]}"; do
+            filename=$(basename "$file")
+            if grep -Fxq "$filename" <<<"$existing_assets"; then
+              existing_path="$tmpdir/existing-$filename"
+              gh release download "v${version}" --repo "$repository" \
+                --pattern "$filename" --output "$existing_path"
+              if [[ "$filename" == *.sigstore.bundle ]]; then
+                artifact_path="dist/${filename%.sigstore.bundle}"
+                if ! gh attestation verify "$artifact_path" --bundle "$existing_path" \
+                  --repo "$repository"; then
+                  echo "ERROR: GitHub Release v${version} has an invalid attestation bundle named $filename."
+                  exit 1
+                fi
+              elif ! cmp -s "$file" "$existing_path"; then
+                echo "ERROR: GitHub Release v${version} already has a different asset named $filename."
+                exit 1
+              fi
+              echo "GitHub Release v${version} already has the identical $filename; skipping it."
+            else
+              new_assets+=("$file")
+            fi
+          done
+          if [ "${#new_assets[@]}" -gt 0 ]; then
+            tag_sha=$(gh api "repos/$repository/commits/v${version}" --jq '.sha')
+            if [ "$tag_sha" != "$GITHUB_SHA" ]; then
+              echo "ERROR: GitHub Release v${version} no longer resolves to this workflow commit."
+              exit 1
+            fi
+            gh release upload "v${version}" "${new_assets[@]}" --repo "$repository"
+          fi
 
       - name: Publish release_build to pypi
         if: (github.repository_owner == 'onnx')
