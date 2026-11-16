@@ -154,6 +154,9 @@ jobs:
 
     needs: [call-linux, call-mac, call-win, call-pyodide, call-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_pypi_release == 'yes') && (github.repository_owner == 'onnx') && startsWith(github.ref, 'refs/heads/rel-') && (github.event_name == 'workflow_dispatch')
+    outputs:
+      package_version: ${{ steps.validate_version.outputs.package_version }}
+      is_prerelease: ${{ steps.validate_version.outputs.is_prerelease }}
 
     steps:
 
@@ -171,16 +174,29 @@ jobs:
           persist-credentials: false
 
       - name: Check if package_version matches branch
+        id: validate_version
         run: |
           branch_version=${GITHUB_REF#refs/heads/rel-}
           package_version=$(cat VERSION_NUMBER)
           echo "Branch version: $branch_version"
           echo "Package version: $package_version"
 
-          if [[ "$package_version" != "$branch_version" && "$package_version" != "$branch_version"rc* ]]; then
-            echo "Error: Package version ($package_version) does not match branch version ($branch_version) or expected RC format."
+          if [[ ! "$branch_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Release branch version ($branch_version) is not in X.Y.Z format."
             exit 1
           fi
+
+          if [[ "$package_version" == "$branch_version" ]]; then
+            is_prerelease=false
+          elif [[ "$package_version" =~ ^${branch_version//./\\.}rc[0-9]+$ ]]; then
+            is_prerelease=true
+          else
+            echo "Error: Package version ($package_version) does not match final version $branch_version or an RC version such as ${branch_version}rc1."
+            exit 1
+          fi
+
+          echo "package_version=$package_version" >> "$GITHUB_OUTPUT"
+          echo "is_prerelease=$is_prerelease" >> "$GITHUB_OUTPUT"
 
   check_for_publish_preview_build_to_testpypi_weekly:
     name: Check for Publish preview build to test.pypi-weekly
@@ -425,15 +441,17 @@ jobs:
         env:
           ATTESTATION_BUNDLE: ${{ steps.attest.outputs.bundle-path }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ needs.check_for_publish_release_build_to_pypi.outputs.package_version }}
+          RELEASE_IS_PRERELEASE: ${{ needs.check_for_publish_release_build_to_pypi.outputs.is_prerelease }}
         run: |
           set -euo pipefail
 
-          version="${GITHUB_REF_NAME#rel-}"
+          version="$RELEASE_VERSION"
           tag="v${version}"
           repository="${GITHUB_REPOSITORY}"
 
           if ! release=$(gh release view "$tag" --repo "$repository" \
-            --json databaseId,isDraft,targetCommitish 2>/dev/null); then
+            --json databaseId,isDraft,isPrerelease,targetCommitish 2>/dev/null); then
             echo "ERROR: GitHub Release draft ${tag} does not exist."
             echo "Create and save the draft release before running this workflow."
             exit 1
@@ -442,6 +460,13 @@ jobs:
           if [ "$(jq -r '.isDraft' <<<"$release")" != "true" ]; then
             echo "ERROR: GitHub Release ${tag} is already published."
             echo "Release assets must be attached before native release immutability is activated."
+            exit 1
+          fi
+
+          release_is_prerelease=$(jq -r '.isPrerelease' <<<"$release")
+          if [ "$release_is_prerelease" != "$RELEASE_IS_PRERELEASE" ]; then
+            echo "ERROR: GitHub Release ${tag} has prerelease=${release_is_prerelease}, expected ${RELEASE_IS_PRERELEASE}."
+            echo "RC drafts must be marked as prereleases; final-release drafts must not be."
             exit 1
           fi
 

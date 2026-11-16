@@ -40,7 +40,25 @@ The ONNX project plans to release roughly every three months. We follow the [Sem
     1. Bump opset version for ai.onnx domain in `onnx/defs/operator_sets.h` and `onnx/defs/schema.h` for use by future operator additions and changes.
         * For example, this [demo PR](https://github.com/onnx/onnx/pull/6001).
 
+## Prepare an immutable GitHub Release draft
+
+Follow these steps before every public release upload, including each release candidate and the final release. Every version has its own immutable release; for example, `v1.20.0rc1`, `v1.20.0rc2`, and `v1.20.0` are three separate releases.
+
+* Confirm that an ONNX repository administrator has enabled [immutable releases](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/establish-provenance-and-integrity/prevent-release-changes). This setting must be enabled before the draft is created and applies only to future releases.
+* Read the exact version from [`VERSION_NUMBER`](/VERSION_NUMBER), then [draft a release](https://github.com/onnx/onnx/releases/new) for that version:
+    * Tag: `v` followed by the exact version, including any RC suffix, such as `v1.20.0rc1` or `v1.20.0`.
+    * Target: The release branch and commit that the workflow will build.
+    * RC only: Select **Set as a pre-release**. Do not select it for a final release.
+    * Use the previous release and the [Release logistics wiki](https://github.com/onnx/onnx/wiki) to prepare the release notes.
+    * DO NOT click **Publish release**. Click **Save draft**.
+* The official PyPI workflow validates the exact version, prerelease status, and target commit. It builds once, attaches the wheels, source distribution, and build provenance to the matching draft, and publishes the same distributions to PyPI.
+* After the workflow succeeds, inspect the draft assets and click **Publish release**. Publishing creates the version tag, locks the tag and assets, and generates a release attestation. Do not publish the draft if the PyPI workflow fails.
+    * GitHub generates the source-code `.tar.gz` and `.zip` archives when the release is published.
+* Never move or reuse a published version tag. If an RC needs changes, increment the RC number and create a new draft instead of replacing the published RC.
+
 ## Upload release candidate to PyPI
+
+First prepare a draft for the exact RC version as described above, including the RC suffix in the tag and marking the draft as a prerelease.
 
 * Go to "Actions" -> select ["Create Releases"](https://github.com/onnx/onnx/actions/workflows/create_release.yml) -> Push the button "Run workflow" with the following config:
 
@@ -101,20 +119,9 @@ Validation steps must be completed before this point. This is the point of no re
 
 * Create PR to remove "`rcX`" suffix from `VERSION_NUMBER` file in the new release's branch.
 
-## Create draft GitHub Release
+## Create final GitHub Release draft
 
-* Confirm that an ONNX repository administrator has enabled [immutable releases](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/establish-provenance-and-integrity/prevent-release-changes). This setting must be enabled before the draft is created and applies only to future releases.
-* [Draft a release](https://github.com/onnx/onnx/releases/new) based on the release branch:
-    * DO NOT click `Publish release`. Use `Save Draft`.
-    * The final PyPI workflow validates that the draft targets the commit being built and attaches all wheels, the source distribution, and build provenance before publication.
-    * Tag: See top of [Preparation](#preparation) for tag to create.
-    * Target: The release branch that was just cut
-    * Previous tag: Select the previous release.
-    * Write:
-        * Use [previous releases](https://github.com/onnx/onnx/releases) as a template
-        * Use information from [Release logistics wiki](https://github.com/onnx/onnx/wiki) which should have been created prior to branch cut.
-        * Add any additional commits that merged into the release in since wiki was written.
-    * The source-code .tar.gz and .zip archives will be auto-generated after publishing the release.
+After the final-version PR merges, prepare a new draft for the exact final version as described in [Prepare an immutable GitHub Release draft](#prepare-an-immutable-github-release-draft). Use tag `vX.Y.Z` and do not mark the draft as a prerelease. This draft is separate from every RC draft.
 
 ## Upload to Official PyPI
 
@@ -122,7 +129,7 @@ Validation steps must be completed before this point. This is the point of no re
 
 <img width="548" height="749" alt="RunWorkflow_Final" src="https://github.com/user-attachments/assets/d836d0b8-b033-4317-aa21-2aeed3c74d05" />
 
-The workflow uploads every wheel, the source distribution, and `onnx-X.Y.Z.sigstore.json` to the draft GitHub Release before publishing the same distributions to PyPI. The Sigstore bundle contains the SLSA build provenance generated for the release artifacts.
+The workflow uploads every wheel, the source distribution, and `onnx-<VERSION_NUMBER>.sigstore.json` to the draft GitHub Release before publishing the same distributions to PyPI. The Sigstore bundle contains the SLSA build provenance generated for the release artifacts.
 
 After the workflow succeeds, inspect the draft assets and click `Publish release`. Publishing creates the release tag, locks the tag and assets through GitHub's native release immutability, and generates a release attestation. Do not publish the draft if the PyPI workflow fails.
 
