@@ -79,7 +79,8 @@ To request GitHub organization membership, open an issue in the `onnx/onnx` repo
 * A brief summary of your contributions (PRs, reviews, issues, SIG participation)
 * The GitHub handles of the two Approvers from different companies who are sponsoring you
 
-One of your sponsors will add you to the organization once the nomination is confirmed.
+Once the nomination is confirmed, a sponsor will ask an ONNX organization owner
+or designated membership team to send the invitation.
 
 ## Organizational Structure
 
