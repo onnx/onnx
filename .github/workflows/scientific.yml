@@ -34,22 +34,22 @@ concurrency:
 jobs:
 
   call-linux:
-    uses: ./.github/workflows/release_linux_cibw.yml
+    uses: $/.github/workflows/release_linux_cibw.yml
     with:
       build_mode: 'scientific'
 
   call-win:
-    uses: ./.github/workflows/release_windows_cibw.yml
+    uses: $/.github/workflows/release_windows_cibw.yml
     with:
       build_mode: 'scientific'
 
   call-mac:
-    uses: ./.github/workflows/release_macos_cibw.yml
+    uses: $/.github/workflows/release_macos_cibw.yml
     with:
       build_mode: 'scientific'
 
   call-sdist:
-    uses: ./.github/workflows/release_sdist.yml
+    uses: $/.github/workflows/release_sdist.yml
     with:
       build_mode: 'scientific'
 
