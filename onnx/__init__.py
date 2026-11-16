@@ -81,7 +81,11 @@ from typing import IO, Literal
 from onnx import serialization
 from onnx.onnx_cpp2py_export import ONNX_ML
 from onnx.external_data_helper import (
+    _ExternalDataContext,
+    _get_all_tensors,
+    _open_model_file_for_write,
     load_external_data_for_model,
+    uses_external_data,
     write_external_data_tensors,
     convert_model_to_external_data,
 )
@@ -188,6 +192,36 @@ def _get_file_path(f: IO[bytes] | str | os.PathLike | None) -> str | None:
     return None
 
 
+def _context_for_named_file(
+    f: IO[bytes] | str | os.PathLike,
+    model_filepath: str,
+    *,
+    read_only: bool,
+) -> _ExternalDataContext:
+    """Pin a named file object's directory and verify both handles name one file."""
+    try:
+        file_object = typing.cast("IO[bytes]", f)
+        file_object_stat = os.fstat(file_object.fileno())
+        base_dir = os.path.dirname(model_filepath)
+        context = _ExternalDataContext(base_dir)
+        context_fd = context.open_model_file(
+            os.path.basename(model_filepath), read_only
+        )
+        try:
+            context_stat = os.fstat(context_fd)
+        finally:
+            os.close(context_fd)
+    except Exception as error:
+        raise ValueError(
+            "Cannot bind the named model file object to its external-data directory."
+        ) from error
+    if not os.path.samestat(file_object_stat, context_stat):
+        raise ValueError(
+            "The named model file object does not belong to its current directory."
+        )
+    return context
+
+
 def _get_serializer(
     fmt: _SupportedFormat | None, f: str | os.PathLike | IO[bytes] | None = None
 ) -> serialization.ProtoSerializer:
@@ -211,6 +245,8 @@ def load_model(
     f: IO[bytes] | str | os.PathLike,
     format: _SupportedFormat | None = None,  # noqa: A002
     load_external_data: bool = True,
+    *,
+    _external_data_context: _ExternalDataContext | None = None,
 ) -> ModelProto:
     """Loads a serialized ModelProto into memory.
 
@@ -228,13 +264,42 @@ def load_model(
     Returns:
         Loaded in-memory ModelProto.
     """
-    model = _get_serializer(format, f).deserialize_proto(_load_bytes(f), ModelProto())
+    model_filepath = _get_file_path(f)
+    external_data_context = _external_data_context
+    context_error: ValueError | None = None
+    if isinstance(f, (str, os.PathLike)):
+        assert model_filepath is not None
+        if not os.path.exists(model_filepath):
+            raise FileNotFoundError(model_filepath)
+        base_dir = os.path.dirname(model_filepath)
+        if external_data_context is None:
+            external_data_context = _ExternalDataContext(base_dir)
+        fd = external_data_context.open_model_file(
+            os.path.basename(model_filepath), True
+        )
+        with os.fdopen(fd, "rb") as readable:
+            serialized = readable.read()
+    else:
+        if load_external_data and model_filepath and external_data_context is None:
+            try:
+                external_data_context = _context_for_named_file(
+                    f, model_filepath, read_only=True
+                )
+            except ValueError as error:
+                context_error = error
+        serialized = _load_bytes(f)
+    model = _get_serializer(format, f).deserialize_proto(serialized, ModelProto())
 
     if load_external_data:
-        model_filepath = _get_file_path(f)
         if model_filepath:
+            if context_error is not None and any(
+                uses_external_data(tensor) for tensor in _get_all_tensors(model)
+            ):
+                raise context_error
             base_dir = os.path.dirname(model_filepath)
-            load_external_data_for_model(model, base_dir)
+            load_external_data_for_model(
+                model, base_dir, _context=external_data_context
+            )
 
     return model
 
@@ -332,21 +397,82 @@ def save_model(
             If true, convert all tensors to external data
             If false, convert only non-attribute tensors to external data
     """
-    if isinstance(proto, bytes):
-        proto = _get_serializer(_DEFAULT_FORMAT).deserialize_proto(proto, ModelProto())
-
-    if save_as_external_data:
-        convert_model_to_external_data(
-            proto, all_tensors_to_one_file, location, size_threshold, convert_attribute
-        )
-
     model_filepath = _get_file_path(f)
-    if model_filepath is not None:
+    external_data_context: _ExternalDataContext | None = None
+    context_error: ValueError | None = None
+    model_file: IO[bytes] | None = None
+    if isinstance(f, (str, os.PathLike)):
+        assert model_filepath is not None
         basepath = os.path.dirname(model_filepath)
-        proto = write_external_data_tensors(proto, basepath)
+        if not os.path.isdir(basepath):
+            raise FileNotFoundError(basepath)
+        external_data_context = _ExternalDataContext(basepath)
+        try:
+            model_file = _open_model_file_for_write(
+                external_data_context,
+                os.path.basename(model_filepath),
+                truncate=False,
+                existing_only=True,
+            )
+        except checker.ValidationError as error:
+            if error.code != "external-data-file-missing":
+                raise
+    elif model_filepath is not None:
+        try:
+            external_data_context = _context_for_named_file(
+                f, model_filepath, read_only=True
+            )
+        except ValueError as error:
+            context_error = error
 
-    serialized = _get_serializer(format, model_filepath).serialize_proto(proto)
-    _save_bytes(serialized, f)
+    try:
+        if isinstance(proto, bytes):
+            proto = _get_serializer(_DEFAULT_FORMAT).deserialize_proto(
+                proto, ModelProto()
+            )
+
+        if save_as_external_data:
+            convert_model_to_external_data(
+                proto,
+                all_tensors_to_one_file,
+                location,
+                size_threshold,
+                convert_attribute,
+            )
+
+        if model_filepath is not None:
+            if context_error is not None and any(
+                uses_external_data(tensor) and tensor.HasField("raw_data")
+                for tensor in _get_all_tensors(proto)
+            ):
+                raise context_error
+            basepath = os.path.dirname(model_filepath)
+            proto = write_external_data_tensors(
+                proto, basepath, _context=external_data_context
+            )
+
+        serialized = _get_serializer(format, model_filepath).serialize_proto(proto)
+        if (
+            model_file is None
+            and external_data_context is not None
+            and isinstance(f, (str, os.PathLike))
+        ):
+            assert model_filepath is not None
+            model_file = _open_model_file_for_write(
+                external_data_context,
+                os.path.basename(model_filepath),
+                truncate=False,
+                create_new=True,
+            )
+        if model_file is not None:
+            model_file.seek(0)
+            model_file.truncate()
+            model_file.write(serialized)
+        else:
+            _save_bytes(serialized, f)
+    finally:
+        if model_file is not None:
+            model_file.close()
 
 
 def save_tensor(

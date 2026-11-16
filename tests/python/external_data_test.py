@@ -19,6 +19,7 @@ from onnx import (
     NodeProto,
     TensorProto,
     checker,
+    external_data_helper,
     helper,
     parser,
     shape_inference,
@@ -149,6 +150,117 @@ class TestLoadExternalData(TestLoadExternalDataBase):
         attribute_tensor = model.graph.node[0].attribute[0].t
         np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
+    def test_load_external_data_for_model_reuses_directory_authority(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """All tensors in one model load must use the same pinned base directory."""
+        original_context = external_data_helper._ExternalDataContext
+        constructed_contexts = []
+
+        class CountingContext:
+            def __init__(self, base_dir: str) -> None:
+                self._context = original_context(base_dir)
+                constructed_contexts.append(self)
+
+            def open(self, location: str, tensor_name: str, read_only: bool) -> int:
+                return self._context.open(location, tensor_name, read_only)
+
+        monkeypatch.setattr(
+            external_data_helper, "_ExternalDataContext", CountingContext
+        )
+        model = onnx.load_model(
+            self.model_filename, self.serialization_format, load_external_data=False
+        )
+
+        load_external_data_for_model(model, self.temp_dir)
+
+        assert len(constructed_contexts) == 1
+
+    def test_load_model_pins_main_model_and_external_data_to_same_directory(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Replacing the model directory after opening the model must not redirect sidecars."""
+        original_context = onnx._ExternalDataContext
+        base_path = pathlib.Path(self.temp_dir)
+        original_path = base_path.with_name(f"{base_path.name}-original")
+        replaced = False
+
+        class ReplacingContext:
+            def __init__(self, base_dir: str) -> None:
+                self._context = original_context(base_dir)
+
+            def open_model_file(self, location: str, read_only: bool) -> int:
+                nonlocal replaced
+                fd = self._context.open_model_file(location, read_only)
+                base_path.rename(original_path)
+                base_path.mkdir()
+                (base_path / "input_value.bin").write_bytes(
+                    bytes(self_initializer_nbytes)
+                )
+                (base_path / "attribute_value.bin").write_bytes(
+                    bytes(self_attribute_nbytes)
+                )
+                replaced = True
+                return fd
+
+            def open(self, location: str, tensor_name: str, read_only: bool) -> int:
+                return self._context.open(location, tensor_name, read_only)
+
+        self_initializer_nbytes = self.initializer_value.nbytes
+        self_attribute_nbytes = self.attribute_value.nbytes
+        monkeypatch.setattr(onnx, "_ExternalDataContext", ReplacingContext)
+        try:
+            model = onnx.load_model(self.model_filename, self.serialization_format)
+        finally:
+            if replaced:
+                shutil.rmtree(base_path)
+                original_path.rename(base_path)
+
+        np.testing.assert_allclose(
+            to_array(model.graph.initializer[0]), self.initializer_value
+        )
+        np.testing.assert_allclose(
+            to_array(model.graph.node[0].attribute[0].t), self.attribute_value
+        )
+
+    def test_named_model_file_object_rejects_replaced_parent(self) -> None:
+        """A named file handle must not load sidecars from a replacement directory."""
+        replacement_path = pathlib.Path(self.temp_dir) / "replacement"
+        replacement_path.mkdir()
+        replacement_model = replacement_path / "model.onnx"
+        shutil.copyfile(self.model_filename, replacement_model)
+        (replacement_path / "input_value.bin").write_bytes(
+            bytes(self.initializer_value.nbytes)
+        )
+        (replacement_path / "attribute_value.bin").write_bytes(
+            bytes(self.attribute_value.nbytes)
+        )
+
+        class StaleNamedFile:
+            def __init__(self, model_file) -> None:
+                self._model_file = model_file
+                self.name = str(replacement_model)
+
+            def read(self):
+                return self._model_file.read()
+
+            def fileno(self) -> int:
+                return self._model_file.fileno()
+
+        with (
+            open(self.model_filename, "rb") as model_file,
+            pytest.raises(ValueError, match="does not belong"),
+        ):
+            onnx.load_model(StaleNamedFile(model_file), self.serialization_format)
+
+    def test_named_model_file_object_loads_external_data(self) -> None:
+        """A named file handle and its verified parent still support sidecars."""
+        with open(self.model_filename, "rb") as model_file:
+            model = onnx.load_model(model_file, self.serialization_format)
+        np.testing.assert_allclose(
+            to_array(model.graph.initializer[0]), self.initializer_value
+        )
+
     def test_save_external_data(self) -> None:
         model = onnx.load_model(self.model_filename, self.serialization_format)
 
@@ -264,6 +376,7 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
 
         with pytest.raises(onnx.checker.ValidationError):
             onnx.save_model(model, new_model_filepath, self.serialization_format)
+        assert not os.path.exists(new_model_filepath)
 
 
 @pytest.mark.parametrize("serialization_format", ["protobuf", "textproto"])
@@ -1159,6 +1272,84 @@ def _make_external_data_test_model() -> tuple[ModelProto, np.ndarray]:
     return model, array
 
 
+def test_save_model_pins_main_model_and_external_data_to_same_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Replacing the output directory before the model write must not split the output."""
+    base_path = tmp_path / "output"
+    original_path = tmp_path / "output-original"
+    base_path.mkdir()
+    model_path = base_path / "model.onnx"
+    model, _ = _make_external_data_test_model()
+    original_context = onnx._ExternalDataContext
+    replaced = False
+
+    class ReplacingContext:
+        def __init__(self, base_dir: str) -> None:
+            self._context = original_context(base_dir)
+
+        def open(self, location: str, tensor_name: str, read_only: bool) -> int:
+            return self._context.open(location, tensor_name, read_only)
+
+        def open_existing_model_file_for_write(self, location: str) -> int:
+            nonlocal replaced
+            try:
+                return self._context.open_existing_model_file_for_write(location)
+            finally:
+                if not replaced:
+                    base_path.rename(original_path)
+                    base_path.mkdir()
+                    replaced = True
+
+        def create_model_file(self, location: str) -> int:
+            return self._context.create_model_file(location)
+
+    monkeypatch.setattr(onnx, "_ExternalDataContext", ReplacingContext)
+    try:
+        onnx.save_model(
+            model,
+            model_path,
+            save_as_external_data=True,
+            location="data.bin",
+        )
+
+        assert (original_path / "model.onnx").is_file()
+        assert (original_path / "data.bin").is_file()
+        assert not (base_path / "model.onnx").exists()
+        assert not (base_path / "data.bin").exists()
+    finally:
+        if replaced:
+            shutil.rmtree(base_path)
+            original_path.rename(base_path)
+
+
+def test_main_model_filename_may_contain_two_dots(tmp_path: Path) -> None:
+    """The external-data '..' substring restriction must not affect model names."""
+    model, _ = _make_external_data_test_model()
+    model_path = tmp_path / "model..onnx"
+
+    onnx.save_model(model, model_path)
+
+    loaded = onnx.load_model(model_path)
+    assert loaded.graph.name == model.graph.name
+
+
+def test_named_model_file_object_saves_external_data(tmp_path: Path) -> None:
+    """A verified named output handle and its sidecars share one authority."""
+    model, array = _make_external_data_test_model()
+    model_path = tmp_path / "model.onnx"
+    with open(model_path, "w+b") as model_file:
+        onnx.save_model(
+            model,
+            model_file,
+            save_as_external_data=True,
+            location="data.bin",
+        )
+
+    loaded = onnx.load_model(model_path)
+    np.testing.assert_allclose(to_array(loaded.graph.initializer[0]), array)
+
+
 @pytest.mark.skipif(
     os.name == "nt", reason="Symlinks require elevated privileges on Windows"
 )
@@ -1375,8 +1566,9 @@ class TestSaveExternalDataAbsolutePathValidation(TestLoadExternalDataBase):
         array = np.ones((100,), dtype=np.float32)
         tensor = from_array(array, name="weight")
         set_external_data(tensor, location="/etc/passwd")
-        with pytest.raises(checker.ValidationError):
+        with pytest.raises(checker.ValidationError) as exc_info:
             save_external_data(tensor, self.temp_dir)
+        assert exc_info.value.code is None
 
 
 def _tensor_with_offset(offset: int, location: str) -> TensorProto:

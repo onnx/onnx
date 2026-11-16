@@ -4,7 +4,9 @@
 
 #pragma once
 
+#include <cstdint>
 #include <filesystem>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -17,6 +19,45 @@
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE::checker {
+
+// Pins the caller-selected external-data base directory and resolves every
+// subsequent file relative to that directory identity. This prevents a model
+// or output directory from being replaced between validation and use.
+class ONNX_API ExternalDataContext final {
+ public:
+  explicit ExternalDataContext(const std::string& base_dir);
+  ~ExternalDataContext();
+
+  ExternalDataContext(const ExternalDataContext&) = delete;
+  ExternalDataContext& operator=(const ExternalDataContext&) = delete;
+  ExternalDataContext(ExternalDataContext&&) = delete;
+  ExternalDataContext& operator=(ExternalDataContext&&) = delete;
+
+  // Returns a CRT file descriptor on all platforms. The caller owns the fd.
+  int64_t open(const std::string& location, const std::string& tensor_name, bool read_only) const;
+
+  // Opens the main model file relative to the same pinned directory. Unlike
+  // external data, the caller-selected model leaf may itself be a symlink.
+  int64_t open_model_file(const std::string& location, bool read_only) const;
+
+  // Save-side variants distinguish a pre-existing model, which is pinned
+  // before sidecar writes, from a new model, which is created exclusively only
+  // after serialization succeeds.
+  int64_t open_existing_model_file_for_write(const std::string& location) const;
+  int64_t create_model_file(const std::string& location) const;
+
+  // Returns the size of a validated regular single-link file without requiring
+  // permission to read its contents.
+  std::uintmax_t file_size(const std::string& location, const std::string& tensor_name) const;
+
+ private:
+  enum class ModelFileOpenMode { kRead, kWriteOrCreate, kWriteExisting, kCreateNew };
+
+  int64_t open_model_file_impl(const std::string& location, ModelFileOpenMode mode) const;
+
+  struct Impl;
+  std::unique_ptr<Impl> impl_;
+};
 
 // Stable identifiers of the rules a model can fail, reported by
 // ValidationError::code(). Messages may change between releases; these codes
@@ -101,13 +142,7 @@ class CheckerContext final {
     return schema_registry_;
   }
 
-  void set_model_dir(const std::string& model_dir) {
-    model_dir_ = model_dir;
-    // Only a model checked from a file path has a model directory. An
-    // in-memory model keeps the default (no directory), so its external
-    // data locations are never resolved against the working directory.
-    model_dir_from_path_ = true;
-  }
+  void set_model_dir(const std::string& model_dir);
 
   const std::string& get_model_dir() const {
     return model_dir_;
@@ -115,6 +150,10 @@ class CheckerContext final {
 
   bool model_dir_from_path() const {
     return model_dir_from_path_;
+  }
+
+  const std::shared_ptr<ExternalDataContext>& get_external_data_context() const {
+    return external_data_context_;
   }
 
   bool skip_opset_compatibility_check() const {
@@ -141,6 +180,7 @@ class CheckerContext final {
   bool is_main_graph_ = true;
   const ISchemaRegistry* schema_registry_ = OpSchemaRegistry::Instance();
   std::string model_dir_;
+  std::shared_ptr<ExternalDataContext> external_data_context_;
   bool model_dir_from_path_ = false;
   bool skip_opset_compatibility_check_ = false;
   bool check_custom_domain_ = false;

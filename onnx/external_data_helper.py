@@ -23,12 +23,21 @@ from onnx.onnx_pb import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
+_ExternalDataContext = c_checker._ExternalDataContext
+
 
 def _open_external_data_fd(
-    base_dir: str, location: str, tensor_name: str, read_only: bool
+    base_dir: str,
+    location: str,
+    tensor_name: str,
+    read_only: bool,
+    *,
+    context: _ExternalDataContext | None = None,
 ) -> int:
     """Open external data via C++ and return a CRT file descriptor."""
-    return c_checker._open_external_data(base_dir, location, tensor_name, read_only)
+    if context is None:
+        context = _ExternalDataContext(base_dir)
+    return context.open(location, tensor_name, read_only)
 
 
 # Security: 3-layer defense against malicious external_data entries (GHSA-538c-55jv-c5g9)
@@ -143,7 +152,12 @@ def _validate_external_data_file_bounds(
     return data_file.read()
 
 
-def _read_external_data_bytes(tensor: TensorProto, base_dir: str) -> bytes:
+def _read_external_data_bytes(
+    tensor: TensorProto,
+    base_dir: str,
+    *,
+    context: _ExternalDataContext | None = None,
+) -> bytes:
     """Reads and returns the raw bytes stored in the external file for tensor.
 
     Unlike load_external_data_for_tensor, this does not mutate tensor: the
@@ -153,12 +167,15 @@ def _read_external_data_bytes(tensor: TensorProto, base_dir: str) -> bytes:
     Arguments:
         tensor: a TensorProto object.
         base_dir: directory that contains the external data.
+        context: optional pinned directory authority shared by a model-level operation.
 
     Returns:
         The raw bytes read from the external data file.
     """
     info = ExternalDataInfo(tensor)
-    fd = _open_external_data_fd(base_dir, info.location, tensor.name, True)
+    fd = _open_external_data_fd(
+        base_dir, info.location, tensor.name, True, context=context
+    )
     with os.fdopen(fd, "rb") as data_file:
         return _validate_external_data_file_bounds(data_file, info, tensor.name)
 
@@ -180,16 +197,28 @@ def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
     del tensor.external_data[:]
 
 
-def load_external_data_for_model(model: ModelProto, base_dir: str) -> None:
+def load_external_data_for_model(
+    model: ModelProto,
+    base_dir: str,
+    *,
+    _context: _ExternalDataContext | None = None,
+) -> None:
     """Loads external tensors into model
 
     Arguments:
         model: ModelProto to load external data to
         base_dir: directory that contains external data
     """
+    context = _context
     for tensor in _get_all_tensors(model):
         if uses_external_data(tensor):
-            load_external_data_for_tensor(tensor, base_dir)
+            if context is None:
+                context = _ExternalDataContext(base_dir)
+            tensor.raw_data = _read_external_data_bytes(
+                tensor, base_dir, context=context
+            )
+            tensor.data_location = TensorProto.DEFAULT
+            del tensor.external_data[:]
 
 
 def set_external_data(
@@ -316,11 +345,17 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
     _write_external_data(tensor, base_path, tensor.raw_data)
 
 
-def _write_external_data(tensor: TensorProto, base_path: str, data: bytes) -> None:
+def _write_external_data(
+    tensor: TensorProto,
+    base_path: str,
+    data: bytes,
+    *,
+    context: _ExternalDataContext | None = None,
+) -> None:
     """Write an existing byte buffer using a tensor's external-data metadata."""
     info = ExternalDataInfo(tensor)
     with _open_external_data_file_for_write(
-        base_path, info.location, tensor.name
+        base_path, info.location, tensor.name, context=context
     ) as data_file:
         _write_external_data_to_file(tensor, data_file, data)
 
@@ -331,6 +366,7 @@ def _open_external_data_file_for_write(
     tensor_name: str,
     *,
     truncate: bool = False,
+    context: _ExternalDataContext | None = None,
 ) -> IO[bytes]:
     """Open an external-data file for writing and optionally truncate it safely.
 
@@ -339,7 +375,9 @@ def _open_external_data_file_for_write(
     ``open(..., "wb")`` or an ``O_TRUNC`` flag would modify the target before
     those post-open checks could reject it.
     """
-    fd = _open_external_data_fd(base_path, location, tensor_name, False)
+    fd = _open_external_data_fd(
+        base_path, location, tensor_name, False, context=context
+    )
     data_file = os.fdopen(fd, "r+b")
     if truncate:
         try:
@@ -349,6 +387,34 @@ def _open_external_data_file_for_write(
             data_file.close()
             raise
     return data_file
+
+
+def _open_model_file_for_write(
+    context: _ExternalDataContext,
+    location: str,
+    *,
+    truncate: bool = True,
+    existing_only: bool = False,
+    create_new: bool = False,
+) -> IO[bytes]:
+    """Open the main model file within a pinned directory."""
+    if existing_only and create_new:
+        raise ValueError("existing_only and create_new are mutually exclusive")
+    if existing_only:
+        fd = context.open_existing_model_file_for_write(location)
+    elif create_new:
+        fd = context.create_model_file(location)
+    else:
+        fd = context.open_model_file(location, False)
+    model_file = os.fdopen(fd, "r+b")
+    if truncate:
+        try:
+            model_file.seek(0)
+            model_file.truncate()
+        except BaseException:
+            model_file.close()
+            raise
+    return model_file
 
 
 def _write_external_data_to_file(
@@ -464,7 +530,12 @@ def remove_external_data_field(tensor: TensorProto, field_key: str) -> None:
             del tensor.external_data[i]
 
 
-def write_external_data_tensors(model: ModelProto, filepath: str) -> ModelProto:
+def write_external_data_tensors(
+    model: ModelProto,
+    filepath: str,
+    *,
+    _context: _ExternalDataContext | None = None,
+) -> ModelProto:
     """Serializes data for all the tensors which have data location set to TensorProto.External.
 
     Note: This function also strips basepath information from all tensors' external_data fields.
@@ -498,8 +569,13 @@ def write_external_data_tensors(model: ModelProto, filepath: str) -> ModelProto:
             infos[id(tensor)].offset or 0,
         )
     )
+    context = _context
+    if context is None and tensors_to_write:
+        context = _ExternalDataContext(filepath)
     for tensor in tensors_to_write:
-        save_external_data(tensor, filepath)
+        if not tensor.HasField("raw_data"):
+            raise onnx_checker.ValidationError("raw_data field doesn't exist.")
+        _write_external_data(tensor, filepath, tensor.raw_data, context=context)
         tensor.ClearField("raw_data")
 
     return model

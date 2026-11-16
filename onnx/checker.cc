@@ -5,6 +5,8 @@
 #include "onnx/checker.h"
 
 #include <algorithm>
+#include <array>
+#include <cerrno>
 #include <charconv>
 #include <cstdint>
 #include <filesystem> // NOLINT(build/c++17)
@@ -17,7 +19,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "onnx/common/file_utils.h"
 #include "onnx/common/path.h"
 #include "onnx/common/proto_util.h"
 #include "onnx/common/safe_math.h"
@@ -29,35 +30,12 @@
 #include <Windows.h>
 #include <fcntl.h>
 #include <io.h>
+#include <sys/stat.h>
+#include <winternl.h>
 #else
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
-
-// Kernel-level path containment: prefer openat2 (Linux 5.6+) or
-// O_RESOLVE_BENEATH (FreeBSD 13+, macOS 15+) when available.
-#ifdef __linux__
-#include <sys/syscall.h>
-#ifdef SYS_openat2
-#define ONNX_HAS_OPENAT2
-#if __has_include(<linux/openat2.h>)
-#include <linux/openat2.h>
-#else
-struct open_how {
-  uint64_t flags;
-  uint64_t mode;
-  uint64_t resolve;
-};
-#define RESOLVE_NO_SYMLINKS 0x04
-#define RESOLVE_BENEATH 0x08
-#endif
-#endif // SYS_openat2
-#endif // __linux__
-
-#ifdef O_RESOLVE_BENEATH
-#define ONNX_HAS_RESOLVE_BENEATH
-#endif
-
 #endif // _WIN32
 
 namespace ONNX_NAMESPACE::checker {
@@ -261,26 +239,9 @@ static int64_t parse_external_data_integer(const StringStringEntryProto& entry, 
 static void check_external_data_size(
     const TensorProto& tensor,
     int64_t nelem,
-    const std::filesystem::path& data_path,
+    std::uintmax_t file_size,
     std::optional<int64_t> offset,
     std::optional<int64_t> length) {
-  const auto data_path_str = path_to_utf8(data_path);
-  // As in resolve_external_data_location, a location starting with '#' refers to
-  // in-memory data rather than a file.
-  if (data_path_str.empty() || data_path_str[0] == '#') {
-    return;
-  }
-  std::error_code ec;
-  const std::uintmax_t file_size = std::filesystem::file_size(data_path, ec);
-  if (ec) {
-    fail_check(
-        "Unable to get the size of external data file ",
-        data_path_str,
-        " (tensor name: ",
-        tensor.name(),
-        "): ",
-        ec.message());
-  }
   const auto start = static_cast<std::uintmax_t>(offset.value_or(0));
   if (start > file_size) {
     fail_check_with_code(
@@ -400,7 +361,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     // Every location is validated, but, as in the Python loader, the last value
     // of each key is the one that describes the data.
     bool has_location = false;
-    std::filesystem::path data_path;
+    std::optional<std::uintmax_t> external_data_file_size;
+    bool location_is_in_memory = false;
     const StringStringEntryProto* offset_entry = nullptr;
     const StringStringEntryProto* length_entry = nullptr;
     for (const StringStringEntryProto& entry : tensor.external_data()) {
@@ -419,6 +381,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         // location that still starts with '#' once normalized is
         // in-memory data.
         const auto normalized_location = path_to_utf8(utf8_to_path(entry.value()).lexically_normal().make_preferred());
+        location_is_in_memory = !normalized_location.empty() && normalized_location[0] == '#';
         if (!ctx.model_dir_from_path() && !normalized_location.empty() && normalized_location[0] != '#') {
           fail_check(
               "Data of TensorProto ( tensor name: ",
@@ -427,7 +390,17 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               entry.value(),
               "' cannot be resolved. Pass a model path to check_model to check external data.");
         }
-        data_path = resolve_external_data_location(ctx.get_model_dir(), entry.value(), tensor.name());
+        if (!location_is_in_memory) {
+          const auto& external_data_context = ctx.get_external_data_context();
+          if (external_data_context == nullptr) {
+            fail_check("External data context is unavailable for tensor ", tensor.name(), ".");
+          }
+          // Validate every location entry, while retaining the last value as
+          // the one that describes the tensor, matching the Python loader.
+          external_data_file_size = external_data_context->file_size(entry.value(), tensor.name());
+        } else {
+          external_data_file_size.reset();
+        }
       } else if (entry.key() == "offset") {
         offset_entry = &entry;
       } else if (entry.key() == "length") {
@@ -449,7 +422,9 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     if (length_entry != nullptr) {
       length = parse_external_data_integer(*length_entry, tensor.name());
     }
-    check_external_data_size(tensor, nelem, data_path, offset, length);
+    if (!location_is_in_memory) {
+      check_external_data_size(tensor, nelem, *external_data_file_size, offset, length);
+    }
     return;
   }
   if (nelem == 0 && num_value_fields != 0) {
@@ -1605,16 +1580,47 @@ void check_model(
     bool full_check,
     bool skip_opset_compatibility_check,
     bool check_custom_domain) {
-  ModelProto model;
-  LoadProtoFromPath(model_path, model);
-
   CheckerContext ctx;
-  std::string model_dir;
-  size_t pos = model_path.find_last_of("\\/");
-  if (pos != std::string::npos) {
-    model_dir = model_path.substr(0, pos + 1);
-  }
+  const auto native_model_path = utf8_to_path(model_path);
+  const std::string model_dir = path_to_utf8(native_model_path.parent_path());
+  const std::string model_filename = path_to_utf8(native_model_path.filename());
   ctx.set_model_dir(model_dir);
+  const auto raw_model_fd = ctx.get_external_data_context()->open_model_file(model_filename, true);
+  ONNX_NAMESPACE::ScopedFd model_fd(static_cast<int>(raw_model_fd));
+  std::string model_bytes;
+#ifdef _WIN32
+  struct _stat64 model_stat{};
+  if (_fstat64(model_fd.get(), &model_stat) == 0 && model_stat.st_size > 0 &&
+      static_cast<std::uintmax_t>(model_stat.st_size) <= model_bytes.max_size()) {
+    model_bytes.reserve(static_cast<size_t>(model_stat.st_size));
+  }
+#else
+  struct stat model_stat{};
+  if (fstat(model_fd.get(), &model_stat) == 0 && model_stat.st_size > 0 &&
+      static_cast<std::uintmax_t>(model_stat.st_size) <= model_bytes.max_size()) {
+    model_bytes.reserve(static_cast<size_t>(model_stat.st_size));
+  }
+#endif
+  std::array<char, 64 * 1024> buffer{};
+  while (true) {
+#ifdef _WIN32
+    const int count = _read(model_fd.get(), buffer.data(), static_cast<unsigned int>(buffer.size()));
+#else
+    const ssize_t count = read(model_fd.get(), buffer.data(), buffer.size());
+#endif
+    if (count < 0) {
+      fail_check("Unable to read proto file: ", model_path, ". Please check if it is a valid proto. ");
+    }
+    if (count == 0) {
+      break;
+    }
+    model_bytes.append(buffer.data(), static_cast<size_t>(count));
+  }
+  ModelProto model;
+  if (!ParseProtoFromBytes(&model, model_bytes.data(), model_bytes.size())) {
+    fail_check(
+        "Unable to parse proto from file: ", model_path, ". Please check if it is a valid protobuf file of proto. ");
+  }
   ctx.set_skip_opset_compatibility_check(skip_opset_compatibility_check);
   ctx.set_check_custom_domain(check_custom_domain);
   check_model(model, ctx);
@@ -1649,13 +1655,77 @@ using ONNX_NAMESPACE::utf8_to_path;
 using ONNX_NAMESPACE::ScopedHandle;
 #endif
 
-#ifdef _WIN32
-// Compare two BY_HANDLE_FILE_INFORMATION structs by volume + file index (inode equivalent).
-static bool same_file(const BY_HANDLE_FILE_INFORMATION& a, const BY_HANDLE_FILE_INFORMATION& b) {
-  return a.dwVolumeSerialNumber == b.dwVolumeSerialNumber && a.nFileIndexHigh == b.nFileIndexHigh &&
-      a.nFileIndexLow == b.nFileIndexLow;
+static std::filesystem::path validate_external_data_relative_path(
+    const std::string& location,
+    const std::string& tensor_name) {
+  auto file_path = utf8_to_path(location);
+  if (file_path.empty() || file_path.is_absolute() || file_path.has_root_name() || file_path.has_root_directory()) {
+    fail_check_with_code(
+        error_code::kExternalDataLocationInvalid,
+        "External data location for tensor ",
+        tensor_name,
+        " is empty or absolute: ",
+        location);
+  }
+  auto relative_path = file_path.lexically_normal().make_preferred();
+  if (relative_path == std::filesystem::path(".") ||
+      relative_path.native().find(std::filesystem::path("..").native()) !=
+          std::filesystem::path::string_type::npos) { // NOSONAR — preserve the existing conservative check
+    fail_check_with_code(
+        error_code::kExternalDataLocationInvalid,
+        "External data location for tensor ",
+        tensor_name,
+        " contains '..' or does not name a file: ",
+        location);
+  }
+  return relative_path;
 }
-#endif
+
+static std::vector<std::filesystem::path> external_data_path_components(
+    const std::string& location,
+    const std::string& tensor_name) {
+  auto relative_path = validate_external_data_relative_path(location, tensor_name);
+  std::vector<std::filesystem::path> components;
+  for (const auto& component : relative_path) {
+    if (component.empty() || component == std::filesystem::path(".") || component == std::filesystem::path("..")) {
+      fail_check_with_code(
+          error_code::kExternalDataLocationInvalid,
+          "External data location for tensor ",
+          tensor_name,
+          " has an invalid path component: ",
+          location);
+    }
+    components.push_back(component);
+  }
+  if (components.empty()) {
+    fail_check_with_code(
+        error_code::kExternalDataLocationInvalid,
+        "External data location for tensor ",
+        tensor_name,
+        " does not name a file: ",
+        location);
+  }
+  return components;
+}
+
+static std::vector<std::filesystem::path> model_file_path_components(const std::string& location) {
+  auto file_path = utf8_to_path(location);
+  if (file_path.empty() || file_path.is_absolute() || file_path.has_root_name() || file_path.has_root_directory()) {
+    fail_check("Model filename is empty or absolute: ", location);
+  }
+  auto relative_path = file_path.lexically_normal().make_preferred();
+  std::vector<std::filesystem::path> components;
+  for (const auto& component : relative_path) {
+    if (component.empty() || component == std::filesystem::path(".") || component == std::filesystem::path("..")) {
+      fail_check("Model filename has an invalid path component: ", location);
+    }
+    components.push_back(component);
+  }
+  if (components.empty()) {
+    fail_check("Model filename does not name a file: ", location);
+  }
+  return components;
+}
 
 // Canonicalize data_path, verify containment within base_dir.
 static std::filesystem::path verify_path_containment(
@@ -1694,34 +1764,7 @@ std::filesystem::path resolve_external_data_location(
     const std::string& location,
     const std::string& tensor_name) {
   auto base_dir_path = utf8_to_path(base_dir);
-  auto file_path = utf8_to_path(location);
-  if (file_path.empty()) {
-    fail_check_with_code(
-        error_code::kExternalDataLocationInvalid,
-        "Location of external TensorProto ( tensor name: ",
-        tensor_name,
-        ") should not be empty.");
-  }
-  if (file_path.is_absolute()) {
-    fail_check_with_code(
-        error_code::kExternalDataLocationInvalid,
-        "Location of external TensorProto ( tensor name: ",
-        tensor_name,
-        ") should be a relative path, but it is an absolute path: ",
-        location);
-  }
-  auto relative_path = file_path.lexically_normal().make_preferred();
-  if (relative_path.native().find(std::filesystem::path("..").native()) != std::filesystem::path::string_type::npos) {
-    fail_check_with_code(
-        error_code::kExternalDataLocationInvalid,
-        "Data of TensorProto ( tensor name: ",
-        tensor_name,
-        ") should be file inside '",
-        base_dir,
-        "', but '",
-        location,
-        "' points outside the directory.");
-  }
+  auto relative_path = validate_external_data_relative_path(location, tensor_name);
   auto data_path = base_dir_path / relative_path;
   auto data_path_str = path_to_utf8(data_path);
   // Do not allow symlinks or directories.
@@ -1764,222 +1807,456 @@ std::filesystem::path resolve_external_data_location(
   return data_path;
 }
 
-static std::filesystem::path
-validate_write_location(const std::string& base_dir, const std::string& location, const std::string& tensor_name) {
-  auto file_path = utf8_to_path(location);
-  if (file_path.empty() || file_path.is_absolute()) {
-    fail_check("External data location for tensor ", tensor_name, " is empty or absolute: ", location);
-  }
-  auto rel = file_path.lexically_normal().make_preferred();
-  if (rel == std::filesystem::path(".")) {
-    fail_check("External data location for tensor ", tensor_name, " is invalid: ", location);
-  }
-  if (rel.native().find(std::filesystem::path("..").native()) !=
-      std::filesystem::path::string_type::npos) { // NOSONAR — C++17, no contains
-    fail_check("External data location for tensor ", tensor_name, " contains '..': ", location);
-  }
-  return utf8_to_path(base_dir) / rel;
-}
+struct ExternalDataContext::Impl {
+#ifdef _WIN32
+  HANDLE base_handle = INVALID_HANDLE_VALUE;
+#else
+  int base_fd = -1;
+#endif
+};
 
 #ifdef _WIN32
 
-int64_t open_external_data(
-    const std::string& base_dir,
-    const std::string& location,
-    const std::string& tensor_name,
-    bool read_only) {
-  std::filesystem::path data_path;
-  if (read_only) {
-    data_path = resolve_external_data_location(base_dir, location, tensor_name);
-  } else {
-    data_path = validate_write_location(base_dir, location, tensor_name);
-    // Pre-open parent-dir check (final-component-only flags don't protect parents).
-    verify_path_containment(data_path.parent_path(), base_dir, tensor_name);
-  }
+using NtCreateFileFn = NTSTATUS(NTAPI*)(
+    PHANDLE,
+    ACCESS_MASK,
+    POBJECT_ATTRIBUTES,
+    PIO_STATUS_BLOCK,
+    PLARGE_INTEGER,
+    ULONG,
+    ULONG,
+    ULONG,
+    ULONG,
+    PVOID,
+    ULONG);
+using RtlNtStatusToDosErrorFn = ULONG(NTAPI*)(NTSTATUS);
 
-  // CreateFileW with FILE_FLAG_OPEN_REPARSE_POINT: opens reparse point itself
-  // (symlink/junction) without following, and returns CRT-independent HANDLE.
-  DWORD access = read_only ? GENERIC_READ : (GENERIC_READ | GENERIC_WRITE);
-  DWORD creation = read_only ? OPEN_EXISTING : OPEN_ALWAYS;
-  HANDLE h = CreateFileW(
-      data_path.native().c_str(),
+static NtCreateFileFn get_nt_create_file() {
+  static const auto nt_create_file =
+      reinterpret_cast<NtCreateFileFn>(GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtCreateFile"));
+  if (nt_create_file == nullptr) {
+    fail_check("Secure external-data opening is unavailable on this Windows system.");
+  }
+  return nt_create_file;
+}
+
+static ULONG nt_status_to_dos_error(NTSTATUS status) {
+  static const auto convert = reinterpret_cast<RtlNtStatusToDosErrorFn>(
+      GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "RtlNtStatusToDosError"));
+  return convert == nullptr ? ERROR_GEN_FAILURE : convert(status);
+}
+
+static HANDLE open_windows_component(
+    HANDLE root,
+    const std::filesystem::path& component,
+    ACCESS_MASK access,
+    ULONG disposition,
+    ULONG options,
+    ULONG share_access,
+    const std::string& tensor_name) {
+  const auto& name = component.native();
+  if (name.size() > std::numeric_limits<USHORT>::max() / sizeof(wchar_t)) {
+    fail_check("External data path component is too long for tensor ", tensor_name, ".");
+  }
+  UNICODE_STRING unicode_name{};
+  unicode_name.Buffer = const_cast<PWSTR>(name.data());
+  unicode_name.Length = static_cast<USHORT>(name.size() * sizeof(wchar_t));
+  unicode_name.MaximumLength = unicode_name.Length;
+  OBJECT_ATTRIBUTES attributes{};
+  attributes.Length = sizeof(attributes);
+  attributes.RootDirectory = root;
+  attributes.ObjectName = &unicode_name;
+  attributes.Attributes = OBJ_CASE_INSENSITIVE;
+  IO_STATUS_BLOCK io_status{};
+  HANDLE handle = INVALID_HANDLE_VALUE;
+  const NTSTATUS status = get_nt_create_file()(
+      &handle,
       access,
-      FILE_SHARE_READ,
+      &attributes,
+      &io_status,
       nullptr,
-      creation,
-      FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OPEN_REPARSE_POINT,
-      nullptr);
-  if (h == INVALID_HANDLE_VALUE) {
-    fail_check("Cannot open external data for tensor ", tensor_name);
+      FILE_ATTRIBUTE_NORMAL,
+      share_access,
+      disposition,
+      options,
+      nullptr,
+      0);
+  if (status < 0 || handle == INVALID_HANDLE_VALUE) {
+    const ULONG error = nt_status_to_dos_error(status);
+    fail_check_with_code(
+        error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND ? error_code::kExternalDataFileMissing
+                                                                       : error_code::kExternalDataLocationInvalid,
+        "Cannot open external data path component for tensor ",
+        tensor_name,
+        ".");
   }
-  ScopedHandle guard(h);
+  return handle;
+}
 
-  // Reject symlinks/junctions.
-  BY_HANDLE_FILE_INFORMATION file_info;
-  if (!GetFileInformationByHandle(h, &file_info)) {
+static BY_HANDLE_FILE_INFORMATION
+validate_windows_handle(HANDLE handle, const std::string& tensor_name, bool expect_directory) {
+  BY_HANDLE_FILE_INFORMATION info{};
+  if (!GetFileInformationByHandle(handle, &info)) {
     fail_check("Tensor ", tensor_name, " external data: cannot query file information.");
   }
-  if (file_info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
-    fail_check("Tensor ", tensor_name, " external data is a reparse point (symlink/junction).");
+  if (info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
+    fail_check_with_code(
+        error_code::kExternalDataLocationInvalid,
+        "Tensor ",
+        tensor_name,
+        " external data path contains a reparse point.");
   }
+  const bool is_directory = (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+  if (is_directory != expect_directory) {
+    fail_check_with_code(
+        error_code::kExternalDataLocationInvalid,
+        "Tensor ",
+        tensor_name,
+        " external data path has an unexpected file type.");
+  }
+  return info;
+}
 
-  // Inode comparison: open canonical path, compare volume + file index.
-  auto canonical_data = verify_path_containment(data_path, base_dir, tensor_name);
-  HANDLE h2 = CreateFileW(
-      canonical_data.native().c_str(),
-      0,
-      FILE_SHARE_READ | FILE_SHARE_WRITE,
-      nullptr,
-      OPEN_EXISTING,
-      FILE_FLAG_OPEN_REPARSE_POINT,
-      nullptr);
-  if (h2 == INVALID_HANDLE_VALUE) {
-    fail_check("Tensor ", tensor_name, " external data: cannot open canonical path for verification.");
+static HANDLE open_windows_leaf(
+    HANDLE base_handle,
+    const std::vector<std::filesystem::path>& components,
+    ACCESS_MASK access,
+    ULONG disposition,
+    const std::string& tensor_name,
+    bool open_reparse_point = true) {
+  std::vector<HANDLE> directories;
+  ONNX_NAMESPACE::ScopeExit close_directories([&]() noexcept {
+    for (HANDLE handle : directories) {
+      CloseHandle(handle);
+    }
+  });
+  HANDLE parent = base_handle;
+  for (size_t i = 0; i + 1 < components.size(); ++i) {
+    HANDLE directory = open_windows_component(
+        parent,
+        components[i],
+        FILE_TRAVERSE | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
+        FILE_OPEN,
+        FILE_DIRECTORY_FILE | FILE_OPEN_REPARSE_POINT | FILE_SYNCHRONOUS_IO_NONALERT,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        tensor_name);
+    ScopedHandle directory_guard(directory);
+    validate_windows_handle(directory, tensor_name, true);
+    directories.push_back(directory);
+    directory_guard.release();
+    parent = directory;
   }
-  ScopedHandle guard2(h2);
-  BY_HANDLE_FILE_INFORMATION canon_info;
-  if (!GetFileInformationByHandle(h2, &canon_info)) {
-    fail_check("Tensor ", tensor_name, " external data: cannot query canonical path file information.");
-  }
-  if (!same_file(file_info, canon_info)) {
-    fail_check("Tensor ", tensor_name, " external data: fd/path mismatch (possible TOCTOU attack).");
-  }
-
-  // Hardlink check (fail closed).
-  if (file_info.nNumberOfLinks > 1) {
-    fail_check("Tensor ", tensor_name, " external data has multiple hard links (possible hardlink attack).");
-  }
-
-  // Convert HANDLE → CRT fd so callers get a uniform fd on all platforms.
-  HANDLE h_released = guard.release();
-  int flags = read_only ? (_O_RDONLY | _O_BINARY) : (_O_RDWR | _O_BINARY);
-  int fd = _open_osfhandle(reinterpret_cast<intptr_t>(h_released), flags);
-  if (fd < 0) {
-    CloseHandle(h_released);
-    fail_check("Cannot convert handle to fd for tensor ", tensor_name);
-  }
-  return static_cast<int64_t>(fd);
+  return open_windows_component(
+      parent,
+      components.back(),
+      access,
+      disposition,
+      FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | (open_reparse_point ? FILE_OPEN_REPARSE_POINT : 0),
+      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+      tensor_name);
 }
 
 #else // POSIX
 
-// Try kernel-level contained open.
-// Returns fd >= 0 on success, -1 if feature unavailable (fall through to legacy).
-// Calls fail_check on kernel rejection (symlink, escape) — does NOT fall through.
-static int try_kernel_contained_open(
-    const std::string& base_dir,
-    const std::string& location,
-    [[maybe_unused]] const std::string& tensor_name,
-    [[maybe_unused]] bool read_only) {
-  const auto normalized_base_dir = base_dir.empty() ? std::string(".") : base_dir;
-  int raw_dirfd = open(normalized_base_dir.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC);
-  if (raw_dirfd < 0) {
-    return -1;
-  }
-  ScopedFd dirfd_guard(raw_dirfd);
-  auto rel = std::filesystem::path(location).lexically_normal().string();
-  int fd = -1;
-
-#ifdef ONNX_HAS_OPENAT2
-  static thread_local bool openat2_supported = true;
-  if (openat2_supported) {
-    struct open_how how = {};
-    how.flags =
-        read_only ? static_cast<uint64_t>(O_RDONLY | O_CLOEXEC) : static_cast<uint64_t>(O_CREAT | O_RDWR | O_CLOEXEC);
-    how.mode = read_only ? 0 : 0600;
-    how.resolve = RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS;
-    fd = static_cast<int>(syscall(SYS_openat2, raw_dirfd, rel.c_str(), &how, sizeof(how)));
-    if (fd < 0) {
-      if (errno == ENOSYS) {
-        openat2_supported = false; // kernel too old, fall through
-      } else {
-        fail_check("Cannot open external data for tensor ", tensor_name, " (kernel rejected path)");
-      }
-    }
-  }
-#elif defined(ONNX_HAS_RESOLVE_BENEATH)
-  // POSIX open flags are int bitmasks.
-  // NOLINTBEGIN(bugprone-signed-bitwise)
-  int flags = O_RESOLVE_BENEATH | O_CLOEXEC;
-#ifdef O_NOFOLLOW
-  flags |= O_NOFOLLOW;
+static int directory_open_flags() {
+  int flags = O_DIRECTORY;
+#ifdef O_CLOEXEC
+  flags |= O_CLOEXEC;
 #endif
-  if (read_only) {
-    fd = openat(raw_dirfd, rel.c_str(), flags | O_RDONLY);
-  } else {
-    fd = openat(raw_dirfd, rel.c_str(), flags | O_CREAT | O_RDWR, 0600);
-  }
-  // NOLINTEND(bugprone-signed-bitwise)
-  if (fd < 0) {
-    fail_check("Cannot open external data for tensor ", tensor_name);
-  }
+#ifdef O_PATH
+  flags |= O_PATH;
+#elif defined(O_SEARCH)
+  flags |= O_SEARCH;
+#else
+  flags |= O_RDONLY;
 #endif
-
-  return fd;
+  return flags;
 }
 
-int64_t open_external_data(
-    const std::string& base_dir,
-    const std::string& location,
+static int open_posix_parent(
+    int base_fd,
+    const std::vector<std::filesystem::path>& components,
     const std::string& tensor_name,
-    bool read_only) {
-  // Pre-open validation (defense-in-depth).
-  std::filesystem::path data_path;
-  if (read_only) {
-    data_path = resolve_external_data_location(base_dir, location, tensor_name);
-  } else {
-    data_path = validate_write_location(base_dir, location, tensor_name);
-    // Pre-open parent-dir check (final-component-only flags don't protect parents).
-    verify_path_containment(data_path.parent_path(), base_dir, tensor_name);
+    std::vector<int>& opened_directories) {
+  int parent = base_fd;
+  for (size_t i = 0; i + 1 < components.size(); ++i) {
+    int flags = directory_open_flags();
+#ifdef O_NOFOLLOW
+    flags |= O_NOFOLLOW;
+#else
+    fail_check("Secure external-data opening requires O_NOFOLLOW for tensor ", tensor_name, ".");
+#endif
+    const int directory = openat(parent, components[i].c_str(), flags);
+    if (directory < 0) {
+      fail_check_with_code(
+          errno == ENOENT ? error_code::kExternalDataFileMissing : error_code::kExternalDataLocationInvalid,
+          "Cannot open external data directory component for tensor ",
+          tensor_name,
+          ".");
+    }
+    ScopedFd directory_guard(directory);
+    opened_directories.push_back(directory);
+    directory_guard.release();
+    parent = directory;
   }
+  return parent;
+}
 
-  // Try kernel-level contained open (openat2 or O_RESOLVE_BENEATH).
-  int fd = try_kernel_contained_open(base_dir, location, tensor_name, read_only);
-  bool kernel_verified = (fd >= 0);
+static void validate_posix_file(const struct stat& file_stat, const std::string& tensor_name) {
+  if (!S_ISREG(file_stat.st_mode)) {
+    fail_check_with_code(
+        error_code::kExternalDataLocationInvalid, "Tensor ", tensor_name, " external data is not a regular file.");
+  }
+  if (file_stat.st_nlink > 1) {
+    fail_check_with_code(
+        error_code::kExternalDataLocationInvalid, "Tensor ", tensor_name, " external data has multiple hard links.");
+  }
+}
 
-  // Fallback: open() + O_NOFOLLOW + post-open inode verification.
-  if (fd < 0) {
-    // POSIX open flags are int bitmasks.
-    // NOLINTBEGIN(bugprone-signed-bitwise)
+#endif
+
+ExternalDataContext::ExternalDataContext(const std::string& base_dir) : impl_(std::make_unique<Impl>()) {
+  const auto normalized_base_dir = base_dir.empty() ? std::string(".") : base_dir;
+#ifdef _WIN32
+  HANDLE base_handle = CreateFileW(
+      utf8_to_path(normalized_base_dir).native().c_str(),
+      FILE_TRAVERSE | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
+      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+      nullptr,
+      OPEN_EXISTING,
+      FILE_FLAG_BACKUP_SEMANTICS,
+      nullptr);
+  if (base_handle == INVALID_HANDLE_VALUE) {
+    fail_check("Cannot open external data base directory.");
+  }
+  ScopedHandle base_guard(base_handle);
+  validate_windows_handle(base_handle, "base directory", true);
+  impl_->base_handle = base_guard.release();
+#else
+  impl_->base_fd = ::open(normalized_base_dir.c_str(), directory_open_flags());
+  if (impl_->base_fd < 0) {
+    fail_check("Cannot open external data base directory.");
+  }
+  struct stat base_stat{};
+  if (fstat(impl_->base_fd, &base_stat) != 0 || !S_ISDIR(base_stat.st_mode)) {
+    close(impl_->base_fd);
+    impl_->base_fd = -1;
+    fail_check("External data base path is not a directory.");
+  }
+#endif
+}
+
+ExternalDataContext::~ExternalDataContext() {
+#ifdef _WIN32
+  if (impl_->base_handle != INVALID_HANDLE_VALUE) {
+    CloseHandle(impl_->base_handle);
+  }
+#else
+  if (impl_->base_fd >= 0) {
+    close(impl_->base_fd);
+  }
+#endif
+}
+
+int64_t ExternalDataContext::open(const std::string& location, const std::string& tensor_name, bool read_only) const {
+  ONNX_TRY {
+    const auto components = external_data_path_components(location, tensor_name);
+#ifdef _WIN32
+    HANDLE handle = open_windows_leaf(
+        impl_->base_handle,
+        components,
+        (read_only ? GENERIC_READ : (GENERIC_READ | GENERIC_WRITE)) | SYNCHRONIZE,
+        read_only ? FILE_OPEN : FILE_OPEN_IF,
+        tensor_name);
+    ScopedHandle guard(handle);
+    const auto info = validate_windows_handle(handle, tensor_name, false);
+    if (info.nNumberOfLinks > 1) {
+      fail_check_with_code(
+          error_code::kExternalDataLocationInvalid, "Tensor ", tensor_name, " external data has multiple hard links.");
+    }
+    HANDLE released = guard.release();
+    const int flags = read_only ? (_O_RDONLY | _O_BINARY) : (_O_RDWR | _O_BINARY);
+    const int fd = _open_osfhandle(reinterpret_cast<intptr_t>(released), flags);
+    if (fd < 0) {
+      CloseHandle(released);
+      fail_check("Cannot convert external data handle to fd for tensor ", tensor_name, ".");
+    }
+    return static_cast<int64_t>(fd);
+#else
+    std::vector<int> directories;
+    ONNX_NAMESPACE::ScopeExit close_directories([&]() noexcept {
+      for (int fd : directories) {
+        close(fd);
+      }
+    });
+    const int parent = open_posix_parent(impl_->base_fd, components, tensor_name, directories);
     int flags = read_only ? O_RDONLY : (O_CREAT | O_RDWR);
 #ifdef O_CLOEXEC
     flags |= O_CLOEXEC;
 #endif
 #ifdef O_NOFOLLOW
     flags |= O_NOFOLLOW;
+#else
+    fail_check("Secure external-data opening requires O_NOFOLLOW for tensor ", tensor_name, ".");
 #endif
-    fd = read_only ? open(data_path.c_str(), flags) : open(data_path.c_str(), flags, 0600);
-    // NOLINTEND(bugprone-signed-bitwise)
-    if (fd == -1) {
-      fail_check("Cannot open external data for tensor ", tensor_name);
+    const int fd = read_only ? openat(parent, components.back().c_str(), flags)
+                             : openat(parent, components.back().c_str(), flags, 0600);
+    if (fd < 0) {
+      fail_check_with_code(
+          read_only && errno == ENOENT ? error_code::kExternalDataFileMissing
+                                       : error_code::kExternalDataLocationInvalid,
+          "Cannot open external data for tensor ",
+          tensor_name,
+          ".");
     }
-  }
-  ScopedFd guard(fd);
-
-  // Post-open checks (fail closed).
-  struct stat fd_stat{};
-  if (fstat(fd, &fd_stat) != 0) {
-    fail_check("Tensor ", tensor_name, " external data: fstat failed.");
-  }
-  if (!kernel_verified) {
-    // Verify containment via canonical path + inode comparison.
-    auto canonical_data = verify_path_containment(data_path, base_dir, tensor_name);
-    struct stat path_stat{};
-    if (stat(canonical_data.c_str(), &path_stat) != 0) {
-      fail_check("Tensor ", tensor_name, " external data: cannot stat canonical path.");
+    ScopedFd guard(fd);
+    struct stat fd_stat{};
+    if (fstat(fd, &fd_stat) != 0) {
+      fail_check("Tensor ", tensor_name, " external data: fstat failed.");
     }
-    if (path_stat.st_dev != fd_stat.st_dev || path_stat.st_ino != fd_stat.st_ino) {
-      fail_check("Tensor ", tensor_name, " external data: fd/path mismatch (possible TOCTOU attack).");
-    }
+    validate_posix_file(fd_stat, tensor_name);
+    return guard.release();
+#endif
   }
-  if (fd_stat.st_nlink > 1) {
-    fail_check("Tensor ", tensor_name, " external data has multiple hard links (possible hardlink attack).");
+  ONNX_CATCH(const ValidationError& error) {
+    ONNX_HANDLE_EXCEPTION([&]() {
+      // Write-side errors historically did not expose checker error codes.
+      // Keep that API contract while read-side failures retain stable codes.
+      if (!read_only && !error.code().empty()) {
+        fail_check(error.what());
+      }
+      throw;
+    });
   }
-
-  return guard.release();
+  return -1; // Unreachable: failures throw or abort, and successful opens return.
 }
 
+int64_t ExternalDataContext::open_model_file(const std::string& location, bool read_only) const {
+  return open_model_file_impl(location, read_only ? ModelFileOpenMode::kRead : ModelFileOpenMode::kWriteOrCreate);
+}
+
+int64_t ExternalDataContext::open_existing_model_file_for_write(const std::string& location) const {
+  return open_model_file_impl(location, ModelFileOpenMode::kWriteExisting);
+}
+
+int64_t ExternalDataContext::create_model_file(const std::string& location) const {
+  return open_model_file_impl(location, ModelFileOpenMode::kCreateNew);
+}
+
+int64_t ExternalDataContext::open_model_file_impl(const std::string& location, ModelFileOpenMode mode) const {
+  const auto components = model_file_path_components(location);
+  const bool read_only = mode == ModelFileOpenMode::kRead;
+#ifdef _WIN32
+  ULONG disposition = FILE_OPEN_IF;
+  if (mode == ModelFileOpenMode::kRead || mode == ModelFileOpenMode::kWriteExisting) {
+    disposition = FILE_OPEN;
+  } else if (mode == ModelFileOpenMode::kCreateNew) {
+    disposition = FILE_CREATE;
+  }
+  HANDLE handle = open_windows_leaf(
+      impl_->base_handle,
+      components,
+      (read_only ? GENERIC_READ : (GENERIC_READ | GENERIC_WRITE)) | SYNCHRONIZE,
+      disposition,
+      "model",
+      mode == ModelFileOpenMode::kCreateNew);
+  ScopedHandle guard(handle);
+  validate_windows_handle(handle, "model", false);
+  HANDLE released = guard.release();
+  const int flags = read_only ? (_O_RDONLY | _O_BINARY) : (_O_RDWR | _O_BINARY);
+  const int fd = _open_osfhandle(reinterpret_cast<intptr_t>(released), flags);
+  if (fd < 0) {
+    CloseHandle(released);
+    fail_check("Cannot convert model file handle to fd.");
+  }
+  return static_cast<int64_t>(fd);
+#else
+  std::vector<int> directories;
+  ONNX_NAMESPACE::ScopeExit close_directories([&]() noexcept {
+    for (int fd : directories) {
+      close(fd);
+    }
+  });
+  const int parent = open_posix_parent(impl_->base_fd, components, "model", directories);
+  int flags = read_only ? O_RDONLY : O_RDWR;
+  if (mode == ModelFileOpenMode::kWriteOrCreate) {
+    flags |= O_CREAT;
+  } else if (mode == ModelFileOpenMode::kCreateNew) {
+    flags |= O_CREAT | O_EXCL;
+  }
+#ifdef O_CLOEXEC
+  flags |= O_CLOEXEC;
 #endif
+  const int fd = (flags & O_CREAT) != 0 ? openat(parent, components.back().c_str(), flags, 0666)
+                                        : openat(parent, components.back().c_str(), flags);
+  if (fd < 0) {
+    fail_check_with_code(
+        errno == ENOENT ? error_code::kExternalDataFileMissing : error_code::kExternalDataLocationInvalid,
+        "Cannot open model file.");
+  }
+  ScopedFd guard(fd);
+  struct stat fd_stat{};
+  if (fstat(fd, &fd_stat) != 0 || !S_ISREG(fd_stat.st_mode)) {
+    fail_check("Model path is not a regular file.");
+  }
+  return guard.release();
+#endif
+}
+
+std::uintmax_t ExternalDataContext::file_size(const std::string& location, const std::string& tensor_name) const {
+  const auto components = external_data_path_components(location, tensor_name);
+#ifdef _WIN32
+  ScopedHandle handle(
+      open_windows_leaf(impl_->base_handle, components, FILE_READ_ATTRIBUTES | SYNCHRONIZE, FILE_OPEN, tensor_name));
+  const auto info = validate_windows_handle(handle.get(), tensor_name, false);
+  if (info.nNumberOfLinks > 1) {
+    fail_check_with_code(
+        error_code::kExternalDataLocationInvalid, "Tensor ", tensor_name, " external data has multiple hard links.");
+  }
+  ULARGE_INTEGER size{};
+  size.HighPart = info.nFileSizeHigh;
+  size.LowPart = info.nFileSizeLow;
+  return static_cast<std::uintmax_t>(size.QuadPart);
+#else
+  std::vector<int> directories;
+  ONNX_NAMESPACE::ScopeExit close_directories([&]() noexcept {
+    for (int fd : directories) {
+      close(fd);
+    }
+  });
+  const int parent = open_posix_parent(impl_->base_fd, components, tensor_name, directories);
+  struct stat file_stat{};
+  if (fstatat(parent, components.back().c_str(), &file_stat, AT_SYMLINK_NOFOLLOW) != 0) {
+    fail_check_with_code(
+        errno == ENOENT ? error_code::kExternalDataFileMissing : error_code::kExternalDataLocationInvalid,
+        "Cannot inspect external data for tensor ",
+        tensor_name,
+        ".");
+  }
+  validate_posix_file(file_stat, tensor_name);
+  if (file_stat.st_size < 0) {
+    fail_check("Tensor ", tensor_name, " external data has a negative file size.");
+  }
+  return static_cast<std::uintmax_t>(file_stat.st_size);
+#endif
+}
+
+void CheckerContext::set_model_dir(const std::string& model_dir) {
+  model_dir_ = model_dir;
+  external_data_context_ = std::make_shared<ExternalDataContext>(model_dir);
+  // Only a model checked from a file path has a model directory. An in-memory
+  // model keeps the default (no directory), so its external data locations are
+  // never resolved against the working directory.
+  model_dir_from_path_ = true;
+}
+
+int64_t open_external_data(
+    const std::string& base_dir,
+    const std::string& location,
+    const std::string& tensor_name,
+    bool read_only) {
+  return ExternalDataContext(base_dir).open(location, tensor_name, read_only);
+}
 
 static const std::unordered_set<std::string> experimental_ops = {
     "ATen",

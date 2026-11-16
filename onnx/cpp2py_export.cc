@@ -677,6 +677,21 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       nb::arg("skip_opset_compatibility_check") = false,
       nb::arg("check_custom_domain") = false);
 
+  nb::class_<checker::ExternalDataContext>(checker, "_ExternalDataContext")
+      .def(nb::init<const std::string&>())
+      .def(
+          "open",
+          &checker::ExternalDataContext::open,
+          nb::arg("location"),
+          nb::arg("tensor_name"),
+          nb::arg("read_only"))
+      .def("open_model_file", &checker::ExternalDataContext::open_model_file, nb::arg("location"), nb::arg("read_only"))
+      .def(
+          "open_existing_model_file_for_write",
+          &checker::ExternalDataContext::open_existing_model_file_for_write,
+          nb::arg("location"))
+      .def("create_model_file", &checker::ExternalDataContext::create_model_file, nb::arg("location"));
+
   checker.def("_open_external_data", &checker::open_external_data);
 
   // Submodule `version_converter`
