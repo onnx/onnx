@@ -11,7 +11,7 @@ from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 class FeatureVectorizer(OpRunAiOnnxMl):
     def _preprocess(self, a, cut):
         if len(a.shape) == 1:
-            a = a.reshape((-1, 1))
+            a = a.reshape((1, -1))
         if len(a.shape) != 2:
             raise ValueError(f"Every input must have 1 or 2 dimensions not {a.shape}.")
         if cut < a.shape[1]:
