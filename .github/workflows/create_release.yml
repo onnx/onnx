@@ -387,7 +387,7 @@ jobs:
       url: https://pypi.org/p/onnx
 
     permissions:
-      contents: read
+      contents: write
       id-token: write
       attestations: write
 
@@ -419,6 +419,63 @@ jobs:
         with:
           name: attestation-bundle-release
           path: ${{ steps.attest.outputs.bundle-path }}
+
+      - name: Upload distributions and provenance to draft GitHub Release
+        if: hashFiles('dist/**') != ''
+        env:
+          ATTESTATION_BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          version="${GITHUB_REF_NAME#rel-}"
+          tag="v${version}"
+          repository="${GITHUB_REPOSITORY}"
+
+          if ! release=$(gh release view "$tag" --repo "$repository" \
+            --json databaseId,isDraft,targetCommitish 2>/dev/null); then
+            echo "ERROR: GitHub Release draft ${tag} does not exist."
+            echo "Create and save the draft release before running this workflow."
+            exit 1
+          fi
+
+          if [ "$(jq -r '.isDraft' <<<"$release")" != "true" ]; then
+            echo "ERROR: GitHub Release ${tag} is already published."
+            echo "Release assets must be attached before native release immutability is activated."
+            exit 1
+          fi
+
+          release_id=$(jq -r '.databaseId' <<<"$release")
+          target_commitish=$(jq -r '.targetCommitish' <<<"$release")
+          if tag_sha=$(gh api "repos/${repository}/commits/${tag}" --jq '.sha' 2>/dev/null); then
+            target_sha="$tag_sha"
+          else
+            target_sha=$(gh api "repos/${repository}/commits/${target_commitish}" --jq '.sha')
+          fi
+          if [ "$target_sha" != "$GITHUB_SHA" ]; then
+            echo "ERROR: GitHub Release ${tag} targets ${target_sha}, but this workflow built ${GITHUB_SHA}."
+            exit 1
+          fi
+
+          # Pin the draft to the workflow commit before uploading. If the tag
+          # already exists, the resolved tag commit was checked above instead.
+          gh api --method PATCH "repos/${repository}/releases/${release_id}" \
+            -f target_commitish="$GITHUB_SHA" >/dev/null
+
+          provenance="dist/onnx-${version}.sigstore.json"
+          cp "$ATTESTATION_BUNDLE" "$provenance"
+
+          shopt -s nullglob
+          distributions=(dist/*.whl dist/*.tar.gz)
+          if [ "${#distributions[@]}" -eq 0 ]; then
+            echo "ERROR: no wheels or source distribution were downloaded."
+            exit 1
+          fi
+
+          # A rerun may replace assets while the release is still a draft.
+          # Publishing the draft subsequently locks its tag and assets.
+          gh release upload "$tag" "${distributions[@]}" "$provenance" \
+            --clobber --repo "$repository"
 
       - name: Publish release_build to pypi
         if: (github.repository_owner == 'onnx')

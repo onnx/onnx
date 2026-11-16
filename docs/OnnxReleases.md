@@ -101,12 +101,12 @@ Validation steps must be completed before this point. This is the point of no re
 
 * Create PR to remove "`rcX`" suffix from `VERSION_NUMBER` file in the new release's branch.
 
-## Create release tag
+## Create draft GitHub Release
 
+* Confirm that an ONNX repository administrator has enabled [immutable releases](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/establish-provenance-and-integrity/prevent-release-changes). This setting must be enabled before the draft is created and applies only to future releases.
 * [Draft a release](https://github.com/onnx/onnx/releases/new) based on the release branch:
-    * DO NOT click `Publish release` until you are sure no more changes are needed.
-        * Use `Save Draft` if need to save and update more later.
-        * Publishing will create the new git tag
+    * DO NOT click `Publish release`. Use `Save Draft`.
+    * The final PyPI workflow validates that the draft targets the commit being built and attaches all wheels, the source distribution, and build provenance before publication.
     * Tag: See top of [Preparation](#preparation) for tag to create.
     * Target: The release branch that was just cut
     * Previous tag: Select the previous release.
@@ -114,13 +114,17 @@ Validation steps must be completed before this point. This is the point of no re
         * Use [previous releases](https://github.com/onnx/onnx/releases) as a template
         * Use information from [Release logistics wiki](https://github.com/onnx/onnx/wiki) which should have been created prior to branch cut.
         * Add any additional commits that merged into the release in since wiki was written.
-    * .tar.gz and .zip will be auto-generated after publishing the release.
+    * The source-code .tar.gz and .zip archives will be auto-generated after publishing the release.
 
 ## Upload to Official PyPI
 
 * Starting with the release of 1.19, the final release will also be pushed to pypi via Github “Action" -> "Create releases" (see above). Use the following config for official release:
 
 <img width="548" height="749" alt="RunWorkflow_Final" src="https://github.com/user-attachments/assets/d836d0b8-b033-4317-aa21-2aeed3c74d05" />
+
+The workflow uploads every wheel, the source distribution, and `onnx-X.Y.Z.sigstore.json` to the draft GitHub Release before publishing the same distributions to PyPI. The Sigstore bundle contains the SLSA build provenance generated for the release artifacts.
+
+After the workflow succeeds, inspect the draft assets and click `Publish release`. Publishing creates the release tag, locks the tag and assets through GitHub's native release immutability, and generates a release attestation. Do not publish the draft if the PyPI workflow fails.
 
 ### NOTES:
 
