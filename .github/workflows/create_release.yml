@@ -462,7 +462,7 @@ jobs:
           gh api --method PATCH "repos/${repository}/releases/${release_id}" \
             -f target_commitish="$GITHUB_SHA" >/dev/null
 
-          provenance="dist/onnx-${version}.sigstore.json"
+          provenance="${RUNNER_TEMP}/onnx-${version}.sigstore.json"
           cp "$ATTESTATION_BUNDLE" "$provenance"
 
           shopt -s nullglob
