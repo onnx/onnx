@@ -138,6 +138,28 @@ def test_softmax_roundtrip(op, axis):
     np.testing.assert_allclose(actual, expected, rtol=1e-6, atol=1e-6)
 
 
+def test_downgrade_allocates_unique_intermediate_output_name():
+    original = helper.make_model(
+        helper.make_graph(
+            [helper.make_node("Softmax", ["X"], ["Y"], axis=0)],
+            "unique-intermediate",
+            [value("X", [2, 3]), value("Y_transposed", [2, 3])],
+            [value("Y", [2, 3])],
+        ),
+        opset_imports=[helper.make_opsetid("", 13)],
+    )
+    checker.check_model(original, full_check=True)
+
+    converted = version_converter.convert_version(original, 12)
+
+    checker.check_model(converted, full_check=True)
+    produced_names = [
+        output for node in converted.graph.node for output in node.output if output
+    ]
+    assert len(produced_names) == len(set(produced_names))
+    assert [output.name for output in converted.graph.output] == ["Y"]
+
+
 @pytest.mark.parametrize("op", ["Shape", "Flatten", "Reshape"])
 def test_shape_operator_downgrade_rejects_bfloat16(op):
     inputs = ["X"]

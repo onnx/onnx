@@ -57,7 +57,7 @@ class Softmax_13_12 final : public Adapter {
 
       const use_list original_uses(node->output()->uses());
       const std::string original_output_name = node->output()->uniqueName();
-      node->output()->setUniqueName(original_output_name + "_transposed");
+      node->output()->setUniqueName(graph->getNextUniqueName(), false);
       Node* transpose_out = graph->create(Symbol("Transpose"));
       transpose_out->addInput(node->output());
       transpose_out->is_(kperm, std::move(perm));
