@@ -16,8 +16,8 @@ with open("model.onnx", "wb") as f:
 This method has the following signature.
 
 ```{eval-rst}
-.. autoclass:: onnx.ModelProto
-    :members: SerializeToString
+.. automethod:: onnx.ModelProto.SerializeToString
+    :no-index:
 ```
 
 Every Proto class implements method `SerializeToString`.
@@ -92,8 +92,8 @@ of the saved data. Therefore, this class must be known before
 restoring an object.
 
 ```{eval-rst}
-.. autoclass:: onnx.ModelProto
-    :members: ParseFromString
+.. automethod:: onnx.ModelProto.ParseFromString
+    :no-index:
 ```
 
 Next example shows how to restore a {ref}`l-nodeproto`.

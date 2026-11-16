@@ -31,6 +31,8 @@ Here is a short list:
   converts models from [scikit-learn](https://scikit-learn.org/stable/),
 - [tensorflow-onnx](https://github.com/onnx/tensorflow-onnx):
   converts models from [tensorflow](https://www.tensorflow.org/),
+- [jax2onnx](https://github.com/enpasos/jax2onnx):
+  converts models from [JAX](https://docs.jax.dev/),
 - [onnxmltools](https://github.com/onnx/onnxmltools):
   converts models from [lightgbm](https://lightgbm.readthedocs.io/),
   [xgboost](https://xgboost.readthedocs.io/en/stable/),
@@ -260,7 +262,6 @@ set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONN
 python onnx\gen_proto.py -l
 python onnx\gen_proto.py -l --ml
 pip install -e .
-python onnx\backend\test\cmd_tools.py generate-data
 python onnx\backend\test\stat_coverage.py
 python onnx\defs\gen_doc.py
 set ONNX_ML=0

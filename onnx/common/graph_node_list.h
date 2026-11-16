@@ -8,6 +8,9 @@
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
 
+#include <cstdint>
+#include <iterator>
+
 #include "onnx/common/assertions.h"
 
 namespace ONNX_NAMESPACE {
@@ -51,6 +54,11 @@ using const_graph_node_list_iterator = generic_graph_node_list_iterator<const No
 
 template <typename T>
 struct generic_graph_node_list_iterator final {
+  using iterator_category = std::bidirectional_iterator_tag;
+  using value_type = T*;
+  using difference_type = int64_t;
+  using pointer = T**;
+  using reference = T*&;
   generic_graph_node_list_iterator() : cur(nullptr), d(kNextDirection) {}
   generic_graph_node_list_iterator(T* cur, size_t d) : cur(cur), d(d) {}
   T* operator*() const {
@@ -153,18 +161,5 @@ static inline bool operator!=(generic_graph_node_list_iterator<T> a, generic_gra
 }
 
 } // namespace ONNX_NAMESPACE
-
-namespace std {
-
-template <typename T>
-struct iterator_traits<ONNX_NAMESPACE::generic_graph_node_list_iterator<T>> {
-  using difference_type = int64_t;
-  using value_type = T*;
-  using pointer = T**;
-  using reference = T*&;
-  using iterator_category = bidirectional_iterator_tag;
-};
-
-} // namespace std
 
 #endif // ONNX_COMMON_GRAPH_NODE_LIST_H_

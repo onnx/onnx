@@ -3,13 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from onnx.reference.ops._op import OpRunUnaryNum
+from onnx.reference.ops._op_common_softmax import _log_softmax
 
-from onnx.reference.ops.op_softmax import Softmax
 
-
-class LogSoftmax(Softmax):
+class LogSoftmax(OpRunUnaryNum):
     def _run(self, X):
-        Y = Softmax._run(self, X)[0]
-        np.log(Y, out=Y)
-        return (Y,)
+        return (_log_softmax(X, self.axis),)

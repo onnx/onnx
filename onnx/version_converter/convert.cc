@@ -4,19 +4,91 @@
 
 #include "onnx/version_converter/convert.h"
 
+#include <cstdint>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "onnx/common/ir_pb_converter.h"
+#include "onnx/shape_inference/implementation.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
+
+namespace {
+
+struct CapturedTensorType {
+  int32_t elem_type = TensorProto_DataType_UNDEFINED;
+  bool has_sizes = false;
+  std::vector<Dimension> sizes;
+};
+
+struct CapturedTensorScope {
+  const CapturedTensorScope* parent = nullptr;
+  std::unordered_map<std::string, CapturedTensorType> values;
+
+  const CapturedTensorType* find(const std::string& name) const {
+    for (const auto* scope = this; scope != nullptr; scope = scope->parent) {
+      const auto value = scope->values.find(name);
+      if (value != scope->values.end()) {
+        return &value->second;
+      }
+    }
+    return nullptr;
+  }
+};
+
+// Runs before all version conversions, not only MVN: captured IR values may lack
+// the outer value's metadata even after model-level shape inference.
+void PropagateCapturedTensorTypes(const std::shared_ptr<Graph>& graph, const CapturedTensorScope* outer_scope) {
+  assertNonNull(graph);
+  CapturedTensorScope scope{outer_scope, {}};
+  for (const auto& initializer : graph->initializers()) {
+    scope.values[initializer.name()] = {
+        initializer.elem_type(), true, {initializer.sizes().begin(), initializer.sizes().end()}};
+  }
+  for (auto* input : graph->inputs()) {
+    scope.values[input->uniqueName()] = {input->elemType(), input->has_sizes(), input->sizes()};
+  }
+  for (auto* node : graph->nodes()) {
+    for (auto* output : node->outputs()) {
+      if (node->kind() == kCaptured && outer_scope != nullptr) {
+        const auto* source = outer_scope->find(output->uniqueName());
+        if (source != nullptr) {
+          if (output->elemType() == TensorProto_DataType_UNDEFINED) {
+            output->setElemType(source->elem_type);
+          }
+          if (!output->has_sizes() && source->has_sizes) {
+            output->setSizes(source->sizes);
+          }
+        }
+      }
+      scope.values[output->uniqueName()] = {output->elemType(), output->has_sizes(), output->sizes()};
+    }
+  }
+  for (auto* node : graph->nodes()) {
+    for (const auto& attr : node->attributeNames()) {
+      if (node->kindOf(attr) == AttributeKind::g) {
+        PropagateCapturedTensorTypes(node->g(attr), &scope);
+      } else if (node->kindOf(attr) == AttributeKind::gs) {
+        for (const auto& subgraph : node->gs(attr)) {
+          PropagateCapturedTensorTypes(subgraph, &scope);
+        }
+      }
+    }
+  }
+}
+
+} // namespace
 
 ModelProto ConvertVersion(const ModelProto& mp_in, int target_version) {
+  ModelProto inferred_model = mp_in;
+  shape_inference::InferShapes(inferred_model);
+
   // Get initial_opsetid from mp_in
   OpSetID initial_struct(0);
-  for (const auto& it : mp_in.opset_import()) {
+  for (const auto& it : inferred_model.opset_import()) {
     if (it.domain().empty() || it.domain() == "ai.onnx") {
       initial_struct.setVersion(it.version());
       break;
@@ -24,7 +96,7 @@ ModelProto ConvertVersion(const ModelProto& mp_in, int target_version) {
   }
   OpSetID target_struct = OpSetID(target_version);
   DefaultVersionConverter v;
-  return v.convert_version(mp_in, initial_struct, target_struct);
+  return v.convert_version(inferred_model, initial_struct, target_struct);
 }
 
 void DefaultVersionConverter::convert_graph(
@@ -56,13 +128,18 @@ void DefaultVersionConverter::convert_graph(
   } else {
     step = -1;
   }
-  // Identify index of this domain in g.opset_versions
-  unsigned int domain_index = 0;
-  for (unsigned int i = 0; i < g->opset_versions_mutable().size(); i++) {
-    if (g->opset_versions_mutable()[i].domain().empty()) {
+  // Identify index of the default domain ("" or "ai.onnx") in g.opset_versions.
+  // ImportModelProto preserves domain strings verbatim from the proto, so both
+  // spellings must be matched here (ConvertVersion also accepts both).
+  int domain_index = -1;
+  for (int i = 0; i < static_cast<int>(g->opset_versions_mutable().size()); i++) {
+    const std::string& dom = g->opset_versions_mutable()[i].domain();
+    if (dom.empty() || dom == "ai.onnx") {
       domain_index = i;
+      break;
     }
   }
+  ONNX_ASSERTM(domain_index >= 0, "Graph has no default-domain (\"\" or \"ai.onnx\") opset entry")
   while (curr_version != target_version.version()) {
     debug(
         "curr_version: " + ONNX_NAMESPACE::to_string(curr_version) +
@@ -89,7 +166,14 @@ void DefaultVersionConverter::convert_graph(
           std::cerr << "Warning: opset domain '" << cur_op->domain() << "' is not supported." << '\n';
         }
       } else if (op_name != "Undefined" && op_name != "Captured") {
-        const auto& op_domain_map = all_schemas.at(op_name);
+        const auto schema_it = all_schemas.find(op_name);
+        ONNX_ASSERTM(
+            schema_it != all_schemas.end(),
+            "Op '%s' has no registered schema; cannot convert it from version %lld to %lld.",
+            op_name.c_str(),
+            static_cast<long long>(curr_version),
+            static_cast<long long>(target_version.version()));
+        const auto& op_domain_map = schema_it->second;
         OpSetID curr_id(curr_version);
         OpSetID next_id(curr_version + step);
         if (searchOpDomainMap(op_domain_map, curr_version, step)) {
@@ -101,7 +185,10 @@ void DefaultVersionConverter::convert_graph(
             std::cerr << "Applying adapter" << '\n';
           }
           // adapt should handle replacing node in graph
+          // An adapter may destroy the original node and return its replacement.
+          const auto metadata_props = cur_op->metadataProps();
           cur_op = op_adapter.adapt(g, cur_op);
+          cur_op->setMetadataProps(metadata_props);
           it = graph_node_list_iterator(cur_op, kNextDirection);
         }
         // Recursively convert any subgraph attributes
@@ -111,11 +198,11 @@ void DefaultVersionConverter::convert_graph(
           }
         }
       }
-      it++;
+      ++it;
     }
     // Update model version
     curr_version += step;
-    g->opset_versions_mutable()[domain_index].incrementVersion(step);
+    g->opset_versions_mutable()[static_cast<size_t>(domain_index)].incrementVersion(step);
   }
 }
 
@@ -125,7 +212,11 @@ ModelProto DefaultVersionConverter::convert_version(
     const OpSetID& target_version) const {
   const std::string& initial_domain = initial_version.domain();
   const std::string& target_domain = target_version.domain();
-  assertDefaultDomain(initial_domain, target_domain);
+  ONNX_ASSERTM(
+      (initial_domain.empty() || initial_domain == "ai.onnx") && (target_domain.empty() || target_domain == "ai.onnx"),
+      "Warning: default onnx version converter can only convert "
+      " between default domain opset versions ('' or 'ai.onnx')\n")
+  ONNX_ASSERTM(initial_domain == target_domain, "initial_version and target_version must have the same domains")
 
   for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import().end(); ++it) {
     if (it->domain() == initial_version.domain()) {
@@ -136,6 +227,8 @@ ModelProto DefaultVersionConverter::convert_version(
 
   std::shared_ptr<Graph> g(ImportModelProto(mp_in));
 
+  // Imported capture placeholders lack the types inferred in their enclosing scope.
+  PropagateCapturedTensorTypes(g, nullptr);
   convert_graph(g, initial_version, target_version);
 
   // Export g as ModelProto
@@ -145,5 +238,4 @@ ModelProto DefaultVersionConverter::convert_version(
   return mp_out;
 }
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

@@ -6,6 +6,7 @@
 
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -77,11 +78,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(num_rois, C, output_height, output_width). The r-th batch element Y[r-1] "
             "is a pooled feature map corresponding to the r-th RoI X[r-1].",
             "T1")
-        .TypeConstraint(
-            "T1",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain types to float tensors.")
-        .TypeConstraint("T2", {"tensor(int64)"}, "Constrain types to int tensors.")
+        .TypeConstraint("T1", {types::Float16, types::Float, types::Double}, "Constrain types to float tensors.")
+        .TypeConstraint("T2", {types::Int64}, "Constrain types to int tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
@@ -172,11 +170,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(num_rois, C, output_height, output_width). The r-th batch element Y[r-1] "
             "is a pooled feature map corresponding to the r-th RoI X[r-1].",
             "T1")
-        .TypeConstraint(
-            "T1",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain types to float tensors.")
-        .TypeConstraint("T2", {"tensor(int64)"}, "Constrain types to int tensors.")
+        .TypeConstraint("T1", {types::Float16, types::Float, types::Double}, "Constrain types to float tensors.")
+        .TypeConstraint("T2", {types::Int64}, "Constrain types to int tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 

@@ -31,8 +31,8 @@ from onnx.onnx_pb import IR_VERSION
 if TYPE_CHECKING:
     from google.protobuf.message import Message
 
-# Limitation of single protobuf file is 2GiB
-MAXIMUM_PROTOBUF = 2147483648
+# Maximum single-protobuf size; matches the C++ parser limit in proto_utils.h (2 GiB - 1 byte)
+MAXIMUM_PROTOBUF = 2147483647
 
 
 # NB: Please don't edit this context!
@@ -141,6 +141,12 @@ def check_model(
             opset compatibility.
         check_custom_domain: If True, the function will check all domains. Otherwise
             only check built-in domains.
+
+    Raises:
+        ValidationError: If the model is invalid. Its ``code`` attribute names the
+            rule that failed, such as ``"input-not-defined"``, or is None for
+            rules that have no code yet. Codes are stable across releases; messages
+            are not. See ``docs/CheckerErrorCodes.md``.
     """
     # If model is a path instead of ModelProto
     if isinstance(model, (str, os.PathLike)):

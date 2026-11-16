@@ -12,8 +12,7 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class Attention_24_23 final : public Adapter {
  public:
@@ -26,12 +25,12 @@ class Attention_24_23 final : public Adapter {
     if (inputs.size() > 6) {
       ONNX_ASSERTM(
           false,
-          "%s being converted from %" PRId64 " to %" PRId64
-          " has nonpad_kv_seqlen input, "
-          "which is not supported in opset 23. This conversion cannot be performed.",
-          name().c_str(),
+          name(),
+          " being converted from ",
           static_cast<int64_t>(initial_version().version()),
-          static_cast<int64_t>(target_version().version()))
+          " to ",
+          static_cast<int64_t>(target_version().version()),
+          " has nonpad_kv_seqlen input, which is not supported in opset 23. This conversion cannot be performed.")
     }
   }
 
@@ -41,5 +40,4 @@ class Attention_24_23 final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

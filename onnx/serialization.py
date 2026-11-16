@@ -102,7 +102,7 @@ class _ProtobufSerializer(ProtoSerializer):
             try:
                 result = proto.SerializeToString()
             except ValueError as e:
-                if proto.ByteSize() >= onnx.checker.MAXIMUM_PROTOBUF:
+                if proto.ByteSize() > onnx.checker.MAXIMUM_PROTOBUF:
                     raise ValueError(
                         "The proto size is larger than the 2 GB limit. "
                         "Please use save_as_external_data to save tensors separately from the model file."

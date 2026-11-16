@@ -32,15 +32,19 @@ extend-words = { kend = "kend" }
 
 [type.doc_strings_cc]
 extend-glob = ["doc_strings.cc"]
-extend-words = { ot = "ot" }
+extend-words = { ot = "ot", iof = "iof"  }
+
+[type.defs_cc]
+extend-glob = ["defs.cc"]
+extend-words = { ot = "ot", iof = "iof"  }
 
 [type.old_cc]
 extend-glob = ["old.cc"]
-extend-words = { ot = "ot" }
+extend-words = { ot = "ot", iof = "iof"  }
 
 [type.operators_md]
 extend-glob = ["Operators.md"]
-extend-words = { ot = "ot" }
+extend-words = { ot = "ot", iof = "iof" }
 
 [type.op_conv_py]
 extend-glob = ["op_conv.py"]
@@ -48,7 +52,7 @@ extend-words = { iz = "iz" }
 
 [type.changelog_md]
 extend-glob = ["Changelog.md"]
-extend-words = { ot = "ot" }
+extend-words = { ot = "ot", iof = "iof"  }
 extend-ignore-re = ["foward\\)"]  # typo in published spec
 
 [type.lint_yml]

@@ -29,16 +29,14 @@ is described, with example,
 The C++ API consists of a single function
 
 ```cpp
-ModelProto ConvertVersion(
-    const ModelProto& mp_in,
-    const OpSetID& initial_version,
-    const OpSetID& target_version);
+ModelProto ConvertVersion(const ModelProto& mp_in, int target_version);
 ```
 
-which accepts an input `ModelProto`, the initial opset version of the model,
-and the target opset version, and which returns a new `ModelProto` which
-is the result of apply all relevant adapters between initial_version and
-target_version. For a list of available passes, see
+which accepts an input `ModelProto` and the target opset version, and which
+returns a new `ModelProto` which is the result of applying all relevant
+adapters between the model's initial opset version and `target_version`.
+The initial version is read from the first `opset_import` entry of `mp_in`
+whose domain is `""` or `"ai.onnx"`. For a list of available passes, see
 [convert.h](/onnx/version_converter/convert.h).
 
 ## Implementing Adapters

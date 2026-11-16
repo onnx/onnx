@@ -11,11 +11,6 @@
 #include "onnx/defs/schema.h"
 #include "onnx/inliner/inliner.h"
 
-static std::string InternalTensorNameGenerator(const std::string& node_name, const std::string& internal_name) {
-  std::string new_name = "Func_" + node_name + internal_name;
-  return new_name;
-}
-
 namespace ONNX_NAMESPACE {
 void FunctionExpandHelper(
     const NodeProto& node,
@@ -31,14 +26,17 @@ void FunctionExpandHelper(
     uniq_prefix = ss.str();
   }
   std::string node_name = node.has_name() ? node.name() : func.name() + uniq_prefix;
-  std::unordered_map<std::string, std::string> io_names_map;
+  inliner::Renamer renamer(node_name, g);
   std::unordered_map<std::string, AttributeProto> attr_map;
 
   for (int idx = 0; idx < node.input_size(); ++idx) {
     if (idx >= func.input_size()) {
       ONNX_THROW("Input for function node " + node_name + " is out of bounds");
     }
-    io_names_map[func.input().Get(idx)] = node.input().Get(idx);
+    renamer.BindName(func.input(idx), node.input(idx));
+  }
+  for (int idx = node.input_size(); idx < func.input_size(); ++idx) {
+    renamer.BindName(func.input(idx), "");
   }
   for (int idx = 0; idx < node.output_size(); ++idx) {
     if (idx >= func.output_size()) {
@@ -50,7 +48,7 @@ void FunctionExpandHelper(
     if (node.output().Get(idx).empty()) {
       continue;
     }
-    io_names_map[func.output().Get(idx)] = node.output().Get(idx);
+    renamer.BindName(func.output(idx), node.output(idx));
   }
 
   for (const auto& attr : node.attribute()) {
@@ -72,7 +70,12 @@ void FunctionExpandHelper(
 
   const OpSchemaRegistry* schema_registry = OpSchemaRegistry::Instance();
   const auto* const schema = schema_registry->GetSchema(node.op_type(), domain_version, node.domain());
-  auto default_attrs = schema->attributes();
+  if (schema == nullptr) {
+    ONNX_THROW(
+        "No schema registered for op '" + node.op_type() + "' in domain '" + node.domain() + "' at version " +
+        std::to_string(domain_version) + " while expanding function node " + node_name);
+  }
+  const auto& default_attrs = schema->attributes();
 
   for (const auto& [attr_name, attr] : default_attrs) {
     if (!attr_map.count(attr_name)) {
@@ -83,23 +86,7 @@ void FunctionExpandHelper(
   for (const auto& function_node : func.node()) {
     NodeProto* new_node = g.add_node();
     new_node->CopyFrom(function_node);
-    new_node->clear_input();
-    new_node->clear_output();
     new_node->clear_attribute();
-    for (const auto& input : function_node.input()) {
-      if (io_names_map.count(input)) {
-        new_node->add_input(io_names_map[input]);
-      } else {
-        new_node->add_input(InternalTensorNameGenerator(node_name, input));
-      }
-    }
-    for (const auto& output : function_node.output()) {
-      if (io_names_map.count(output)) {
-        new_node->add_output(io_names_map[output]);
-      } else {
-        new_node->add_output(InternalTensorNameGenerator(node_name, output));
-      }
-    }
     for (const auto& attr : function_node.attribute()) {
       if (attr.has_ref_attr_name()) {
         if (attr_map.count(attr.ref_attr_name())) {
@@ -112,6 +99,7 @@ void FunctionExpandHelper(
         new_attr->CopyFrom(attr);
       }
     }
+    renamer.RenameNode(*new_node);
   }
 }
 
@@ -131,7 +119,7 @@ std::vector<NodeProto> FunctionBodyHelper::BuildNodes(const std::vector<NodeDef>
       n.add_output(o);
     }
     for (const auto& attr : node.attributes) {
-      *(n.add_attribute()) = attr.proto;
+      *n.add_attribute() = attr.proto;
     }
   }
 
@@ -151,7 +139,7 @@ void FunctionBodyHelper::BuildNodes(FunctionProto& functionProto, const std::vec
       np->add_output(o);
     }
     for (const auto& attr : node.attributes) {
-      *(np->add_attribute()) = attr.proto;
+      *np->add_attribute() = attr.proto;
     }
   }
 }
@@ -164,7 +152,7 @@ bool FunctionBodyHelper::BuildFunctionProto(
   BuildNodes(functionProto, node_defs);
 
   for (const auto& relied_opset : relied_opsets) {
-    *(functionProto.mutable_opset_import()->Add()) = relied_opset;
+    *functionProto.mutable_opset_import()->Add() = relied_opset;
   }
 
   schema.BuildFunction(functionProto);

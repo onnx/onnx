@@ -1,0 +1,160 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# Runs the OSS-Fuzz harnesses under onnx/fuzz/ directly (not via OSS-Fuzz
+# infrastructure) as a regression check. This is deliberately not a
+# replacement for OSS-Fuzz's own continuous, long-running campaigns
+# (see google/oss-fuzz#15382) — it exists to catch harness regressions
+# (import errors, API drift, a harness file going missing) at PR time
+# instead of silently, since OSS-Fuzz failures are not surfaced here.
+#
+# atheris only ships wheels for Linux and macOS, so this does not run on
+# Windows. See https://github.com/onnx/onnx/blob/main/onnx/fuzz/README.md
+# for the harness/toggle-byte details.
+
+name: Fuzz
+
+on:
+  pull_request:
+    paths:
+      - 'onnx/**'
+      - 'pyproject.toml'
+      - '.github/workflows/fuzz.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'onnx/**'
+      - 'pyproject.toml'
+      - '.github/workflows/fuzz.yml'
+  schedule:
+    - cron: '0 6 * * *'  # nightly: run each harness for longer than the PR smoke test
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Mirrors main.yml's sanitizer job. Leak detection is off because CPython
+  # intentionally leaks at exit; container-overflow is off because libstdc++
+  # itself is not instrumented.
+  ASAN_OPTIONS: detect_leaks=0:symbolize=1:detect_stack_use_after_return=true:strict_init_order=true:detect_odr_violation=1:detect_container_overflow=0:check_initialization_order=true:fast_unwind_on_malloc=1:verify_asan_link_order=0:alloc_dealloc_mismatch=1:abort_on_error=1
+  # halt_on_error turns UBSan reports into crashes that libFuzzer records.
+  UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1:abort_on_error=1
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fuzz:
+    name: Run fuzz harnesses (${{ github.event_name == 'schedule' && 'nightly' || 'smoke' }})
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+
+      - name: Install atheris
+        run: pip install atheris
+
+      - name: Build and install ONNX
+        run: pip install -e ".[reference]" -v
+        env:
+          ONNX_ML: 1
+          # ONNX_USE_ASAN enables both ASan and UBSan; debug info keeps the
+          # sanitizer stack traces symbolized.
+          CMAKE_ARGS: -DONNX_USE_ASAN=ON
+          SKBUILD_CMAKE_BUILD_TYPE: RelWithDebInfo
+
+      - name: Setup ASAN LD_PRELOAD
+        run: |
+          echo "LD_PRELOAD=$(/usr/bin/c++ -print-file-name=libasan.so):$(/usr/bin/c++ -print-file-name=libstdc++.so)" >> "$GITHUB_ENV"
+
+      - name: Generate seed corpora
+        run: |
+          mkdir -p corpus crashes/{checker,model_loader,parser,shape_inference,version_converter,compose,external_data}
+          python onnx/fuzz/make_seed_corpus.py \
+            corpus/version_converter.zip corpus/parser.zip \
+            corpus/checker.zip corpus/shape_inference.zip corpus/compose.zip \
+            corpus/external_data.zip
+          for name in version_converter parser checker shape_inference compose external_data; do
+            mkdir -p "corpus/$name"
+            python -m zipfile -e "corpus/$name.zip" "corpus/$name/"
+          done
+          # fuzz_model_loader.py has no dedicated seeds; it exercises the same
+          # load+check path as fuzz_checker.py, so reuse that corpus.
+          mkdir -p corpus/model_loader
+          cp corpus/checker/* corpus/model_loader/
+
+      - name: Set fuzz duration
+        id: duration
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "seconds=300" >> "$GITHUB_OUTPUT"
+          else
+            echo "seconds=60" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run fuzz_checker.py
+        run: python onnx/fuzz/fuzz_checker.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/checker/ corpus/checker
+        env:
+          FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
+
+      - name: Run fuzz_model_loader.py
+        run: python onnx/fuzz/fuzz_model_loader.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/model_loader/ corpus/model_loader
+        env:
+          FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
+
+      - name: Run fuzz_parser.py
+        run: python onnx/fuzz/fuzz_parser.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/parser/ corpus/parser
+        env:
+          FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
+
+      - name: Run fuzz_shape_inference.py
+        run: python onnx/fuzz/fuzz_shape_inference.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/shape_inference/ corpus/shape_inference
+        env:
+          FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
+
+      - name: Run fuzz_version_converter.py
+        run: python onnx/fuzz/fuzz_version_converter.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/version_converter/ corpus/version_converter
+        env:
+          FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
+
+      - name: Run fuzz_compose.py
+        run: python onnx/fuzz/fuzz_compose.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/compose/ corpus/compose
+        env:
+          FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
+
+      - name: Run fuzz_external_data.py
+        run: python onnx/fuzz/fuzz_external_data.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/external_data/ corpus/external_data
+        env:
+          FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
+
+      - name: Print backtraces for crashes
+        if: failure()
+        run: |
+          for crash in crashes/*/*; do
+            [ -f "$crash" ] || continue
+            harness="onnx/fuzz/fuzz_$(basename "$(dirname "$crash")").py"
+            echo "::group::Backtrace for $crash ($harness)"
+            # The sanitizer report gives the native stack; faulthandler adds
+            # the Python frames when the process aborts.
+            python -X faulthandler "$harness" "$crash" || true
+            echo "::endgroup::"
+          done
+
+      - name: Upload crash artifacts
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: fuzz-crashes
+          path: crashes/
+          if-no-files-found: ignore

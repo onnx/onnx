@@ -12,16 +12,10 @@
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/onnx_pb.h"
 
-namespace ONNX_NAMESPACE {
-namespace defs {
-namespace sequence {
-namespace utils {
+namespace ONNX_NAMESPACE::defs::sequence::utils {
 
 std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
     std::vector<std::string> input_types,
     std::vector<std::string> output_types);
 
-}
-} // namespace sequence
-} // namespace defs
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::defs::sequence::utils

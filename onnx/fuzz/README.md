@@ -1,0 +1,150 @@
+<!-- Copyright (c) ONNX Project Contributors -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
+# ONNX OSS-Fuzz Harnesses
+
+This directory contains [atheris](https://github.com/google/atheris)-based Python fuzz
+targets used by [OSS-Fuzz](https://github.com/google/oss-fuzz) to continuously test ONNX
+for crashes, hangs, and sanitizer violations.
+
+## Harnesses
+
+| File | Entry point fuzzed | Input path |
+|---|---|---|
+| `fuzz_checker.py` | `checker.check_model` | Raw bytes → protobuf parser |
+| `fuzz_compose.py` | `compose.merge_models` | Raw (length-prefixed model pair) **and** structured (toggle byte) |
+| `fuzz_external_data.py` | External-data metadata, read/write helpers, model loading, and `ModelContainer` | Structured bytes + disposable filesystem fixtures |
+| `fuzz_model_loader.py` | `load_model_from_string` + `checker.check_model` | Raw bytes → protobuf parser |
+| `fuzz_parser.py` | `parser.parse_model`, `parse_graph`, `parse_function`, `parse_node` | UTF-8 text (ONNX text format) |
+| `fuzz_shape_inference.py` | `shape_inference.infer_shapes` | Raw bytes **and** structured model (toggle byte) |
+| `fuzz_version_converter.py` | `version_converter.convert_version` | Raw bytes → protobuf parser |
+| `make_seed_corpus.py` | *(seed generator, not a fuzzer)* | Produces seed zips for OSS-Fuzz |
+
+## CI regression check
+
+[`.github/workflows/fuzz.yml`](../../.github/workflows/fuzz.yml) runs each harness in this
+repo's own CI (a short smoke run on PRs/pushes that touch `onnx/`, a longer nightly run) as
+a regression check — e.g. to catch a harness failing to import or a documented harness file
+going missing. This is separate from, and much shallower than, OSS-Fuzz's own continuous
+fuzzing campaigns; OSS-Fuzz findings are not surfaced in this repo's CI.
+
+The CI build enables AddressSanitizer and UndefinedBehaviorSanitizer (`-DONNX_USE_ASAN=ON`),
+so memory errors and undefined behavior in the C++ code are reported as crashes. Crashing
+inputs are saved under `crashes/<harness>/`, replayed to print the sanitizer and Python
+stack traces, and uploaded as the `fuzz-crashes` artifact.
+
+## How OSS-Fuzz uses these files
+
+The companion OSS-Fuzz project ([google/oss-fuzz#15382](https://github.com/google/oss-fuzz/pull/15382))
+clones this repository and runs each `fuzz_*.py` file via `compile_python_fuzzer`.
+The `build.sh` in that repo references these files from `$SRC/onnx/fuzz/` so that the
+harnesses are version-controlled here alongside the code they test.
+The current ONNX builder results are visible on the
+[OSS-Fuzz build-status dashboard](https://oss-fuzz-build-logs.storage.googleapis.com/index.html#onnx).
+
+## Running a harness locally
+
+Atheris requires a libFuzzer-instrumented Python build; the easiest way is via the
+OSS-Fuzz Docker image. For quick local smoke-tests you can run without fuzzing by
+passing `-runs=0` (just loads the harness):
+
+```bash
+pip install atheris
+python onnx/fuzz/fuzz_checker.py -runs=1000
+python onnx/fuzz/fuzz_compose.py -runs=1000
+python onnx/fuzz/fuzz_external_data.py -runs=1000
+python onnx/fuzz/fuzz_parser.py -runs=1000
+python onnx/fuzz/fuzz_shape_inference.py -runs=1000
+python onnx/fuzz/fuzz_version_converter.py -runs=1000
+```
+
+To generate the seed corpora that OSS-Fuzz uses as starting inputs. The compose
+and external-data outputs are optional, so existing 4-zip and 5-zip invocations
+keep working unchanged:
+
+```bash
+python onnx/fuzz/make_seed_corpus.py \
+    /tmp/vc_seeds.zip /tmp/parser_seeds.zip /tmp/checker_seeds.zip \
+    /tmp/shape_inference_seeds.zip \
+    [/tmp/compose_seeds.zip [/tmp/external_data_seeds.zip]]
+```
+
+## Design notes
+
+### Why `except Exception: return`?
+
+Fuzz targets must never crash on expected errors — only on *unexpected* ones
+(memory corruption, hangs, sanitizer reports). All protobuf parse failures,
+`ValidationError`, `InferenceError`, `DecodeError`, etc. are expected when the
+fuzzer feeds random bytes. Swallowing them lets libFuzzer keep searching for
+inputs that cause real bugs.
+
+The parser harness ignores only invalid UTF-8 and `parser.ParseError`; other
+exceptions are findings. Decimal literals must parse as float and double
+values unless they overflow, in which case they must be rejected. Escaped string
+attributes must preserve their UTF-8 bytes, including NUL. Integer attributes
+and signed/unsigned tensors must preserve in-range values and reject
+out-of-range literals; unsigned literals must not carry a sign, even `-0`.
+
+### Why `TestOneInput`?
+
+`TestOneInput` is the [required entry-point name](https://github.com/google/atheris#usage)
+for atheris harnesses. Ruff's `N802` (lowercase function names) is suppressed for
+`onnx/fuzz/**` in `pyproject.toml` for this reason.
+
+### `fuzz_shape_inference.py` toggle byte
+
+The shape inference harness exercises two code paths per iteration, selected by
+the last byte of the input:
+
+| Bit | Meaning |
+|---|---|
+| `0x01` | `strict_mode=True` |
+| `0x02` | `check_type=True` |
+| `0x04` | Use structured model builder (If/Loop/Scan subgraphs) instead of raw bytes |
+
+This lets a single harness cover both the protobuf-parser path and the recursive
+subgraph visitor without needing separate fuzzers.
+
+### `fuzz_compose.py` toggle byte
+
+The compose harness drives two ModelProtos plus an io_map into
+`compose.merge_models`. The last byte selects the input strategy:
+
+| Bit | Meaning |
+|---|---|
+| `0x01` | pass `prefix1`/`prefix2` (collision-resolution path) |
+| `0x04` | structured: build both models from `FuzzedDataProvider` (else raw: a 4-byte length prefix splits the remaining bytes into m1 \| m2) |
+| `0x08` | random io_map (else derive it from m1's output names and m2's input names) |
+
+`merge_models` transitively exercises `merge_graphs`, `check_overlapping_names`,
+the recursive `connect_io` subgraph rewrite, `add_prefix`, and a final
+`checker.check_model` on the merged result.
+
+### `fuzz_external_data.py` filesystem boundary
+
+The external-data harness uses a fresh model directory inside a disposable
+workspace on every iteration. Fuzzer-selected locations include ordinary and
+nested files, missing files, traversal paths, absolute paths, UNC and Windows
+drive forms, encoded traversal text, symlinks, and hardlinks. All escape and
+link cases target a sentinel outside the model directory. The harness reports a
+finding if an external-data open resolves to that sentinel (same device and
+inode) or if an operation modifies it, even when the operation also raises an
+otherwise expected validation error. Fixture setup failures are not treated as
+expected errors.
+
+The six-byte input header selects the operation, location, duplicate-metadata
+flags, offset, length, and alternate location. Remaining bytes become bounded
+tensor data. This covers `ExternalDataInfo`, tensor and whole-model reads,
+single- and multi-tensor writes, `onnx.save_model`, and `ModelContainer` load and
+regular save/load paths. Filesystem concurrency is intentionally left to
+deterministic regression tests rather than introducing scheduler-dependent fuzz
+results.
+
+## Adding a new harness
+
+1. Create `onnx/fuzz/fuzz_<name>.py` following the pattern of an existing harness.
+2. If the fuzzer benefits from seed inputs, add them to `make_seed_corpus.py` and
+   wire up the output zip in the OSS-Fuzz `build.sh`.
+3. Open a PR here; once merged, update the OSS-Fuzz `build.sh` if a new seed zip
+   was added.

@@ -18,6 +18,7 @@
 #include "onnx/defs/operator_sets.h"
 #include "onnx/defs/operator_sets_preview.h"
 #include "onnx/defs/operator_sets_training.h"
+#include "onnx/defs/type_builders.h"
 
 #ifdef ONNX_ML
 #include "onnx/defs/operator_sets_ml.h"
@@ -114,8 +115,8 @@ OpSchemaRegistry* OpSchemaRegistry::Instance() {
 void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
   std::unordered_map<std::string, std::string> type_constraints;
   // Check the number of inputs / output.
-  VerifyInputNum(ctx.getNumInputs());
-  VerifyOutputNum(ctx.getNumOutputs());
+  VerifyInputNum(static_cast<int>(ctx.getNumInputs()));
+  VerifyOutputNum(static_cast<int>(ctx.getNumOutputs()));
 
   // check all input types
   for (size_t in_idx = 0; in_idx < ctx.getNumInputs(); ++in_idx) {
@@ -137,11 +138,10 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
       auto [it, inserted] = type_constraints.emplace(type_str, *type_proto);
-      if (!inserted) {
-        // failed to insert a new element due to a duplication, now check consistency
-        if (it->second != *type_proto) {
-          fail_check(param.GetName(), " has inconsistent type ", *Utils::DataTypeUtils::ToType(*param_type));
-        }
+      if ((!inserted) && (it->second != *type_proto))
+      // failed to insert a new element due to a duplication, now check consistency
+      {
+        fail_check(param.GetName(), " has inconsistent type ", *Utils::DataTypeUtils::ToType(*param_type));
       }
     }
   } // for inputs
@@ -183,7 +183,12 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
 
 void OpSchema::Verify(const NodeProto& node) const {
   if (deprecated_) {
-    fail_check("Operator '", name_, "' has been deprecated since version ", since_version_);
+    fail_check_with_code(
+        checker::error_code::kOperatorDeprecated,
+        "Operator '",
+        name_,
+        "' has been deprecated since version ",
+        since_version_);
   }
 
   VerifyInputNum(node.input_size(), node.name());
@@ -196,7 +201,8 @@ void OpSchema::Verify(const NodeProto& node) const {
         // The last input formal parameter should be variadic.
         break;
       } else {
-        fail_check(
+        fail_check_with_code(
+            checker::error_code::kNodeSchemaMismatch,
             "Node (",
             node.name(),
             ") has more inputs (",
@@ -207,7 +213,13 @@ void OpSchema::Verify(const NodeProto& node) const {
       }
     }
     if (node.input(in_idx).empty() && (Single == inputs_[in_idx].GetOption())) {
-      fail_check("Node (", node.name(), ")'s input ", in_idx, " is marked single but has an empty string in the graph");
+      fail_check_with_code(
+          checker::error_code::kNodeSchemaMismatch,
+          "Node (",
+          node.name(),
+          ")'s input ",
+          in_idx,
+          " is marked single but has an empty string in the graph");
     }
   }
 
@@ -217,7 +229,8 @@ void OpSchema::Verify(const NodeProto& node) const {
         // The last output formal parameter should be variadic.
         break;
       } else {
-        fail_check(
+        fail_check_with_code(
+            checker::error_code::kNodeSchemaMismatch,
             "Node (",
             node.name(),
             ") has more outputs (",
@@ -229,17 +242,15 @@ void OpSchema::Verify(const NodeProto& node) const {
     }
 
     if (node.output(out_idx).empty() && (Single == outputs_[out_idx].GetOption())) {
-      fail_check(
-          "Node (", node.name(), ")'s output ", out_idx, " is marked single but has an empty string in the graph");
+      fail_check_with_code(
+          checker::error_code::kNodeSchemaMismatch,
+          "Node (",
+          node.name(),
+          ")'s output ",
+          out_idx,
+          " is marked single but has an empty string in the graph");
     }
   }
-
-  // An internal symbol is defined as starting with two underscores. Attributes
-  // with names meeting this condition are considered implementation details
-  // and should be ignored for the purpose of schema checking.
-  auto isInternalSymbol = [](const std::string& sym) -> bool {
-    return sym.length() >= 2 && sym[0] == '_' && sym[1] == '_';
-  };
 
   // Check attributes
   std::unordered_set<std::string> seen_attr_names{};
@@ -247,22 +258,26 @@ void OpSchema::Verify(const NodeProto& node) const {
     const auto& name = attr_proto.name();
 
     if (!seen_attr_names.insert(name).second) {
-      fail_check("Attribute '", name, "' appeared multiple times.");
+      fail_check_with_code(checker::error_code::kNodeSchemaMismatch, "Attribute '", name, "' appeared multiple times.");
     }
 
     const auto search = attributes_.find(name);
     AttributeProto::AttributeType expected_type{};
     if (search != attributes_.end()) {
       expected_type = search->second.type;
-    } else if (allows_unchecked_attributes_ || isInternalSymbol(name)) {
+    } else if (allows_unchecked_attributes_ || name.rfind("__", 0) == 0) {
+      // Attributes starting with two underscores are internal implementation
+      // details and are ignored for the purpose of schema checking.
       continue;
     } else {
-      fail_check("Unrecognized attribute: ", name, " for operator ", node.op_type());
+      fail_check_with_code(
+          checker::error_code::kNodeSchemaMismatch, "Unrecognized attribute: ", name, " for operator ", node.op_type());
     }
 
     // Type would be UNDEFINED if not set
     if (attr_proto.type() != expected_type) {
-      fail_check(
+      fail_check_with_code(
+          checker::error_code::kNodeSchemaMismatch,
           "Mismatched attribute type in '",
           node.name() + " : " + name,
           "'. Expected: '",
@@ -289,22 +304,32 @@ void OpSchema::Verify(const NodeProto& node) const {
         break;
       case AttributeProto::TENSOR:
         if (!attr_proto.has_t()) {
-          fail_check("Attribute '", name, "' is expected to have field 't'");
+          fail_check_with_code(
+              checker::error_code::kNodeSchemaMismatch, "Attribute '", name, "' is expected to have field 't'");
         }
         break;
       case AttributeProto::SPARSE_TENSOR:
         if (!attr_proto.has_sparse_tensor()) {
-          fail_check("Attribute '", name, "' is expected to have field 'sparse_tensor'");
+          fail_check_with_code(
+              checker::error_code::kNodeSchemaMismatch,
+              "Attribute '",
+              name,
+              "' is expected to have field 'sparse_tensor'");
         }
         break;
       case AttributeProto::GRAPH:
         if (!attr_proto.has_g()) {
-          fail_check("Attribute '", name, "' is expected to have field 'g'");
+          fail_check_with_code(
+              checker::error_code::kNodeSchemaMismatch, "Attribute '", name, "' is expected to have field 'g'");
         }
         break;
       case AttributeProto::TYPE_PROTO:
         if (!attr_proto.has_tp()) {
-          fail_check("Attribute '", name, "' is expected to have field 'type_proto'");
+          fail_check_with_code(
+              checker::error_code::kNodeSchemaMismatch,
+              "Attribute '",
+              name,
+              "' is expected to have field 'type_proto'");
         }
         break;
       case AttributeProto::INTS:
@@ -318,7 +343,8 @@ void OpSchema::Verify(const NodeProto& node) const {
         // is op specific.
         break;
       default:
-        fail_check("Attribute '", name, " has unknown expected type");
+        fail_check_with_code(
+            checker::error_code::kNodeSchemaMismatch, "Attribute '", name, " has unknown expected type");
     }
   }
   for (const auto& [_, attr] : attributes_) {
@@ -326,7 +352,8 @@ void OpSchema::Verify(const NodeProto& node) const {
       continue;
     }
     if (!seen_attr_names.count(attr.name)) {
-      fail_check("Required attribute '", attr.name, "' is missing.");
+      fail_check_with_code(
+          checker::error_code::kNodeSchemaMismatch, "Required attribute '", attr.name, "' is missing.");
     }
   }
 
@@ -344,7 +371,8 @@ std::string OpSchema::VerifyFailPrefix(std::string_view node_name) const {
 
 void OpSchema::VerifyInputNum(int input_num, std::string_view node_name) const {
   if (input_num < min_input_ || input_num > max_input_) {
-    fail_check(
+    fail_check_with_code(
+        checker::error_code::kNodeSchemaMismatch,
         VerifyFailPrefix(node_name),
         " has input size ",
         input_num,
@@ -356,13 +384,19 @@ void OpSchema::VerifyInputNum(int input_num, std::string_view node_name) const {
   }
 
   if (!num_inputs_allowed_(input_num)) {
-    fail_check(VerifyFailPrefix(node_name), " has input size ", input_num, " not in allowed input sizes.");
+    fail_check_with_code(
+        checker::error_code::kNodeSchemaMismatch,
+        VerifyFailPrefix(node_name),
+        " has input size ",
+        input_num,
+        " not in allowed input sizes.");
   }
 }
 
 void OpSchema::VerifyOutputNum(int output_num, std::string_view node_name) const {
   if (output_num < min_output_ || output_num > max_output_) {
-    fail_check(
+    fail_check_with_code(
+        checker::error_code::kNodeSchemaMismatch,
         VerifyFailPrefix(node_name),
         " has output size ",
         output_num,
@@ -374,7 +408,12 @@ void OpSchema::VerifyOutputNum(int output_num, std::string_view node_name) const
   }
 
   if (!num_outputs_allowed_(output_num)) {
-    fail_check(VerifyFailPrefix(node_name), " has output size ", output_num, " not in allowed output sizes.");
+    fail_check_with_code(
+        checker::error_code::kNodeSchemaMismatch,
+        VerifyFailPrefix(node_name),
+        " has output size ",
+        output_num,
+        " not in allowed output sizes.");
   }
 }
 
@@ -501,7 +540,7 @@ OpSchema& OpSchema::Attr(
 #define ATTR_SETTER_WITH_SINGLE_VALUE(type, field, attrtype)                                                           \
   OpSchema& OpSchema::Attr(                                                                                            \
       std::string name, std::string description, AttributeProto::AttributeType attr_type, const type& default_value) { \
-    if (attrtype != attr_type) {                                                                                       \
+    if ((attrtype) != attr_type) {                                                                                     \
       fail_schema("Attribute specification type mismatch.");                                                           \
     }                                                                                                                  \
     AttributeProto a;                                                                                                  \
@@ -522,7 +561,7 @@ OpSchema& OpSchema::Attr(
       std::string description,                                              \
       AttributeProto::AttributeType attr_type,                              \
       const std::vector<type>& default_value) {                             \
-    if (attrtype != attr_type) {                                            \
+    if ((attrtype) != attr_type) {                                          \
       fail_schema("Attribute specification type mismatch.");                \
     }                                                                       \
     AttributeProto a;                                                       \
@@ -538,7 +577,7 @@ OpSchema& OpSchema::Attr(
 #define ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(type, field, attrtype)                                                    \
   OpSchema& OpSchema::Attr(                                                                                            \
       std::string name, std::string description, AttributeProto::AttributeType attr_type, const type& default_value) { \
-    if (attrtype != attr_type) {                                                                                       \
+    if ((attrtype) != attr_type) {                                                                                     \
       fail_schema("Attribute specification type mismatch.");                                                           \
     }                                                                                                                  \
     AttributeProto a;                                                                                                  \
@@ -555,7 +594,7 @@ OpSchema& OpSchema::Attr(
       std::string description,                                              \
       AttributeProto::AttributeType attr_type,                              \
       const std::vector<type>& default_value) {                             \
-    if (attrtype != attr_type) {                                            \
+    if ((attrtype) != attr_type) {                                          \
       fail_schema("Attribute specification type mismatch.");                \
     }                                                                       \
     AttributeProto a;                                                       \
@@ -853,7 +892,7 @@ OpSchema& OpSchema::FunctionBody(
 
   auto function_proto = std::make_shared<FunctionProto>();
   for (const auto& relied_opset : relied_opsets) {
-    *(function_proto->mutable_opset_import()->Add()) = relied_opset;
+    *function_proto->mutable_opset_import()->Add() = relied_opset;
   }
 
   for (const auto& node : func_nodes) {
@@ -954,637 +993,528 @@ void OpSchema::BuildFunction(FunctionProto& function_body) const {
 }
 
 const std::vector<std::string>& OpSchema::numeric_types_for_math_reduction_ir9() {
-  static const std::vector<std::string> numeric_types_for_math_reduction_ir9 = {
-      "tensor(uint32)",
-      "tensor(uint64)",
-      "tensor(int32)",
-      "tensor(int64)",
-      "tensor(float16)",
-      "tensor(float)",
-      "tensor(double)",
-      "tensor(bfloat16)",
-      "tensor(float8e4m3fn)",
-      "tensor(float8e4m3fnuz)",
-      "tensor(float8e5m2)",
-      "tensor(float8e5m2fnuz)"};
-  return numeric_types_for_math_reduction_ir9;
+  static const auto v = types::Tensors(
+      {TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::BFLOAT16,
+       TensorProto::FLOAT8E4M3FN,
+       TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2,
+       TensorProto::FLOAT8E5M2FNUZ});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::numeric_types_for_math_reduction_ir4() {
-  static const std::vector<std::string> numeric_types_for_math_reduction_ir4 = {
-      "tensor(uint32)",
-      "tensor(uint64)",
-      "tensor(int32)",
-      "tensor(int64)",
-      "tensor(float16)",
-      "tensor(float)",
-      "tensor(double)",
-      "tensor(bfloat16)"};
-  return numeric_types_for_math_reduction_ir4;
+  static const auto v = types::Tensors(
+      {TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::BFLOAT16});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::numeric_types_for_math_reduction() {
-  static const std::vector<std::string> numeric_types_for_math_reduction = {
-      "tensor(uint32)",
-      "tensor(uint64)",
-      "tensor(int32)",
-      "tensor(int64)",
-      "tensor(float16)",
-      "tensor(float)",
-      "tensor(double)"};
-  return numeric_types_for_math_reduction;
+  static const auto v = types::Tensors(
+      {TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_numeric_types_ir12() {
-  static const std::vector<std::string> all_numeric_types_ir12 = {
-      "tensor(uint8)",        "tensor(uint16)",         "tensor(uint32)",     "tensor(uint64)",
-      "tensor(int8)",         "tensor(int16)",          "tensor(int32)",      "tensor(int64)",
-      "tensor(float16)",      "tensor(float)",          "tensor(double)",     "tensor(bfloat16)",
-      "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)", "tensor(float8e5m2)", "tensor(float8e5m2fnuz)",
-      "tensor(uint4)",        "tensor(int4)",           "tensor(float4e2m1)", "tensor(float8e8m0)"};
-  return all_numeric_types_ir12;
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,        TensorProto::UINT16,         TensorProto::UINT32,     TensorProto::UINT64,
+       TensorProto::INT8,         TensorProto::INT16,          TensorProto::INT32,      TensorProto::INT64,
+       TensorProto::FLOAT16,      TensorProto::FLOAT,          TensorProto::DOUBLE,     TensorProto::BFLOAT16,
+       TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ, TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ,
+       TensorProto::UINT4,        TensorProto::INT4,           TensorProto::FLOAT4E2M1, TensorProto::FLOAT8E8M0});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_numeric_types_ir13() {
-  static const std::vector<std::string> all_numeric_types_ir13 = {"tensor(uint8)",        "tensor(uint16)",
-                                                                  "tensor(uint32)",       "tensor(uint64)",
-                                                                  "tensor(int8)",         "tensor(int16)",
-                                                                  "tensor(int32)",        "tensor(int64)",
-                                                                  "tensor(float16)",      "tensor(float)",
-                                                                  "tensor(double)",       "tensor(bfloat16)",
-                                                                  "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)",
-                                                                  "tensor(float8e5m2)",   "tensor(float8e5m2fnuz)",
-                                                                  "tensor(uint4)",        "tensor(int4)",
-                                                                  "tensor(float4e2m1)",   "tensor(float8e8m0)",
-                                                                  "tensor(uint2)",        "tensor(int2)"};
-  return all_numeric_types_ir13;
+  static const auto v = types::Tensors({TensorProto::UINT8,        TensorProto::UINT16,
+                                        TensorProto::UINT32,       TensorProto::UINT64,
+                                        TensorProto::INT8,         TensorProto::INT16,
+                                        TensorProto::INT32,        TensorProto::INT64,
+                                        TensorProto::FLOAT16,      TensorProto::FLOAT,
+                                        TensorProto::DOUBLE,       TensorProto::BFLOAT16,
+                                        TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ,
+                                        TensorProto::FLOAT8E5M2,   TensorProto::FLOAT8E5M2FNUZ,
+                                        TensorProto::UINT4,        TensorProto::INT4,
+                                        TensorProto::FLOAT4E2M1,   TensorProto::FLOAT8E8M0,
+                                        TensorProto::UINT2,        TensorProto::INT2});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_numeric_types_ir11() {
-  static const std::vector<std::string> all_numeric_types_ir11 = {
-      "tensor(uint8)",
-      "tensor(uint16)",
-      "tensor(uint32)",
-      "tensor(uint64)",
-      "tensor(int8)",
-      "tensor(int16)",
-      "tensor(int32)",
-      "tensor(int64)",
-      "tensor(float16)",
-      "tensor(float)",
-      "tensor(double)",
-      "tensor(bfloat16)",
-      "tensor(float8e4m3fn)",
-      "tensor(float8e4m3fnuz)",
-      "tensor(float8e5m2)",
-      "tensor(float8e5m2fnuz)",
-      "tensor(uint4)",
-      "tensor(int4)",
-      "tensor(float4e2m1)"};
-  return all_numeric_types_ir11;
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,
+       TensorProto::UINT16,
+       TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT8,
+       TensorProto::INT16,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::BFLOAT16,
+       TensorProto::FLOAT8E4M3FN,
+       TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2,
+       TensorProto::FLOAT8E5M2FNUZ,
+       TensorProto::UINT4,
+       TensorProto::INT4,
+       TensorProto::FLOAT4E2M1});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_numeric_types_ir10() {
-  static const std::vector<std::string> all_numeric_types_ir10 = {
-      "tensor(uint8)",
-      "tensor(uint16)",
-      "tensor(uint32)",
-      "tensor(uint64)",
-      "tensor(int8)",
-      "tensor(int16)",
-      "tensor(int32)",
-      "tensor(int64)",
-      "tensor(float16)",
-      "tensor(float)",
-      "tensor(double)",
-      "tensor(bfloat16)",
-      "tensor(float8e4m3fn)",
-      "tensor(float8e4m3fnuz)",
-      "tensor(float8e5m2)",
-      "tensor(float8e5m2fnuz)",
-      "tensor(uint4)",
-      "tensor(int4)"};
-  return all_numeric_types_ir10;
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,
+       TensorProto::UINT16,
+       TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT8,
+       TensorProto::INT16,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::BFLOAT16,
+       TensorProto::FLOAT8E4M3FN,
+       TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2,
+       TensorProto::FLOAT8E5M2FNUZ,
+       TensorProto::UINT4,
+       TensorProto::INT4});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_numeric_types_ir9() {
-  static const std::vector<std::string> all_numeric_types_ir9 = {
-      "tensor(uint8)",
-      "tensor(uint16)",
-      "tensor(uint32)",
-      "tensor(uint64)",
-      "tensor(int8)",
-      "tensor(int16)",
-      "tensor(int32)",
-      "tensor(int64)",
-      "tensor(float16)",
-      "tensor(float)",
-      "tensor(double)",
-      "tensor(bfloat16)",
-      "tensor(float8e4m3fn)",
-      "tensor(float8e4m3fnuz)",
-      "tensor(float8e5m2)",
-      "tensor(float8e5m2fnuz)"};
-  return all_numeric_types_ir9;
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,
+       TensorProto::UINT16,
+       TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT8,
+       TensorProto::INT16,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::BFLOAT16,
+       TensorProto::FLOAT8E4M3FN,
+       TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2,
+       TensorProto::FLOAT8E5M2FNUZ});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_numeric_types_ir4() {
-  static const std::vector<std::string> all_numeric_types_ir4 = {
-      "tensor(uint8)",
-      "tensor(uint16)",
-      "tensor(uint32)",
-      "tensor(uint64)",
-      "tensor(int8)",
-      "tensor(int16)",
-      "tensor(int32)",
-      "tensor(int64)",
-      "tensor(float16)",
-      "tensor(float)",
-      "tensor(double)",
-      "tensor(bfloat16)"};
-  return all_numeric_types_ir4;
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,
+       TensorProto::UINT16,
+       TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT8,
+       TensorProto::INT16,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::BFLOAT16});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_numeric_types() {
-  static const std::vector<std::string> all_numeric_types = {
-      "tensor(uint8)",
-      "tensor(uint16)",
-      "tensor(uint32)",
-      "tensor(uint64)",
-      "tensor(int8)",
-      "tensor(int16)",
-      "tensor(int32)",
-      "tensor(int64)",
-      "tensor(float16)",
-      "tensor(float)",
-      "tensor(double)"};
-  return all_numeric_types;
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,
+       TensorProto::UINT16,
+       TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT8,
+       TensorProto::INT16,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_numeric_sequence_types() {
-  static const std::vector<std::string> all_numeric_sequence_types = {
-      "seq(tensor(uint8))",
-      "seq(tensor(uint16))",
-      "seq(tensor(uint32))",
-      "seq(tensor(uint64))",
-      "seq(tensor(int8))",
-      "seq(tensor(int16))",
-      "seq(tensor(int32))",
-      "seq(tensor(int64))",
-      "seq(tensor(float16))",
-      "seq(tensor(float))",
-      "seq(tensor(double))"};
-  return all_numeric_sequence_types;
+  static const auto v = types::Sequence(
+      types::Tensors(
+          {TensorProto::UINT8,
+           TensorProto::UINT16,
+           TensorProto::UINT32,
+           TensorProto::UINT64,
+           TensorProto::INT8,
+           TensorProto::INT16,
+           TensorProto::INT32,
+           TensorProto::INT64,
+           TensorProto::FLOAT16,
+           TensorProto::FLOAT,
+           TensorProto::DOUBLE}));
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_tensor_types() {
-  static const std::vector<std::string> all_tensor_types = {
-      "tensor(uint8)",
-      "tensor(uint16)",
-      "tensor(uint32)",
-      "tensor(uint64)",
-      "tensor(int8)",
-      "tensor(int16)",
-      "tensor(int32)",
-      "tensor(int64)",
-      "tensor(float16)",
-      "tensor(float)",
-      "tensor(double)",
-      "tensor(string)",
-      "tensor(bool)",
-      "tensor(complex64)",
-      "tensor(complex128)"};
-  return all_tensor_types;
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,
+       TensorProto::UINT16,
+       TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT8,
+       TensorProto::INT16,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::STRING,
+       TensorProto::BOOL,
+       TensorProto::COMPLEX64,
+       TensorProto::COMPLEX128});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_tensor_types_ir4() {
-  static const std::vector<std::string> all_tensor_types_ir4 = {
-      "tensor(uint8)",
-      "tensor(uint16)",
-      "tensor(uint32)",
-      "tensor(uint64)",
-      "tensor(int8)",
-      "tensor(int16)",
-      "tensor(int32)",
-      "tensor(int64)",
-      "tensor(bfloat16)",
-      "tensor(float16)",
-      "tensor(float)",
-      "tensor(double)",
-      "tensor(string)",
-      "tensor(bool)",
-      "tensor(complex64)",
-      "tensor(complex128)"};
-  return all_tensor_types_ir4;
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,
+       TensorProto::UINT16,
+       TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT8,
+       TensorProto::INT16,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::BFLOAT16,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::STRING,
+       TensorProto::BOOL,
+       TensorProto::COMPLEX64,
+       TensorProto::COMPLEX128});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_non_complex_numeric_types_plus_bool_ir4() {
-  static const std::vector<std::string> all_non_complex_numeric_types_plus_bool_ir4 = {
-      "tensor(uint8)",
-      "tensor(uint16)",
-      "tensor(uint32)",
-      "tensor(uint64)",
-      "tensor(int8)",
-      "tensor(int16)",
-      "tensor(int32)",
-      "tensor(int64)",
-      "tensor(bfloat16)",
-      "tensor(float16)",
-      "tensor(float)",
-      "tensor(double)",
-      "tensor(bool)"};
-  return all_non_complex_numeric_types_plus_bool_ir4;
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,
+       TensorProto::UINT16,
+       TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT8,
+       TensorProto::INT16,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::BFLOAT16,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::BOOL});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_float_types_ir4() {
-  static const std::vector<std::string> all_float_types_ir4 = {
-      "tensor(bfloat16)", "tensor(float16)", "tensor(float)", "tensor(double)"};
-  return all_float_types_ir4;
+  static const auto v =
+      types::Tensors({TensorProto::BFLOAT16, TensorProto::FLOAT16, TensorProto::FLOAT, TensorProto::DOUBLE});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_float_types_plus_Xint8_ir4() {
-  static const std::vector<std::string> all_float_types_ir4 = {
-      "tensor(bfloat16)", "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(int8)", "tensor(uint8)"};
-  return all_float_types_ir4;
+  static const auto v = types::Tensors(
+      {TensorProto::BFLOAT16,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::INT8,
+       TensorProto::UINT8});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_float_types_ir9() {
-  static const std::vector<std::string> all_float_types_ir9 = {
-      "tensor(bfloat16)",
-      "tensor(float16)",
-      "tensor(float)",
-      "tensor(double)",
-      "tensor(float8e4m3fn)",
-      "tensor(float8e4m3fnuz)",
-      "tensor(float8e5m2)",
-      "tensor(float8e5m2fnuz)"};
-  return all_float_types_ir9;
+  static const auto v = types::Tensors(
+      {TensorProto::BFLOAT16,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::FLOAT8E4M3FN,
+       TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2,
+       TensorProto::FLOAT8E5M2FNUZ});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_tensor_types_ir9() {
-  static const std::vector<std::string> all_tensor_types_ir9 = {
-      "tensor(uint8)",        "tensor(uint16)",         "tensor(uint32)",     "tensor(uint64)",
-      "tensor(int8)",         "tensor(int16)",          "tensor(int32)",      "tensor(int64)",
-      "tensor(bfloat16)",     "tensor(float16)",        "tensor(float)",      "tensor(double)",
-      "tensor(string)",       "tensor(bool)",           "tensor(complex64)",  "tensor(complex128)",
-      "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)", "tensor(float8e5m2)", "tensor(float8e5m2fnuz)"};
-  return all_tensor_types_ir9;
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,        TensorProto::UINT16,         TensorProto::UINT32,     TensorProto::UINT64,
+       TensorProto::INT8,         TensorProto::INT16,          TensorProto::INT32,      TensorProto::INT64,
+       TensorProto::BFLOAT16,     TensorProto::FLOAT16,        TensorProto::FLOAT,      TensorProto::DOUBLE,
+       TensorProto::STRING,       TensorProto::BOOL,           TensorProto::COMPLEX64,  TensorProto::COMPLEX128,
+       TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ, TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_tensor_types_ir10() {
-  static const std::vector<std::string> all_tensor_types_ir10 = {
-      "tensor(uint8)",      "tensor(uint16)",         "tensor(uint32)",
-      "tensor(uint64)",     "tensor(int8)",           "tensor(int16)",
-      "tensor(int32)",      "tensor(int64)",          "tensor(bfloat16)",
-      "tensor(float16)",    "tensor(float)",          "tensor(double)",
-      "tensor(string)",     "tensor(bool)",           "tensor(complex64)",
-      "tensor(complex128)", "tensor(float8e4m3fn)",   "tensor(float8e4m3fnuz)",
-      "tensor(float8e5m2)", "tensor(float8e5m2fnuz)", "tensor(uint4)",
-      "tensor(int4)"};
-  return all_tensor_types_ir10;
+  static const auto v =
+      types::Tensors({TensorProto::UINT8,      TensorProto::UINT16,         TensorProto::UINT32,
+                      TensorProto::UINT64,     TensorProto::INT8,           TensorProto::INT16,
+                      TensorProto::INT32,      TensorProto::INT64,          TensorProto::BFLOAT16,
+                      TensorProto::FLOAT16,    TensorProto::FLOAT,          TensorProto::DOUBLE,
+                      TensorProto::STRING,     TensorProto::BOOL,           TensorProto::COMPLEX64,
+                      TensorProto::COMPLEX128, TensorProto::FLOAT8E4M3FN,   TensorProto::FLOAT8E4M3FNUZ,
+                      TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ, TensorProto::UINT4,
+                      TensorProto::INT4});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_non_complex_tensor_types_ir10() {
-  static const std::vector<std::string> all_non_complex_tensor_types_ir10 = {
-      "tensor(uint8)",      "tensor(uint16)",         "tensor(uint32)",       "tensor(uint64)",
-      "tensor(int8)",       "tensor(int16)",          "tensor(int32)",        "tensor(int64)",
-      "tensor(bfloat16)",   "tensor(float16)",        "tensor(float)",        "tensor(double)",
-      "tensor(string)",     "tensor(bool)",           "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)",
-      "tensor(float8e5m2)", "tensor(float8e5m2fnuz)", "tensor(uint4)",        "tensor(int4)"};
-  return all_non_complex_tensor_types_ir10;
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,      TensorProto::UINT16,         TensorProto::UINT32,       TensorProto::UINT64,
+       TensorProto::INT8,       TensorProto::INT16,          TensorProto::INT32,        TensorProto::INT64,
+       TensorProto::BFLOAT16,   TensorProto::FLOAT16,        TensorProto::FLOAT,        TensorProto::DOUBLE,
+       TensorProto::STRING,     TensorProto::BOOL,           TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ, TensorProto::UINT4,        TensorProto::INT4});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_tensor_types_ir11() {
-  static const std::vector<std::string> all_tensor_types_ir11 = {
-      "tensor(uint8)",        "tensor(uint16)",         "tensor(uint32)",     "tensor(uint64)",
-      "tensor(int8)",         "tensor(int16)",          "tensor(int32)",      "tensor(int64)",
-      "tensor(bfloat16)",     "tensor(float16)",        "tensor(float)",      "tensor(double)",
-      "tensor(string)",       "tensor(bool)",           "tensor(complex64)",  "tensor(complex128)",
-      "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)", "tensor(float8e5m2)", "tensor(float8e5m2fnuz)",
-      "tensor(uint4)",        "tensor(int4)",           "tensor(float4e2m1)"};
-  return all_tensor_types_ir11;
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,        TensorProto::UINT16,         TensorProto::UINT32,     TensorProto::UINT64,
+       TensorProto::INT8,         TensorProto::INT16,          TensorProto::INT32,      TensorProto::INT64,
+       TensorProto::BFLOAT16,     TensorProto::FLOAT16,        TensorProto::FLOAT,      TensorProto::DOUBLE,
+       TensorProto::STRING,       TensorProto::BOOL,           TensorProto::COMPLEX64,  TensorProto::COMPLEX128,
+       TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ, TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ,
+       TensorProto::UINT4,        TensorProto::INT4,           TensorProto::FLOAT4E2M1});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_non_complex_tensor_types_ir11() {
-  static const std::vector<std::string> all_non_complex_tensor_types_ir11 = {
-      "tensor(uint8)",      "tensor(uint16)",         "tensor(uint32)",       "tensor(uint64)",
-      "tensor(int8)",       "tensor(int16)",          "tensor(int32)",        "tensor(int64)",
-      "tensor(bfloat16)",   "tensor(float16)",        "tensor(float)",        "tensor(double)",
-      "tensor(string)",     "tensor(bool)",           "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)",
-      "tensor(float8e5m2)", "tensor(float8e5m2fnuz)", "tensor(uint4)",        "tensor(int4)",
-      "tensor(float4e2m1)"};
-  return all_non_complex_tensor_types_ir11;
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,      TensorProto::UINT16,         TensorProto::UINT32,       TensorProto::UINT64,
+       TensorProto::INT8,       TensorProto::INT16,          TensorProto::INT32,        TensorProto::INT64,
+       TensorProto::BFLOAT16,   TensorProto::FLOAT16,        TensorProto::FLOAT,        TensorProto::DOUBLE,
+       TensorProto::STRING,     TensorProto::BOOL,           TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ, TensorProto::UINT4,        TensorProto::INT4,
+       TensorProto::FLOAT4E2M1});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_tensor_types_ir12() {
-  static const std::vector<std::string> all_tensor_types_ir12 = {
-      "tensor(uint8)",        "tensor(uint16)",         "tensor(uint32)",     "tensor(uint64)",
-      "tensor(int8)",         "tensor(int16)",          "tensor(int32)",      "tensor(int64)",
-      "tensor(bfloat16)",     "tensor(float16)",        "tensor(float)",      "tensor(double)",
-      "tensor(string)",       "tensor(bool)",           "tensor(complex64)",  "tensor(complex128)",
-      "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)", "tensor(float8e5m2)", "tensor(float8e5m2fnuz)",
-      "tensor(uint4)",        "tensor(int4)",           "tensor(float4e2m1)", "tensor(float8e8m0)"};
-  return all_tensor_types_ir12;
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,        TensorProto::UINT16,         TensorProto::UINT32,     TensorProto::UINT64,
+       TensorProto::INT8,         TensorProto::INT16,          TensorProto::INT32,      TensorProto::INT64,
+       TensorProto::BFLOAT16,     TensorProto::FLOAT16,        TensorProto::FLOAT,      TensorProto::DOUBLE,
+       TensorProto::STRING,       TensorProto::BOOL,           TensorProto::COMPLEX64,  TensorProto::COMPLEX128,
+       TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ, TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ,
+       TensorProto::UINT4,        TensorProto::INT4,           TensorProto::FLOAT4E2M1, TensorProto::FLOAT8E8M0});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_non_complex_tensor_types_ir12() {
-  static const std::vector<std::string> all_non_complex_tensor_types_ir12 = {
-      "tensor(uint8)",      "tensor(uint16)",         "tensor(uint32)",       "tensor(uint64)",
-      "tensor(int8)",       "tensor(int16)",          "tensor(int32)",        "tensor(int64)",
-      "tensor(bfloat16)",   "tensor(float16)",        "tensor(float)",        "tensor(double)",
-      "tensor(string)",     "tensor(bool)",           "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)",
-      "tensor(float8e5m2)", "tensor(float8e5m2fnuz)", "tensor(uint4)",        "tensor(int4)",
-      "tensor(float4e2m1)", "tensor(float8e8m0)"};
-  return all_non_complex_tensor_types_ir12;
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,      TensorProto::UINT16,         TensorProto::UINT32,       TensorProto::UINT64,
+       TensorProto::INT8,       TensorProto::INT16,          TensorProto::INT32,        TensorProto::INT64,
+       TensorProto::BFLOAT16,   TensorProto::FLOAT16,        TensorProto::FLOAT,        TensorProto::DOUBLE,
+       TensorProto::STRING,     TensorProto::BOOL,           TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ, TensorProto::UINT4,        TensorProto::INT4,
+       TensorProto::FLOAT4E2M1, TensorProto::FLOAT8E8M0});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_tensor_types_ir13() {
-  static const std::vector<std::string> all_tensor_types_ir13 = {"tensor(uint8)",        "tensor(uint16)",
-                                                                 "tensor(uint32)",       "tensor(uint64)",
-                                                                 "tensor(int8)",         "tensor(int16)",
-                                                                 "tensor(int32)",        "tensor(int64)",
-                                                                 "tensor(bfloat16)",     "tensor(float16)",
-                                                                 "tensor(float)",        "tensor(double)",
-                                                                 "tensor(string)",       "tensor(bool)",
-                                                                 "tensor(complex64)",    "tensor(complex128)",
-                                                                 "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)",
-                                                                 "tensor(float8e5m2)",   "tensor(float8e5m2fnuz)",
-                                                                 "tensor(uint4)",        "tensor(int4)",
-                                                                 "tensor(float4e2m1)",   "tensor(float8e8m0)",
-                                                                 "tensor(uint2)",        "tensor(int2)"};
-  return all_tensor_types_ir13;
+  static const auto v = types::Tensors({TensorProto::UINT8,        TensorProto::UINT16,
+                                        TensorProto::UINT32,       TensorProto::UINT64,
+                                        TensorProto::INT8,         TensorProto::INT16,
+                                        TensorProto::INT32,        TensorProto::INT64,
+                                        TensorProto::BFLOAT16,     TensorProto::FLOAT16,
+                                        TensorProto::FLOAT,        TensorProto::DOUBLE,
+                                        TensorProto::STRING,       TensorProto::BOOL,
+                                        TensorProto::COMPLEX64,    TensorProto::COMPLEX128,
+                                        TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ,
+                                        TensorProto::FLOAT8E5M2,   TensorProto::FLOAT8E5M2FNUZ,
+                                        TensorProto::UINT4,        TensorProto::INT4,
+                                        TensorProto::FLOAT4E2M1,   TensorProto::FLOAT8E8M0,
+                                        TensorProto::UINT2,        TensorProto::INT2});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_non_complex_tensor_types_ir13() {
-  static const std::vector<std::string> all_non_complex_tensor_types_ir13 = {
-      "tensor(uint8)",      "tensor(uint16)",         "tensor(uint32)",       "tensor(uint64)",
-      "tensor(int8)",       "tensor(int16)",          "tensor(int32)",        "tensor(int64)",
-      "tensor(bfloat16)",   "tensor(float16)",        "tensor(float)",        "tensor(double)",
-      "tensor(string)",     "tensor(bool)",           "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)",
-      "tensor(float8e5m2)", "tensor(float8e5m2fnuz)", "tensor(uint4)",        "tensor(int4)",
-      "tensor(float4e2m1)", "tensor(float8e8m0)",     "tensor(uint2)",        "tensor(int2)"};
-  return all_non_complex_tensor_types_ir13;
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,      TensorProto::UINT16,         TensorProto::UINT32,       TensorProto::UINT64,
+       TensorProto::INT8,       TensorProto::INT16,          TensorProto::INT32,        TensorProto::INT64,
+       TensorProto::BFLOAT16,   TensorProto::FLOAT16,        TensorProto::FLOAT,        TensorProto::DOUBLE,
+       TensorProto::STRING,     TensorProto::BOOL,           TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ, TensorProto::UINT4,        TensorProto::INT4,
+       TensorProto::FLOAT4E2M1, TensorProto::FLOAT8E8M0,     TensorProto::UINT2,        TensorProto::INT2});
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_non_string_tensor_types_ir13() {
-  static const std::vector<std::string> all_non_string_tensor_types_ir13 = {"tensor(uint8)",
-                                                                            "tensor(uint16)",
-                                                                            "tensor(uint32)",
-                                                                            "tensor(uint64)",
-                                                                            "tensor(int8)",
-                                                                            "tensor(int16)",
-                                                                            "tensor(int32)",
-                                                                            "tensor(int64)",
-                                                                            "tensor(bfloat16)",
-                                                                            "tensor(float16)",
-                                                                            "tensor(float)",
-                                                                            "tensor(double)",
-                                                                            "tensor(bool)",
-                                                                            "tensor(complex64)",
-                                                                            "tensor(complex128)",
-                                                                            "tensor(float8e4m3fn)",
-                                                                            "tensor(float8e4m3fnuz)",
-                                                                            "tensor(float8e5m2)",
-                                                                            "tensor(float8e5m2fnuz)",
-                                                                            "tensor(uint4)",
-                                                                            "tensor(int4)",
-                                                                            "tensor(float4e2m1)",
-                                                                            "tensor(float8e8m0)",
-                                                                            "tensor(uint2)",
-                                                                            "tensor(int2)"};
-  return all_non_string_tensor_types_ir13;
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,
+       TensorProto::UINT16,
+       TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT8,
+       TensorProto::INT16,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::BFLOAT16,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::BOOL,
+       TensorProto::COMPLEX64,
+       TensorProto::COMPLEX128,
+       TensorProto::FLOAT8E4M3FN,
+       TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2,
+       TensorProto::FLOAT8E5M2FNUZ,
+       TensorProto::UINT4,
+       TensorProto::INT4,
+       TensorProto::FLOAT4E2M1,
+       TensorProto::FLOAT8E8M0,
+       TensorProto::UINT2,
+       TensorProto::INT2});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_types_ir14() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,        TensorProto::UINT16,         TensorProto::UINT32,     TensorProto::UINT64,
+       TensorProto::INT8,         TensorProto::INT16,          TensorProto::INT32,      TensorProto::INT64,
+       TensorProto::BFLOAT16,     TensorProto::FLOAT16,        TensorProto::FLOAT,      TensorProto::DOUBLE,
+       TensorProto::STRING,       TensorProto::BOOL,           TensorProto::COMPLEX64,  TensorProto::COMPLEX128,
+       TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ, TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ,
+       TensorProto::UINT4,        TensorProto::INT4,           TensorProto::FLOAT4E2M1, TensorProto::FLOAT8E8M0,
+       TensorProto::UINT2,        TensorProto::INT2,           TensorProto::FLOAT6E2M3, TensorProto::FLOAT6E3M2});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_non_complex_tensor_types_ir14() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,      TensorProto::UINT16,         TensorProto::UINT32,       TensorProto::UINT64,
+       TensorProto::INT8,       TensorProto::INT16,          TensorProto::INT32,        TensorProto::INT64,
+       TensorProto::BFLOAT16,   TensorProto::FLOAT16,        TensorProto::FLOAT,        TensorProto::DOUBLE,
+       TensorProto::STRING,     TensorProto::BOOL,           TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ, TensorProto::UINT4,        TensorProto::INT4,
+       TensorProto::FLOAT4E2M1, TensorProto::FLOAT8E8M0,     TensorProto::UINT2,        TensorProto::INT2,
+       TensorProto::FLOAT6E2M3, TensorProto::FLOAT6E3M2});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_non_string_tensor_types_ir14() {
+  static const auto v = [] {
+    auto result = all_tensor_types_ir14();
+    const auto string_type = types::Tensor(TensorProto::STRING);
+    result.erase(std::find(result.begin(), result.end(), string_type));
+    return result;
+  }();
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_tensor_sequence_types() {
-  static const std::vector<std::string> all_tensor_sequence_types = {
-      "seq(tensor(uint8))",
-      "seq(tensor(uint16))",
-      "seq(tensor(uint32))",
-      "seq(tensor(uint64))",
-      "seq(tensor(int8))",
-      "seq(tensor(int16))",
-      "seq(tensor(int32))",
-      "seq(tensor(int64))",
-      "seq(tensor(float16))",
-      "seq(tensor(float))",
-      "seq(tensor(double))",
-      "seq(tensor(string))",
-      "seq(tensor(bool))",
-      "seq(tensor(complex64))",
-      "seq(tensor(complex128))"};
-  return all_tensor_sequence_types;
+  static const auto v = types::Sequence(all_tensor_types());
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir4() {
-  static const std::vector<std::string> all_tensor_sequence_types_ir4 = {
-      "seq(tensor(uint8))",
-      "seq(tensor(uint16))",
-      "seq(tensor(uint32))",
-      "seq(tensor(uint64))",
-      "seq(tensor(int8))",
-      "seq(tensor(int16))",
-      "seq(tensor(int32))",
-      "seq(tensor(int64))",
-      "seq(tensor(bfloat16))",
-      "seq(tensor(float16))",
-      "seq(tensor(float))",
-      "seq(tensor(double))",
-      "seq(tensor(string))",
-      "seq(tensor(bool))",
-      "seq(tensor(complex64))",
-      "seq(tensor(complex128))"};
-  return all_tensor_sequence_types_ir4;
+  static const auto v = types::Sequence(all_tensor_types_ir4());
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir9() {
-  static const std::vector<std::string> all_tensor_sequence_types_ir9 = {
-      "seq(tensor(uint8))",      "seq(tensor(uint16))",        "seq(tensor(uint32))",
-      "seq(tensor(uint64))",     "seq(tensor(int8))",          "seq(tensor(int16))",
-      "seq(tensor(int32))",      "seq(tensor(int64))",         "seq(tensor(bfloat16))",
-      "seq(tensor(float16))",    "seq(tensor(float))",         "seq(tensor(double))",
-      "seq(tensor(string))",     "seq(tensor(bool))",          "seq(tensor(complex64))",
-      "seq(tensor(complex128))", "seq(tensor(float8e4m3fn))",  "seq(tensor(float8e4m3fnuz))",
-      "seq(tensor(float8e5m2))", "seq(tensor(float8e5m2fnuz))"};
-  return all_tensor_sequence_types_ir9;
+  static const auto v = types::Sequence(all_tensor_types_ir9());
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir10() {
-  static const std::vector<std::string> all_tensor_sequence_types_ir10 = {
-      "seq(tensor(uint8))",      "seq(tensor(uint16))",         "seq(tensor(uint32))",
-      "seq(tensor(uint64))",     "seq(tensor(int8))",           "seq(tensor(int16))",
-      "seq(tensor(int32))",      "seq(tensor(int64))",          "seq(tensor(bfloat16))",
-      "seq(tensor(float16))",    "seq(tensor(float))",          "seq(tensor(double))",
-      "seq(tensor(string))",     "seq(tensor(bool))",           "seq(tensor(complex64))",
-      "seq(tensor(complex128))", "seq(tensor(float8e4m3fn))",   "seq(tensor(float8e4m3fnuz))",
-      "seq(tensor(float8e5m2))", "seq(tensor(float8e5m2fnuz))", "seq(tensor(uint4))",
-      "seq(tensor(int4))"};
-  return all_tensor_sequence_types_ir10;
+  static const auto v = types::Sequence(all_tensor_types_ir10());
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir11() {
-  static const std::vector<std::string> all_tensor_sequence_types_ir11 = {
-      "seq(tensor(uint8))",      "seq(tensor(uint16))",         "seq(tensor(uint32))",
-      "seq(tensor(uint64))",     "seq(tensor(int8))",           "seq(tensor(int16))",
-      "seq(tensor(int32))",      "seq(tensor(int64))",          "seq(tensor(bfloat16))",
-      "seq(tensor(float16))",    "seq(tensor(float))",          "seq(tensor(double))",
-      "seq(tensor(string))",     "seq(tensor(bool))",           "seq(tensor(complex64))",
-      "seq(tensor(complex128))", "seq(tensor(float8e4m3fn))",   "seq(tensor(float8e4m3fnuz))",
-      "seq(tensor(float8e5m2))", "seq(tensor(float8e5m2fnuz))", "seq(tensor(uint4))",
-      "seq(tensor(int4))",       "seq(tensor(float4e2m1))"};
-  return all_tensor_sequence_types_ir11;
+  static const auto v = types::Sequence(all_tensor_types_ir11());
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir12() {
-  static const std::vector<std::string> all_tensor_sequence_types_ir12 = {
-      "seq(tensor(uint8))",      "seq(tensor(uint16))",         "seq(tensor(uint32))",
-      "seq(tensor(uint64))",     "seq(tensor(int8))",           "seq(tensor(int16))",
-      "seq(tensor(int32))",      "seq(tensor(int64))",          "seq(tensor(bfloat16))",
-      "seq(tensor(float16))",    "seq(tensor(float))",          "seq(tensor(double))",
-      "seq(tensor(string))",     "seq(tensor(bool))",           "seq(tensor(complex64))",
-      "seq(tensor(complex128))", "seq(tensor(float8e4m3fn))",   "seq(tensor(float8e4m3fnuz))",
-      "seq(tensor(float8e5m2))", "seq(tensor(float8e5m2fnuz))", "seq(tensor(uint4))",
-      "seq(tensor(int4))",       "seq(tensor(float4e2m1))",     "seq(tensor(float8e8m0))"};
-  return all_tensor_sequence_types_ir12;
+  static const auto v = types::Sequence(all_tensor_types_ir12());
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir13() {
-  static const std::vector<std::string> all_tensor_sequence_types_ir13 = {
-      "seq(tensor(uint8))",        "seq(tensor(uint16))",
-      "seq(tensor(uint32))",       "seq(tensor(uint64))",
-      "seq(tensor(int8))",         "seq(tensor(int16))",
-      "seq(tensor(int32))",        "seq(tensor(int64))",
-      "seq(tensor(bfloat16))",     "seq(tensor(float16))",
-      "seq(tensor(float))",        "seq(tensor(double))",
-      "seq(tensor(string))",       "seq(tensor(bool))",
-      "seq(tensor(complex64))",    "seq(tensor(complex128))",
-      "seq(tensor(float8e4m3fn))", "seq(tensor(float8e4m3fnuz))",
-      "seq(tensor(float8e5m2))",   "seq(tensor(float8e5m2fnuz))",
-      "seq(tensor(uint4))",        "seq(tensor(int4))",
-      "seq(tensor(float4e2m1))",   "seq(tensor(float8e8m0))",
-      "seq(tensor(uint2))",        "seq(tensor(int2))"};
-  return all_tensor_sequence_types_ir13;
+  static const auto v = types::Sequence(all_tensor_types_ir13());
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir14() {
+  static const auto v = types::Sequence(all_tensor_types_ir14());
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_optional_types() {
-  static const std::vector<std::string> all_optional_types = {
-      "optional(seq(tensor(uint8)))",  "optional(seq(tensor(uint16)))",    "optional(seq(tensor(uint32)))",
-      "optional(seq(tensor(uint64)))", "optional(seq(tensor(int8)))",      "optional(seq(tensor(int16)))",
-      "optional(seq(tensor(int32)))",  "optional(seq(tensor(int64)))",     "optional(seq(tensor(float16)))",
-      "optional(seq(tensor(float)))",  "optional(seq(tensor(double)))",    "optional(seq(tensor(string)))",
-      "optional(seq(tensor(bool)))",   "optional(seq(tensor(complex64)))", "optional(seq(tensor(complex128)))",
-      "optional(tensor(uint8))",       "optional(tensor(uint16))",         "optional(tensor(uint32))",
-      "optional(tensor(uint64))",      "optional(tensor(int8))",           "optional(tensor(int16))",
-      "optional(tensor(int32))",       "optional(tensor(int64))",          "optional(tensor(float16))",
-      "optional(tensor(float))",       "optional(tensor(double))",         "optional(tensor(string))",
-      "optional(tensor(bool))",        "optional(tensor(complex64))",      "optional(tensor(complex128))"};
-  return all_optional_types;
+  static const auto v =
+      types::Concat(types::Optional(all_tensor_sequence_types()), types::Optional(all_tensor_types()));
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_optional_types_ir4() {
-  static const std::vector<std::string> all_optional_types = {
-      "optional(seq(tensor(uint8)))",      "optional(seq(tensor(uint16)))", "optional(seq(tensor(uint32)))",
-      "optional(seq(tensor(uint64)))",     "optional(seq(tensor(int8)))",   "optional(seq(tensor(int16)))",
-      "optional(seq(tensor(int32)))",      "optional(seq(tensor(int64)))",  "optional(seq(tensor(bfloat16)))",
-      "optional(seq(tensor(float16)))",    "optional(seq(tensor(float)))",  "optional(seq(tensor(double)))",
-      "optional(seq(tensor(string)))",     "optional(seq(tensor(bool)))",   "optional(seq(tensor(complex64)))",
-      "optional(seq(tensor(complex128)))", "optional(tensor(uint8))",       "optional(tensor(uint16))",
-      "optional(tensor(uint32))",          "optional(tensor(uint64))",      "optional(tensor(int8))",
-      "optional(tensor(int16))",           "optional(tensor(int32))",       "optional(tensor(int64))",
-      "optional(tensor(bfloat16))",        "optional(tensor(float16))",     "optional(tensor(float))",
-      "optional(tensor(double))",          "optional(tensor(string))",      "optional(tensor(bool))",
-      "optional(tensor(complex64))",       "optional(tensor(complex128))"};
-  return all_optional_types;
+  static const auto v =
+      types::Concat(types::Optional(all_tensor_sequence_types_ir4()), types::Optional(all_tensor_types_ir4()));
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_optional_types_ir9() {
-  static const std::vector<std::string> all_optional_types = {
-      "optional(seq(tensor(uint8)))",      "optional(seq(tensor(uint16)))", "optional(seq(tensor(uint32)))",
-      "optional(seq(tensor(uint64)))",     "optional(seq(tensor(int8)))",   "optional(seq(tensor(int16)))",
-      "optional(seq(tensor(int32)))",      "optional(seq(tensor(int64)))",  "optional(seq(tensor(bfloat16)))",
-      "optional(seq(tensor(float16)))",    "optional(seq(tensor(float)))",  "optional(seq(tensor(double)))",
-      "optional(seq(tensor(string)))",     "optional(seq(tensor(bool)))",   "optional(seq(tensor(complex64)))",
-      "optional(seq(tensor(complex128)))", "optional(tensor(uint8))",       "optional(tensor(uint16))",
-      "optional(tensor(uint32))",          "optional(tensor(uint64))",      "optional(tensor(int8))",
-      "optional(tensor(int16))",           "optional(tensor(int32))",       "optional(tensor(int64))",
-      "optional(tensor(bfloat16))",        "optional(tensor(float16))",     "optional(tensor(float))",
-      "optional(tensor(double))",          "optional(tensor(string))",      "optional(tensor(bool))",
-      "optional(tensor(complex64))",       "optional(tensor(complex128))",  "optional(tensor(float8e4m3fn))",
-      "optional(tensor(float8e4m3fnuz))",  "optional(tensor(float8e5m2))",  "optional(tensor(float8e5m2fnuz))"};
-  return all_optional_types;
+  static const auto v =
+      types::Concat(types::Optional(all_tensor_sequence_types_ir4()), types::Optional(all_tensor_types_ir9()));
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_optional_types_ir10() {
-  static const std::vector<std::string> all_optional_types = {
-      "optional(seq(tensor(uint8)))",      "optional(seq(tensor(uint16)))", "optional(seq(tensor(uint32)))",
-      "optional(seq(tensor(uint64)))",     "optional(seq(tensor(int8)))",   "optional(seq(tensor(int16)))",
-      "optional(seq(tensor(int32)))",      "optional(seq(tensor(int64)))",  "optional(seq(tensor(bfloat16)))",
-      "optional(seq(tensor(float16)))",    "optional(seq(tensor(float)))",  "optional(seq(tensor(double)))",
-      "optional(seq(tensor(string)))",     "optional(seq(tensor(bool)))",   "optional(seq(tensor(complex64)))",
-      "optional(seq(tensor(complex128)))", "optional(tensor(uint8))",       "optional(tensor(uint16))",
-      "optional(tensor(uint32))",          "optional(tensor(uint64))",      "optional(tensor(int8))",
-      "optional(tensor(int16))",           "optional(tensor(int32))",       "optional(tensor(int64))",
-      "optional(tensor(bfloat16))",        "optional(tensor(float16))",     "optional(tensor(float))",
-      "optional(tensor(double))",          "optional(tensor(string))",      "optional(tensor(bool))",
-      "optional(tensor(complex64))",       "optional(tensor(complex128))",  "optional(tensor(float8e4m3fn))",
-      "optional(tensor(float8e4m3fnuz))",  "optional(tensor(float8e5m2))",  "optional(tensor(float8e5m2fnuz))",
-      "optional(tensor(uint4))",           "optional(tensor(int4))"};
-  return all_optional_types;
+  static const auto v =
+      types::Concat(types::Optional(all_tensor_sequence_types_ir4()), types::Optional(all_tensor_types_ir10()));
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_optional_types_ir11() {
-  static const std::vector<std::string> all_optional_types = {
-      "optional(seq(tensor(uint8)))",      "optional(seq(tensor(uint16)))", "optional(seq(tensor(uint32)))",
-      "optional(seq(tensor(uint64)))",     "optional(seq(tensor(int8)))",   "optional(seq(tensor(int16)))",
-      "optional(seq(tensor(int32)))",      "optional(seq(tensor(int64)))",  "optional(seq(tensor(bfloat16)))",
-      "optional(seq(tensor(float16)))",    "optional(seq(tensor(float)))",  "optional(seq(tensor(double)))",
-      "optional(seq(tensor(string)))",     "optional(seq(tensor(bool)))",   "optional(seq(tensor(complex64)))",
-      "optional(seq(tensor(complex128)))", "optional(tensor(uint8))",       "optional(tensor(uint16))",
-      "optional(tensor(uint32))",          "optional(tensor(uint64))",      "optional(tensor(int8))",
-      "optional(tensor(int16))",           "optional(tensor(int32))",       "optional(tensor(int64))",
-      "optional(tensor(bfloat16))",        "optional(tensor(float16))",     "optional(tensor(float))",
-      "optional(tensor(double))",          "optional(tensor(string))",      "optional(tensor(bool))",
-      "optional(tensor(complex64))",       "optional(tensor(complex128))",  "optional(tensor(float8e4m3fn))",
-      "optional(tensor(float8e4m3fnuz))",  "optional(tensor(float8e5m2))",  "optional(tensor(float8e5m2fnuz))",
-      "optional(tensor(uint4))",           "optional(tensor(int4))",        "optional(tensor(float4e2m1))"};
-  return all_optional_types;
+  static const auto v =
+      types::Concat(types::Optional(all_tensor_sequence_types_ir4()), types::Optional(all_tensor_types_ir11()));
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_optional_types_ir12() {
-  static const std::vector<std::string> all_optional_types = {
-      "optional(seq(tensor(uint8)))",      "optional(seq(tensor(uint16)))", "optional(seq(tensor(uint32)))",
-      "optional(seq(tensor(uint64)))",     "optional(seq(tensor(int8)))",   "optional(seq(tensor(int16)))",
-      "optional(seq(tensor(int32)))",      "optional(seq(tensor(int64)))",  "optional(seq(tensor(bfloat16)))",
-      "optional(seq(tensor(float16)))",    "optional(seq(tensor(float)))",  "optional(seq(tensor(double)))",
-      "optional(seq(tensor(string)))",     "optional(seq(tensor(bool)))",   "optional(seq(tensor(complex64)))",
-      "optional(seq(tensor(complex128)))", "optional(tensor(uint8))",       "optional(tensor(uint16))",
-      "optional(tensor(uint32))",          "optional(tensor(uint64))",      "optional(tensor(int8))",
-      "optional(tensor(int16))",           "optional(tensor(int32))",       "optional(tensor(int64))",
-      "optional(tensor(bfloat16))",        "optional(tensor(float16))",     "optional(tensor(float))",
-      "optional(tensor(double))",          "optional(tensor(string))",      "optional(tensor(bool))",
-      "optional(tensor(complex64))",       "optional(tensor(complex128))",  "optional(tensor(float8e4m3fn))",
-      "optional(tensor(float8e4m3fnuz))",  "optional(tensor(float8e5m2))",  "optional(tensor(float8e5m2fnuz))",
-      "optional(tensor(uint4))",           "optional(tensor(int4))",        "optional(tensor(float4e2m1))",
-      "optional(tensor(float8e8m0))"};
-  return all_optional_types;
+  static const auto v =
+      types::Concat(types::Optional(all_tensor_sequence_types_ir4()), types::Optional(all_tensor_types_ir12()));
+  return v;
 }
 
 const std::vector<std::string>& OpSchema::all_optional_types_ir13() {
-  static const std::vector<std::string> all_optional_types = {
-      "optional(seq(tensor(uint8)))",      "optional(seq(tensor(uint16)))", "optional(seq(tensor(uint32)))",
-      "optional(seq(tensor(uint64)))",     "optional(seq(tensor(int8)))",   "optional(seq(tensor(int16)))",
-      "optional(seq(tensor(int32)))",      "optional(seq(tensor(int64)))",  "optional(seq(tensor(bfloat16)))",
-      "optional(seq(tensor(float16)))",    "optional(seq(tensor(float)))",  "optional(seq(tensor(double)))",
-      "optional(seq(tensor(string)))",     "optional(seq(tensor(bool)))",   "optional(seq(tensor(complex64)))",
-      "optional(seq(tensor(complex128)))", "optional(tensor(uint8))",       "optional(tensor(uint16))",
-      "optional(tensor(uint32))",          "optional(tensor(uint64))",      "optional(tensor(int8))",
-      "optional(tensor(int16))",           "optional(tensor(int32))",       "optional(tensor(int64))",
-      "optional(tensor(bfloat16))",        "optional(tensor(float16))",     "optional(tensor(float))",
-      "optional(tensor(double))",          "optional(tensor(string))",      "optional(tensor(bool))",
-      "optional(tensor(complex64))",       "optional(tensor(complex128))",  "optional(tensor(float8e4m3fn))",
-      "optional(tensor(float8e4m3fnuz))",  "optional(tensor(float8e5m2))",  "optional(tensor(float8e5m2fnuz))",
-      "optional(tensor(uint4))",           "optional(tensor(int4))",        "optional(tensor(float4e2m1))",
-      "optional(tensor(float8e8m0))",      "optional(tensor(uint2))",       "optional(tensor(int2))"};
-  return all_optional_types;
+  static const auto v =
+      types::Concat(types::Optional(all_tensor_sequence_types_ir4()), types::Optional(all_tensor_types_ir13()));
+  return v;
 }
 
 void OpSchema::Finalize() {
@@ -1676,13 +1606,13 @@ OpSchema::NodeDeterminism OpSchema::GetNodeDeterminism() const {
       return NodeDeterminism::Unknown;
     } else if (const FunctionProto* func_proto = GetFunction(); func_proto) {
       const OpSchemaRegistry& reg = *OpSchemaRegistry::Instance();
-      std::unordered_map<std::string, int> domain_to_opset_version;
+      std::unordered_map<std::string, int64_t> domain_to_opset_version;
       for (const auto& opset : func_proto->opset_import()) {
         domain_to_opset_version[opset.domain()] = opset.version();
       }
       for (const NodeProto& n : func_proto->node()) {
-        const int opset = domain_to_opset_version[n.domain()];
-        const OpSchema* sch = reg.GetSchema(n.op_type(), opset, n.domain());
+        const int64_t opset = domain_to_opset_version[n.domain()];
+        const OpSchema* sch = reg.GetSchema(n.op_type(), static_cast<int>(opset), n.domain());
         if (!sch) {
           return NodeDeterminism::Unknown;
         }
@@ -1801,10 +1731,10 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       if (OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0) {
         ONNX_ASSERTM(
             dbg_registered_schema_count == ONNX_DBG_GET_COUNT_IN_OPSETS(),
-            "%zu schema were exposed from operator sets and automatically placed into the static registry.  "
-            "%zu were expected based on calls to registration macros. Operator set functions may need to be updated.",
             dbg_registered_schema_count,
-            ONNX_DBG_GET_COUNT_IN_OPSETS())
+            " schema were exposed from operator sets and automatically placed into the static registry.  ",
+            ONNX_DBG_GET_COUNT_IN_OPSETS(),
+            " were expected based on calls to registration macros. Operator set functions may need to be updated.")
       }
 #endif
     }

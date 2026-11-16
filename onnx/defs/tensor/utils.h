@@ -11,10 +11,19 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
+OpSchema GatherNDSchema(bool allow_int32_indices);
+OpSchema ScatterNDSchema(bool allow_int32_indices, bool allow_mean = false);
+void ScatterReductionShapeInference(InferenceContext& ctx);
+
 // The below is called by ops after opset 11, inclusively.
 void resizeShapeInference(InferenceContext& ctx);
 
 void gridSampleShapeInference(InferenceContext& ctx);
+
+// Shared type/shape inference for the OneHot operator. 'version' is the opset
+// version of the calling schema; before opset 11 'indices' were required to be
+// non-negative, which is enforced when 'indices' is a constant.
+void oneHotShapeInference(InferenceContext& ctx, int version);
 
 void resizeShapeInferenceHelper(
     const TensorShapeProto& input_shape,
@@ -48,9 +57,6 @@ void KeepAspectRatioHelper(
     const TensorShapeProto& input_shape,
     const std::vector<int64_t>& axes,
     std::vector<int64_t>& sizes_data);
-
-extern const char* NonZero_ver9_doc;
-extern const char* Transpose_doc;
 
 std::function<void(OpSchema&)> PadDocGenerator(
     const char* description,

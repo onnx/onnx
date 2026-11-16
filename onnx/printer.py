@@ -7,11 +7,15 @@ import onnx
 import onnx.onnx_cpp2py_export.printer as C  # noqa: N812
 
 
-def to_text(proto: onnx.ModelProto | onnx.FunctionProto | onnx.GraphProto) -> str:
+def to_text(
+    proto: onnx.ModelProto | onnx.FunctionProto | onnx.GraphProto | onnx.NodeProto,
+) -> str:
     if isinstance(proto, onnx.ModelProto):
         return C.model_to_text(proto.SerializeToString())
     if isinstance(proto, onnx.FunctionProto):
         return C.function_to_text(proto.SerializeToString())
     if isinstance(proto, onnx.GraphProto):
         return C.graph_to_text(proto.SerializeToString())
+    if isinstance(proto, onnx.NodeProto):
+        return C.node_to_text(proto.SerializeToString())
     raise TypeError("Unsupported argument type.")

@@ -12,10 +12,10 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 import google.protobuf.message
 import numpy as np
-import typing_extensions
 
 import onnx
 from onnx import _mapping, defs
+from onnx._deprecated import deprecated
 from onnx.onnx_data_pb import MapProto, OptionalProto, SequenceProto
 from onnx.onnx_pb import (
     AttributeProto,
@@ -76,6 +76,8 @@ VERSION_TABLE: VersionTableType = [
     ("1.20.0", 13, 25, 5, 1),
     ("1.20.1", 13, 25, 5, 1),
     ("1.21.0", 13, 26, 5, 1),
+    ("1.22.0", 13, 27, 5, 1),
+    ("1.23.0", 14, 28, 5, 1),
 ]
 
 VersionMapType = dict[tuple[str, int], int]
@@ -233,7 +235,8 @@ def make_graph(
     graph.name = name
     graph.input.extend(inputs)
     graph.output.extend(outputs)
-    graph.initializer.extend(initializer)
+    for tensor in initializer:
+        graph.initializer.add().CopyFrom(tensor)
     graph.sparse_initializer.extend(sparse_initializer)
     graph.value_info.extend(value_info)
     if doc_string:
@@ -377,7 +380,8 @@ def make_tensor(
         name: tensor name
         data_type: a value such as onnx.TensorProto.FLOAT
         dims: shape
-        vals: values
+        vals: values. For STRING tensors, str values are UTF-8 encoded and bytes
+            values are stored unchanged.
         raw: if True, vals contains the serialized content of the tensor,
             otherwise, vals should be a list of values of the type defined by ``data_type``.
 
@@ -395,15 +399,19 @@ def make_tensor(
     np_dtype = tensor_dtype_to_np_dtype(data_type)
 
     if raw:
-        # NumPy doesn't have INT2/INT4/FP4. It is packed in couples to UINT8 buffers.
-        if data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
-            expected_size_bytes = 0.5
+        # NumPy doesn't have INT2/INT4/FP4/FP6. It is packed in couples to UINT8 buffers.
+        if data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+            bits_per_element = 6
+        elif data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
+            bits_per_element = 4
         elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
-            expected_size_bytes = 0.25
+            bits_per_element = 2
         else:
-            expected_size_bytes = np_dtype.itemsize
-        expected_size_bytes *= math.prod(dims)
-        expected_size_bytes = math.ceil(expected_size_bytes)
+            bits_per_element = np_dtype.itemsize * 8
+        # Integer ceil(n * bits_per_element / 8): avoids the float-multiplication
+        # precision loss for large n that a `math.ceil(fraction * n)` formula
+        # would be susceptible to.
+        expected_size_bytes = -(-math.prod(dims) * bits_per_element // 8)
         if isinstance(vals, np.ndarray):
             if data_type in {
                 TensorProto.INT4,
@@ -413,6 +421,8 @@ def make_tensor(
                 vals = onnx.numpy_helper._pack_4bitx2(vals)
             elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
                 vals = onnx.numpy_helper._pack_2bitx4(vals)
+            elif data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+                vals = onnx.numpy_helper._pack_6bit(vals.view(np.uint8))
 
             raw_data = onnx.numpy_helper.tobytes_little_endian(vals)
         elif isinstance(vals, bytes):
@@ -431,9 +441,8 @@ def make_tensor(
     assert not raw, "Bug: raw should be False at this point."
 
     if data_type == TensorProto.STRING:
-        vals = np.array(vals).flatten()
-        if len(vals) != 0:
-            vals = np.vectorize(_to_bytes)(vals)  # Convert to bytes
+        vals = np.array(vals, dtype=object).flatten()
+        vals = np.vectorize(_to_bytes, otypes=[object])(vals)
     elif data_type in {
         TensorProto.FLOAT8E4M3FN,
         TensorProto.FLOAT8E4M3FNUZ,
@@ -446,9 +455,18 @@ def make_tensor(
         vals = onnx.numpy_helper.to_float8e8m0(
             np.asarray(vals), saturate=True, round_mode="up"
         ).flatten()
+    elif data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+        # For FP6 in non-raw mode, store per-element bytes in int32_data (like float8)
+        vals = np.asarray(vals, dtype=np_dtype).flatten().view(np.uint8)
     else:
         vals = np.asarray(vals, dtype=np_dtype).flatten()
 
+    expected_elements = math.prod(dims)
+    if len(vals) != expected_elements:
+        raise ValueError(
+            f"Number of values ({len(vals)}) does not match tensor "
+            f"dimensions requiring {expected_elements} elements."
+        )
     if data_type == TensorProto.COMPLEX128:
         vals = vals.view(np.float64)  # type: ignore[union-attr]
     elif data_type == TensorProto.COMPLEX64:
@@ -659,7 +677,8 @@ def make_attribute(
                 )
 
         if attr_type == AttributeProto.INTS:
-            attr.ints.extend(value)
+            # bool is a numbers.Integral, but protobuf>=7 rejects bools in int fields
+            attr.ints.extend(int(v) if isinstance(v, bool) else v for v in value)
             attr.type = AttributeProto.INTS
         elif attr_type == AttributeProto.FLOATS:
             attr.floats.extend(value)
@@ -692,12 +711,34 @@ def make_attribute(
 
 
 def make_attribute_ref(
-    name: str, attr_type: AttributeProto.AttributeType, doc_string: str | None = None
+    name: str,
+    attr_type: AttributeProto.AttributeType,
+    doc_string: str | None = None,
+    *,
+    ref_attr_name: str | None = None,
 ) -> AttributeProto:
-    """Make an AttributeProto holding a reference to the parent function's attribute of given name and type."""
+    """Make an AttributeProto holding a reference to the parent function's attribute.
+
+    The returned attribute carries no value of its own; at instantiation time its
+    value is supplied by the parent function's attribute named ``ref_attr_name``.
+    When ``ref_attr_name`` is not provided, it defaults to ``name``. Reference
+    attributes are only valid inside a function (sub-graph).
+
+    Args:
+        name: The name of this attribute as used inside the function body.
+        attr_type: The type of the attribute.
+        doc_string: Optional human-readable documentation for the attribute.
+        ref_attr_name: The name of the parent function's attribute being referenced.
+    """
+    if ref_attr_name is None:
+        ref_attr_name = name
+    if not ref_attr_name:
+        raise ValueError("ref_attr_name must be non-empty")
+
     attr = AttributeProto()
     attr.name = name
     attr.type = attr_type  # type: ignore[assignment]
+    attr.ref_attr_name = ref_attr_name
     if doc_string:
         attr.doc_string = doc_string
     return attr
@@ -993,7 +1034,6 @@ def printable_attribute(
     elif attr.HasField("i"):
         content.append(str_int(attr.i))
     elif attr.HasField("s"):
-        # TODO: Bit nervous about Python 2 / Python 3 determinism implications
         content.append(repr(_sanitize_str(attr.s)))
     elif attr.HasField("t"):
         if len(attr.t.dims) > 0:
@@ -1014,7 +1054,6 @@ def printable_attribute(
     elif attr.ints:
         content.append(str_list(str_int, attr.ints))
     elif attr.strings:
-        # TODO: Bit nervous about Python 2 / Python 3 determinism implications
         content.append(str(list(map(_sanitize_str, attr.strings))))
     elif attr.tensors:
         content.append("[<Tensor>, ...]")
@@ -1115,9 +1154,7 @@ def printable_node(
     return prefix + " ".join(content)
 
 
-@typing_extensions.deprecated(
-    "Deprecated since 1.19. Consider using onnx.printer.to_text() instead."
-)
+@deprecated("Deprecated since 1.19. Consider using onnx.printer.to_text() instead.")
 def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     """Display a GraphProto as a string.
 
@@ -1208,7 +1245,7 @@ def strip_doc_string(proto: google.protobuf.message.Message) -> None:
         if descriptor.name == "doc_string":
             proto.ClearField(descriptor.name)
         elif descriptor.type == descriptor.TYPE_MESSAGE:
-            if descriptor.label == descriptor.LABEL_REPEATED:
+            if descriptor.is_repeated:
                 for x in getattr(proto, descriptor.name):
                     strip_doc_string(x)
             elif proto.HasField(descriptor.name):
@@ -1276,7 +1313,7 @@ def tensor_dtype_to_string(tensor_dtype: int) -> str:
     return _mapping.TENSOR_TYPE_MAP[tensor_dtype].name
 
 
-@functools.lru_cache(None)
+@functools.cache
 def tensor_dtype_to_field(tensor_dtype: int) -> str:
     """Convert a TensorProto's data_type to corresponding field name for storage. It can be used while making tensors.
 
@@ -1300,7 +1337,7 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
     ]
 
 
-@functools.lru_cache(None)
+@functools.cache
 def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
     """Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
 

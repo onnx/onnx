@@ -5,6 +5,7 @@
 #include "onnx/shape_inference/implementation.h"
 
 #include <algorithm>
+#include <cassert>
 #include <fstream>
 #include <list>
 #include <string>
@@ -15,14 +16,14 @@
 
 #include "onnx/checker.h"
 #include "onnx/common/common.h"
+#include "onnx/common/constants.h"
 #include "onnx/common/file_utils.h"
 #include "onnx/common/proto_util.h"
 #include "onnx/common/scoped_resource.h"
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/shape_inference/attribute_binder.h"
 
-namespace ONNX_NAMESPACE {
-namespace shape_inference {
+namespace ONNX_NAMESPACE::shape_inference {
 namespace {
 
 std::string GetValueCaseString(const TypeProto& type) {
@@ -35,10 +36,8 @@ std::string GetValueCaseString(const TypeProto& type) {
       return "map_type";
     case TypeProto::ValueCase::kOptionalType:
       return "optional_type";
-#ifdef ONNX_ML
     case TypeProto::ValueCase::kOpaqueType:
       return "opaque_type";
-#endif
     case TypeProto::ValueCase::kSparseTensorType:
       return "sparse_tensor_type";
     case TypeProto::ValueCase::VALUE_NOT_SET:
@@ -65,10 +64,6 @@ std::string GetElemTypeString(const TypeProto_SparseTensor& type) {
   }
 #endif
   return ONNX_NAMESPACE::to_string(type.elem_type());
-}
-
-inline bool IsOnnxDomainOp(const NodeProto& node, const std::string& op_type) {
-  return (IsOnnxDomain(node.domain()) && (node.op_type() == op_type));
 }
 
 } // namespace
@@ -142,6 +137,21 @@ void checkShapesAndTypes(const TypeProto& inferred_type, const TypeProto& existi
           Utils::DataTypeUtils::ToDataTypeString(inferred_type.map_type().key_type()));
     }
     checkShapesAndTypes(inferred_type.map_type().value_type(), existing_type.map_type().value_type());
+  } else if (inferred_value_case == TypeProto::kOpaqueType && existing_value_case == TypeProto::kOpaqueType) {
+    const auto& inferred_opaque = inferred_type.opaque_type();
+    const auto& existing_opaque = existing_type.opaque_type();
+    if (existing_opaque.has_domain() && inferred_opaque.has_domain() &&
+        NormalizeDomain(existing_opaque.domain()) != NormalizeDomain(inferred_opaque.domain())) {
+      fail_type_inference(
+          "domain mismatch for opaque type: existing=",
+          existing_opaque.domain(),
+          " inferred=",
+          inferred_opaque.domain());
+    }
+    if (existing_opaque.has_name() && inferred_opaque.has_name() && existing_opaque.name() != inferred_opaque.name()) {
+      fail_type_inference(
+          "name mismatch for opaque type: existing=", existing_opaque.name(), " inferred=", inferred_opaque.name());
+    }
   } else {
     fail_type_inference("type case unsupported. existing=", existing_value_case, " inferred=", inferred_value_case);
   }
@@ -212,12 +222,21 @@ void mergeShapesAndTypes(const TypeProto& inferred_type, TypeProto* existing_typ
       existing_type->mutable_map_type()->set_key_type(inferred_type.map_type().key_type());
     }
     mergeShapesAndTypes(inferred_type.map_type().value_type(), existing_type->mutable_map_type()->mutable_value_type());
+  } else if (inferred_val_case == TypeProto::kOpaqueType) {
+    auto* existing_opaque = existing_type->mutable_opaque_type();
+    const auto& inferred_opaque = inferred_type.opaque_type();
+    if (!existing_opaque->has_domain() && inferred_opaque.has_domain()) {
+      existing_opaque->set_domain(inferred_opaque.domain());
+    }
+    if (!existing_opaque->has_name() && inferred_opaque.has_name()) {
+      existing_opaque->set_name(inferred_opaque.name());
+    }
   }
 }
 
 // TypeProto_Tensor or TypeProto_SparseTensor
 template <typename TensorTypeProto>
-void GenerateSymbolicShape(TensorTypeProto* inferred_type, SymbolTable& symbol_table) {
+static void GenerateSymbolicShape(TensorTypeProto* inferred_type, SymbolTable& symbol_table) {
   if (!inferred_type->has_shape()) {
     return;
   }
@@ -246,6 +265,9 @@ void MaterializeSymbolicShape(TypeProto* inferred_type, SymbolTable& symbol_tabl
     MaterializeSymbolicShape(inferred_type->mutable_optional_type()->mutable_elem_type(), symbol_table);
   } else if (inferred_val_case == TypeProto::kMapType) {
     MaterializeSymbolicShape(inferred_type->mutable_map_type()->mutable_value_type(), symbol_table);
+  } else if (inferred_val_case == TypeProto::kOpaqueType) {
+    // Opaque types have no shape to materialize.
+    return;
   } else {
     fail_shape_inference("type case unsupported for symbolic shape inference. inferred=", inferred_val_case);
   }
@@ -348,6 +370,14 @@ void BindValuesOnReturn(
   }
 }
 
+// ShapeInferenceImplBase drives type-and-shape inference over a GraphProto or FunctionProto.
+// A single instance is used to process one top-level graph, or one function-body invocation
+// (a "callee" scope): ProcessCall()/InferShapeForFunctionNodeInternal() construct a brand-new
+// ShapeInferenceImplBase for every function call encountered (including nested/recursive calls
+// and repeated calls to the same function), each with its own private copies of instance fields
+// such as value_types_by_name and unbound_value_names. Consequently, these fields are correctly
+// scoped to a single graph/function invocation and are never shared or aliased across distinct
+// (nested, sibling, or recursive) function-body invocations.
 class ShapeInferenceImplBase {
  public:
   void UpdateType(const std::string& name, TypeProto* inferred_type) {
@@ -395,7 +425,7 @@ class ShapeInferenceImplBase {
   }
 
   void ProcessConstant(const NodeProto& n) {
-    if (IsOnnxDomainOp(n, "Constant") && n.output().size() == 1) {
+    if (IsOnnxDomain(n.domain()) && n.op_type() == "Constant" && n.output().size() == 1) {
       const std::string& output_name = n.output(0);
       for (const auto& attr : n.attribute()) {
         if (attr.name() == "value") {
@@ -406,11 +436,11 @@ class ShapeInferenceImplBase {
               input_data_by_name_holder[output_name] = attr.t();
               input_data_by_name[output_name] = &input_data_by_name_holder[output_name];
             }
-          } else if (attr.type() == AttributeProto::SPARSE_TENSOR && attr.has_sparse_tensor()) {
-            if (reuse_constant_tensors) {
-              input_sparse_data_by_name[output_name] = &attr.sparse_tensor();
-            }
+          } else if (
+              attr.type() == AttributeProto::SPARSE_TENSOR && attr.has_sparse_tensor() && reuse_constant_tensors) {
+            input_sparse_data_by_name[output_name] = &attr.sparse_tensor();
           }
+
         } else {
           switch (attr.type()) {
             case AttributeProto::INTS: {
@@ -470,14 +500,15 @@ class ShapeInferenceImplBase {
         input_sparse_data_by_name,
         options,
         generated_shape_data_by_name,
-        &graph_inference_context);
+        &graph_inference_context,
+        &unbound_value_names);
 
     ONNX_TRY {
       if (schema) {
         if (schema->has_type_and_shape_inference_function()) {
           schema->GetTypeAndShapeInferenceFunction()(ctx);
         } else if (schema->HasFunction()) {
-          ProcessCall(n, *(schema->GetFunction()), ctx);
+          ProcessCall(n, *schema->GetFunction(), ctx);
         } // else: rely on schema->CheckInputOutputType() down below.
         // check type-constraints specified via type variables
         if (options.check_type) {
@@ -486,7 +517,7 @@ class ShapeInferenceImplBase {
       } else if (!model_local_functions_map.empty()) {
         auto iter = model_local_functions_map.find(GetFunctionIdentifier(n));
         if (iter != model_local_functions_map.end()) {
-          ProcessCall(n, *(iter->second), ctx);
+          ProcessCall(n, *iter->second, ctx);
         } else {
           has_unsupported_op = true;
           return;
@@ -602,11 +633,17 @@ class ShapeInferenceImplBase {
 
   void Process(const NodeProto& n, internal::AttributeBinder& attribute_binder) {
     NodeProto copy_n(n);
-    attribute_binder.VisitNode(&copy_n);
+    attribute_binder.VisitNode(copy_n);
     Process(copy_n);
   }
 
   void Process(const FunctionProto& func_proto, InferenceContext& ctx) {
+    // This method processes a single function-body invocation. Per the class-level comment
+    // above, a fresh ShapeInferenceImplBase instance is created for each such invocation, so
+    // unbound_value_names must still be in its initial, empty state at this point (it is
+    // populated below, exclusively for the formal parameters of this invocation's own callee).
+    assert(unbound_value_names.empty());
+
     // Ensure Constant node tensor-attributes are copied
     bool old_reuse_constant_tensors = reuse_constant_tensors;
     reuse_constant_tensors = false;
@@ -617,15 +654,23 @@ class ShapeInferenceImplBase {
     std::vector<TypeProto> types_cache(num_func_inputs);
     for (int i = 0; i < num_func_inputs; ++i) {
       const auto& parameter_name = func_proto.input().Get(i);
-      const auto* const type_ptr = (i < num_actual_inputs) ? ctx.getInputType(i) : nullptr;
-      // nullptr is valid, and indicates a missing optional input
+      // A formal parameter is considered "provided" by the caller only if the caller's own
+      // hasInput() reports it as present. This correctly distinguishes a genuinely omitted
+      // optional argument (recorded in unbound_value_names, below) from an argument that is
+      // provided but whose type happens to be unknown (nullptr is valid here, and simply
+      // indicates that the type could not be determined).
+      const bool caller_has_input = (i < num_actual_inputs) && ctx.hasInput(i);
+      const auto* const type_ptr = caller_has_input ? ctx.getInputType(i) : nullptr;
       if (type_ptr != nullptr) {
         // Use a temporary copy of original type.
         // TODO(ONNX): investigate whether we can eliminate use of temporary copy
         types_cache[i] = *type_ptr;
         value_types_by_name[parameter_name] = &types_cache[i];
-      } else {
-        value_types_by_name[parameter_name] = nullptr;
+      }
+      if (!caller_has_input) {
+        // unbound_value_names starts out empty (see assert above) and each parameter_name is
+        // visited at most once (function inputs have unique names), so a plain insert suffices.
+        unbound_value_names.insert(parameter_name);
       }
     }
 
@@ -667,14 +712,13 @@ class ShapeInferenceImplBase {
         // Copy the type info to ctx
         // to pass back to main graph
         auto* type_proto = ctx.getOutputType(i);
-        type_proto->CopyFrom(*(iter->second));
+        type_proto->CopyFrom(*iter->second);
       }
     }
 
     reuse_constant_tensors = old_reuse_constant_tensors;
   }
 
- public:
   ShapeInferenceImplBase(
       GraphProto* graph, // nullptr for FunctionProto inference
       const std::unordered_map<std::string, TypeProto*>& outer_scope_value_types_by_name_in,
@@ -684,7 +728,7 @@ class ShapeInferenceImplBase {
       const ModelLocalFunctionsMap& model_local_functions_map_in,
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
       DataValueMap* generated_shape_data_by_name_in = nullptr,
-      const int ir_version_in = IR_VERSION,
+      const int64_t ir_version_in = IR_VERSION,
       std::shared_ptr<std::unordered_set<const FunctionProto*>> active_functions_in = nullptr)
       : inferred_types(graph),
         value_types_by_name(outer_scope_value_types_by_name_in),
@@ -741,7 +785,7 @@ class ShapeInferenceImplBase {
   const ModelLocalFunctionsMap& model_local_functions_map;
   const ISchemaRegistry* schema_registry;
   DataValueMap* generated_shape_data_by_name;
-  int ir_version;
+  int64_t ir_version;
   std::shared_ptr<std::unordered_set<const FunctionProto*>> active_functions;
   GraphInferenceContext graph_inference_context;
 
@@ -759,6 +803,18 @@ class ShapeInferenceImplBase {
   // reuse_constant_tensors: controls whether we need to copy tensors occurring as attributes
   // in Constant nodes. We avoid it for inference for graphs, but must make a copy for functions.
   bool reuse_constant_tensors = true;
+
+  // Names of function-formal-parameters that were not provided (structurally) by the caller of
+  // the function currently being processed (empty when processing a top-level graph). A function
+  // body's nodes reference formal parameters by name unconditionally, so hasInput()/hasOutput(),
+  // which check structural presence in the NodeProto, cannot by themselves distinguish "argument
+  // genuinely omitted by the caller" from "argument provided but its type happens to be unknown".
+  // This set lets InferenceContextImpl::hasInput() correctly report false for the former case,
+  // while still reporting true (with a null type) for the latter.
+  //
+  // Populated exactly once, by Process(const FunctionProto&, ...), starting from empty -- see the
+  // class-level comment above regarding per-invocation scoping of this and other instance fields.
+  std::unordered_set<std::string> unbound_value_names;
 };
 
 void InferShapesImpl(
@@ -770,7 +826,7 @@ void InferShapesImpl(
     const ModelLocalFunctionsMap& model_local_functions_map,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     DataValueMap* generated_shape_data_by_name = nullptr,
-    const int ir_version = IR_VERSION // default the latest one
+    const int64_t ir_version = IR_VERSION // default the latest one
 ) {
   DataValueMap empty;
   if (generated_shape_data_by_name == nullptr) {
@@ -846,8 +902,11 @@ void InferShapes(
   // Use SerializeToString instead of SerializeToOstream due to LITE_PROTO
   std::fstream output(save_path, std::ios::out | std::ios::trunc | std::ios::binary);
   std::string model_string;
+  // Protobuf marks SerializeToString nodiscard, so check it explicitly.
+  if (!model.SerializeToString(&model_string)) {
+    fail_check("Unable to serialize the inferred model for the target path: ", save_path);
+  }
   ONNX_TRY {
-    model.SerializeToString(&model_string);
     output << model_string;
   }
   ONNX_CATCH(...) {
@@ -952,6 +1011,12 @@ void InferShapeForFunctionNode(
 
 namespace {
 
+// Note: input_types plays a dual role for this context: an entry with
+// value_case() == TypeProto::ValueCase::VALUE_NOT_SET indicates that the corresponding
+// (optional) input is absent, while any other value indicates that the input is present
+// with that type. Consequently, hasInput() (inherited, unmodified, from the base
+// InferenceContext) cannot distinguish an input that is present but has an unknown type
+// from one that is simply absent -- both are represented identically here.
 struct FunctionInferenceContext : public InferenceContext {
   FunctionInferenceContext(
       const FunctionProto& func_proto,
@@ -1050,18 +1115,24 @@ std::vector<TypeProto> InferFunctionOutputTypes(
     const FunctionProto& function_proto,
     const std::vector<TypeProto>& input_types,
     const std::vector<AttributeProto>& attributes) {
+  // See the doc-comment on the declaration (in implementation.h) for a description of the dual
+  // role played by input_types: it indicates both which inputs are present/absent and, for
+  // those that are present, their types.
   // TODO(ONNX): if it is desirable for infer_function_output_types to provide check_type, strict_mode, data_prop,
   // we can add them to the Python API. For now we just assume the default options.
   ShapeInferenceOptions options{true, 1, false};
   FunctionInferenceContext ctx(function_proto, input_types, attributes, options);
   auto opset_imports = GetOpsetImportsFromProto(function_proto);
+  // ShapeInferenceImplBase stores this map by reference, so bind it to the
+  // function scope instead of passing a temporary that immediately dangles.
+  ModelLocalFunctionsMap model_local_functions_map;
   ShapeInferenceImplBase base(
       nullptr, // no graph
       {}, // outer_scope_value_types_by_name
       opset_imports,
       options,
       /*symbol_table*/ nullptr,
-      /*model_local_functions_map*/ {},
+      model_local_functions_map,
       /*schema_registry*/ OpSchemaRegistry::Instance(),
       /*generated_shape_data_by_name*/ nullptr);
   base.Process(function_proto, ctx);
@@ -1165,5 +1236,4 @@ void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTable& symbol
   }
 }
 
-} // namespace shape_inference
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::shape_inference

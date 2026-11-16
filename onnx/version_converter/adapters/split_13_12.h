@@ -13,8 +13,7 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class Split_13_12 : public Adapter {
  public:
@@ -26,6 +25,10 @@ class Split_13_12 : public Adapter {
     // Check if split input is provided (it's optional)
     if (inputs.size() <= 1) {
       // No split input provided, nothing to convert
+      return node;
+    }
+    if (inputs[1]->node()->kind() == kUndefined) {
+      node->removeInput(1);
       return node;
     }
     // Get 'split' from initializer or constant operator
@@ -40,6 +43,9 @@ class Split_13_12 : public Adapter {
         node_ptr->destroy();
       }
     } else {
+      ONNX_ASSERTM(
+          graph->is_constant_initializer(const_val),
+          "Split input must be constant; dynamic inputs and overridable initializers cannot be converted to attributes.")
       // Get Value name, find Initializer with same name
       for (const auto& initializer : graph->initializers()) {
         if (initializer.name() == inputs[1]->uniqueName()) {
@@ -57,5 +63,4 @@ class Split_13_12 : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

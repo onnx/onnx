@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -195,26 +196,26 @@ def _interpolate_1d_with_x(
     input_width = len(data)
     output_width = scale_factor * input_width
     if coordinate_transformation_mode == "align_corners":
-        if output_width == 1:
+        if output_width_int == 1:
             x_ori = 0.0
         else:
-            x_ori = x * (input_width - 1) / (output_width - 1)
+            x_ori = x * (input_width - 1) / (output_width_int - 1)
     elif coordinate_transformation_mode == "asymmetric":
         x_ori = x / scale_factor
     elif coordinate_transformation_mode == "tf_crop_and_resize":
         if roi is None:
             raise ValueError("roi cannot be None.")
-        if output_width == 1:
+        if output_width_int == 1:
             x_ori = (roi[1] - roi[0]) * (input_width - 1) / 2
         else:
-            x_ori = x * (roi[1] - roi[0]) * (input_width - 1) / (output_width - 1)
+            x_ori = x * (roi[1] - roi[0]) * (input_width - 1) / (output_width_int - 1)
         x_ori += roi[0] * (input_width - 1)
         # Return extrapolation_value directly as what TF CropAndResize does
         if x_ori < 0 or x_ori > input_width - 1:
             return np.array(extrapolation_value)
     elif coordinate_transformation_mode == "pytorch_half_pixel":
-        if output_width == 1:
-            x_ori = -0.5
+        if output_width_int == 1:
+            x_ori = 0.0
         else:
             x_ori = (x + 0.5) / scale_factor - 0.5
     elif coordinate_transformation_mode == "half_pixel":
@@ -309,6 +310,164 @@ def _get_all_coords(data: np.ndarray) -> np.ndarray:
     )
 
 
+def _compute_x_ori(
+    coordinate_transformation_mode: str,
+    y: np.ndarray,
+    scale_factor: float,
+    input_width: int,
+    output_width: float,
+    output_width_int: int,
+    roi: np.ndarray | list[float] | None,
+) -> tuple[np.ndarray, np.ndarray | None]:
+    """Map output indices ``y`` to source coordinates per the chosen mode.
+
+    Returns ``(x_ori, is_extrapolated)``. ``is_extrapolated`` is ``None`` for
+    every mode except ``tf_crop_and_resize``, where it flags output positions
+    whose source coordinate falls outside the input range.
+    """
+    is_extrapolated: np.ndarray | None = None
+    if coordinate_transformation_mode == "align_corners":
+        x_ori = (
+            np.zeros(output_width_int, dtype=np.float64)
+            if output_width_int == 1
+            else y * (input_width - 1) / (output_width_int - 1)
+        )
+    elif coordinate_transformation_mode == "asymmetric":
+        x_ori = y / scale_factor
+    elif coordinate_transformation_mode == "tf_crop_and_resize":
+        if roi is None:
+            raise ValueError("roi cannot be None.")
+        if output_width_int == 1:
+            x_ori = np.full(
+                output_width_int,
+                (roi[1] - roi[0]) * (input_width - 1) / 2,
+                dtype=np.float64,
+            )
+        else:
+            x_ori = y * (roi[1] - roi[0]) * (input_width - 1) / (output_width_int - 1)
+        x_ori = x_ori + roi[0] * (input_width - 1)
+        is_extrapolated = (x_ori < 0) | (x_ori > input_width - 1)
+    elif coordinate_transformation_mode == "pytorch_half_pixel":
+        x_ori = (
+            np.zeros(output_width_int, dtype=np.float64)
+            if output_width_int == 1
+            else (y + 0.5) / scale_factor - 0.5
+        )
+    elif coordinate_transformation_mode == "half_pixel":
+        x_ori = (y + 0.5) / scale_factor - 0.5
+    elif coordinate_transformation_mode == "half_pixel_symmetric":
+        adjustment = output_width_int / output_width
+        center = input_width / 2
+        offset = center * (1 - adjustment)
+        x_ori = offset + (y + 0.5) / scale_factor - 0.5
+    else:
+        raise ValueError(
+            f"Invalid coordinate_transformation_mode: {coordinate_transformation_mode!r}."
+        )
+    return x_ori, is_extrapolated
+
+
+def _interpolate_1d_along_axis(
+    data: np.ndarray,
+    axis: int,
+    scale_factor: float,
+    output_width_int: int,
+    get_coeffs: Callable[[float, float], np.ndarray],
+    roi: np.ndarray | list[float] | None = None,
+    extrapolation_value: float = 0.0,
+    coordinate_transformation_mode: str = "half_pixel",
+    exclude_outside: bool = False,
+) -> np.ndarray:
+    """Vectorized 1-D resize along a single axis.
+
+    Computes the same result as calling :func:`_interpolate_1d_with_x` for
+    every output coordinate along ``axis``, but in a single batched numpy
+    operation. Resize interpolation is separable along axes, so resizing an
+    N-D tensor reduces to applying this routine once per axis.
+    """
+    if output_width_int == 0:
+        # Zero-sized output along this axis — nothing to interpolate, but
+        # downstream code indexes ratios[0] / coeffs[0], so bail out early.
+        empty_shape = list(data.shape)
+        empty_shape[axis] = 0
+        return np.empty(empty_shape, dtype=data.dtype)
+
+    input_width = data.shape[axis]
+    output_width = scale_factor * input_width
+    y = np.arange(output_width_int, dtype=np.float64)
+
+    x_ori, is_extrapolated = _compute_x_ori(
+        coordinate_transformation_mode,
+        y,
+        scale_factor,
+        input_width,
+        output_width,
+        output_width_int,
+        roi,
+    )
+
+    x_ori_int = np.floor(x_ori).astype(np.int64)
+    # Match the scalar code: prefer the pixel on the left of x_ori by
+    # forcing ratio = 1 when x_ori is an exact integer.
+    integer_mask = x_ori == x_ori_int
+    ratios = np.where(integer_mask, 1.0, x_ori - x_ori_int)
+
+    # Kernel size is fixed per axis: for non-antialias modes it doesn't
+    # depend on ratio at all, and for antialias modes it depends only on
+    # scale. Compute coefficients per output position.
+    sample_coeffs = np.asarray(get_coeffs(float(ratios[0]), scale_factor))
+    n = len(sample_coeffs)
+    coeffs = np.empty((output_width_int, n), dtype=np.float64)
+    coeffs[0] = sample_coeffs
+    for i in range(1, output_width_int):
+        coeffs[i] = get_coeffs(float(ratios[i]), scale_factor)
+
+    # Replicate _get_neighbor_idxes semantics: take the n indices closest to
+    # x_ori (in padded-edge coordinates) with ties broken by smaller index.
+    pad_width = int(np.ceil(n / 2))
+    x_padded = x_ori + pad_width
+    p_padded = np.floor(x_padded).astype(np.int64)
+    frac = x_padded - p_padded
+
+    if n % 2 == 0:
+        # Even kernel: window centers are half-integers. At an integer
+        # x_padded, the tie between p-0.5 and p+0.5 goes to the smaller
+        # center (p-0.5), so the window starts at p - n/2.
+        offset_from_p = np.where(frac == 0, -(n // 2), -(n // 2) + 1)
+    else:
+        # Odd kernel: window centered on the nearest integer. Ties
+        # (frac == 0.5) go to the smaller center.
+        base = -((n - 1) // 2)
+        offset_from_p = np.where(frac <= 0.5, base, base + 1)
+
+    start_padded = p_padded + offset_from_p
+    neighbor_idxes = start_padded[:, None] + np.arange(n)[None, :] - pad_width
+
+    if exclude_outside:
+        outside_mask = (neighbor_idxes < 0) | (neighbor_idxes >= input_width)
+        coeffs = np.where(outside_mask, 0.0, coeffs)
+        coeff_sum = coeffs.sum(axis=-1, keepdims=True)
+        # Guard against rows where every coefficient is zero.
+        coeff_sum = np.where(coeff_sum == 0, 1.0, coeff_sum)
+        coeffs = coeffs / coeff_sum
+
+    # Edge-padding is equivalent to clamping indices into the valid range.
+    # intp cast: np.take rejects int64 indices on 32-bit platforms.
+    clamped = np.clip(neighbor_idxes, 0, input_width - 1).astype(np.intp)
+    gathered = np.take(data, clamped, axis=axis)
+
+    coeff_shape = (1,) * axis + coeffs.shape + (1,) * (data.ndim - axis - 1)
+    weighted = gathered * coeffs.reshape(coeff_shape)
+    result = weighted.sum(axis=axis + 1)
+
+    if is_extrapolated is not None and is_extrapolated.any():
+        mask_shape = (1,) * axis + (output_width_int,) + (1,) * (data.ndim - axis - 1)
+        mask = is_extrapolated.reshape(mask_shape)
+        result = np.where(mask, extrapolation_value, result)
+
+    return result  # type: ignore[no-any-return]
+
+
 def _interpolate_nd(
     data: np.ndarray,
     get_coeffs: Callable[[float, float], np.ndarray],
@@ -323,10 +482,16 @@ def _interpolate_nd(
     if output_size is None and scale_factors is None:
         raise ValueError("output_size is None and scale_factors is None.")
 
+    # roi is only meaningful for tf_crop_and_resize; for other modes it may
+    # arrive as an empty tensor. Normalize to None so downstream indexing
+    # (roi[axis], roi[axis + r]) doesn't fault on an empty array.
+    if roi is not None and np.asarray(roi).size == 0:
+        roi = None
+
     r = len(data.shape)
     if axes is not None:
         if scale_factors is not None:
-            new_scale_factors = [1.0] * r
+            new_scale_factors = np.ones(r, dtype=np.asarray(scale_factors).dtype)
             for i, d in enumerate(axes):
                 new_scale_factors[d] = scale_factors[i]
             scale_factors = new_scale_factors
@@ -348,7 +513,9 @@ def _interpolate_nd(
         axes = list(range(r))
 
     if output_size is not None:
-        scale_factors = [output_size[i] / data.shape[i] for i in range(r)]
+        scale_factors = [
+            output_size[i] / data.shape[i] if i in axes else 1.0 for i in range(r)
+        ]
         if keep_aspect_ratio_policy != "stretch":
             if keep_aspect_ratio_policy == "not_larger":
                 scale = np.array(scale_factors)[axes].min()
@@ -377,20 +544,108 @@ def _interpolate_nd(
     if output_size is None:
         raise ValueError("output_size is None.")
 
-    ret = np.zeros(output_size)
-    for x in _get_all_coords(ret):
-        ret[tuple(x)] = _interpolate_nd_with_x(
-            data,
-            len(data.shape),
-            scale_factors,
-            output_size,
-            x,
+    # Separable interpolation: resize one axis at a time. This avoids the
+    # O(prod(output_shape)) scan of the old implementation, which called the
+    # recursive _interpolate_nd_with_x once per output element.
+    result = data if data.dtype == np.float64 else data.astype(np.float64)
+    for axis in axes:
+        axis_scale = float(scale_factors[axis])
+        axis_output = int(output_size[axis])
+        if (
+            math.isclose(axis_scale, 1.0)
+            and axis_output == result.shape[axis]
+            and (
+                roi is None
+                or (
+                    math.isclose(float(roi[axis]), 0.0)
+                    and math.isclose(float(roi[axis + r]), 1.0)
+                )
+            )
+        ):
+            # Identity along this axis — skip to avoid unnecessary work.
+            continue
+        axis_roi = None if roi is None else [roi[axis], roi[axis + r]]
+        result = _interpolate_1d_along_axis(
+            result,
+            axis,
+            axis_scale,
+            axis_output,
             get_coeffs,
-            roi=roi,
+            roi=axis_roi,
             exclude_outside=exclude_outside,
             **kwargs,
         )
-    return ret
+    return result
+
+
+_AXES_INTERPOLATION_MEMORY_BUDGET = 4 * 1024 * 1024
+_MIN_AXES_INTERPOLATION_CHUNK_SIZE = 12
+
+
+def _axes_chunk_size(
+    data: np.ndarray,
+    axes: list[int],
+    get_coeffs: Callable[[float, float], np.ndarray],
+    output_size: np.ndarray | None,
+    scale_factors: np.ndarray | None,
+    keep_aspect_ratio_policy: str,
+    coordinate_transformation_mode: str,
+    batch_size: int,
+) -> int:
+    input_size = np.array([data.shape[axis] for axis in axes], dtype=np.int64)
+    if output_size is not None:
+        axis_output = np.asarray(output_size, dtype=np.int64)
+        axis_scales = axis_output / input_size
+        if keep_aspect_ratio_policy != "stretch":
+            if keep_aspect_ratio_policy == "not_larger":
+                scale = axis_scales.min()
+            elif keep_aspect_ratio_policy == "not_smaller":
+                scale = axis_scales.max()
+            else:
+                raise ValueError(
+                    f"Invalid keep_aspect_ratio_policy={keep_aspect_ratio_policy!r}"
+                )
+            axis_scales = np.full(len(axes), scale)
+            axis_output = (axis_scales * input_size + 0.5).astype(np.int64)
+    elif scale_factors is not None:
+        axis_scales = np.asarray(scale_factors)
+        axis_output = (axis_scales * input_size).astype(np.int64)
+    else:
+        raise ValueError("output_size and scale_factors are both None.")
+
+    # During one axis pass, the previous result, gathered neighbors, and
+    # weighted neighbors coexist. Bound those buffers, the copied input, and
+    # the coordinate, coefficient, and index workspace for that axis.
+    current_size = input_size.copy()
+    input_bytes_per_slice = int(np.prod(input_size)) * data.dtype.itemsize + 8 * (
+        data.ndim - len(axes) + 1
+    )
+    chunk_size = batch_size
+    for index, (axis_scale, axis_output_size) in enumerate(
+        zip(axis_scales, axis_output, strict=False)
+    ):
+        previous_elements = int(np.prod(current_size))
+        current_size[index] = axis_output_size
+        output_elements = int(np.prod(current_size))
+        if output_elements == 0:
+            bytes_per_slice = input_bytes_per_slice + 8 * previous_elements
+            workspace_bytes = 0
+        else:
+            kernel_width = len(np.asarray(get_coeffs(1.0, float(axis_scale))))
+            bytes_per_slice = input_bytes_per_slice + 8 * (
+                previous_elements + (2 * kernel_width + 1) * output_elements
+            )
+            if coordinate_transformation_mode == "tf_crop_and_resize":
+                bytes_per_slice += 8 * output_elements
+            workspace_bytes = int(axis_output_size) * (64 + 32 * kernel_width)
+        available_bytes = _AXES_INTERPOLATION_MEMORY_BUDGET - workspace_bytes
+        axis_chunk_size = max(1, available_bytes // max(1, bytes_per_slice))
+        chunk_size = min(chunk_size, axis_chunk_size)
+
+    # Small vector batches cost more memory bandwidth than they save in dispatch.
+    if chunk_size < batch_size and chunk_size < _MIN_AXES_INTERPOLATION_CHUNK_SIZE:
+        return 1
+    return chunk_size
 
 
 class Resize(OpRun):
@@ -451,32 +706,115 @@ class Resize(OpRun):
             )
             return (output,)
 
-        # axes is not None
-        not_axes = [a for a in range(len(X.shape)) if a not in axes]
-        perm = tuple(not_axes + axes)
-        permuted = np.transpose(X, perm)
-        new_shape = (-1, *tuple(X.shape[a] for a in axes))
-        reshaped = permuted.reshape(new_shape)
-        res = None
-        for i in range(reshaped.shape[0]):
-            output = _interpolate_nd(
-                reshaped[i],
-                fct,
-                scale_factors=scales,
-                output_size=sizes,
-                roi=roi,
-                keep_aspect_ratio_policy=keep_aspect_ratio_policy,
-                exclude_outside=exclude_outside,
-                coordinate_transformation_mode=coordinate_transformation_mode,
-                extrapolation_value=extrapolation_value,
+        if any(axis < -X.ndim or axis >= X.ndim for axis in axes):
+            raise ValueError(
+                f"All axes must be in the range [{-X.ndim}, {X.ndim - 1}]."
             )
-            if res is None:
-                res = np.empty((reshaped.shape[0], *output.shape), dtype=X.dtype)
-            res[i] = onnx.numpy_helper.saturate_cast(output, X.dtype)
+        normalized_axes = [axis + X.ndim if axis < 0 else axis for axis in axes]
+        if len(set(normalized_axes)) != len(normalized_axes):
+            raise ValueError("The axes must not contain duplicates.")
+        not_axes = [axis for axis in range(X.ndim) if axis not in normalized_axes]
+        permutation = tuple(not_axes + normalized_axes)
+        batch_shape = tuple(X.shape[axis] for axis in not_axes)
+        batch_size = int(np.prod(batch_shape))
+        if (
+            not not_axes
+            or batch_size == 0
+            or any(X.shape[axis] == 0 for axis in normalized_axes)
+        ):
+            output = onnx.numpy_helper.saturate_cast(
+                _interpolate_nd(
+                    X,
+                    fct,
+                    scale_factors=scales,
+                    output_size=sizes,
+                    axes=normalized_axes,
+                    roi=roi,
+                    keep_aspect_ratio_policy=keep_aspect_ratio_policy,
+                    exclude_outside=exclude_outside,
+                    coordinate_transformation_mode=coordinate_transformation_mode,
+                    extrapolation_value=extrapolation_value,
+                ),
+                X.dtype,
+            )
+            return (output,)
 
-        res_reshaped = res.reshape(tuple(X.shape[a] for a in not_axes) + res[0].shape)
-        new_perm = list(perm)
-        for i, a in enumerate(perm):
-            new_perm[a] = i
-        final = np.transpose(res_reshaped, tuple(new_perm))
-        return (final,)
+        permuted = np.transpose(X, permutation)
+        batch_view = (
+            X.reshape((batch_size, *(X.shape[axis] for axis in normalized_axes)))
+            if permutation == tuple(range(X.ndim)) and X.flags.c_contiguous
+            else None
+        )
+        chunk_size = _axes_chunk_size(
+            X,
+            normalized_axes,
+            fct,
+            sizes,
+            scales,
+            keep_aspect_ratio_policy,
+            coordinate_transformation_mode,
+            batch_size,
+        )
+        chunk_axes = list(range(1, len(normalized_axes) + 1))
+        result = None
+        if chunk_size == 1:
+            for index in range(batch_size):
+                chunk_input = (
+                    batch_view[index]
+                    if batch_view is not None
+                    else permuted[np.unravel_index(index, batch_shape)]
+                )
+                chunk = onnx.numpy_helper.saturate_cast(
+                    _interpolate_nd(
+                        chunk_input,
+                        fct,
+                        scale_factors=scales,
+                        output_size=sizes,
+                        roi=roi,
+                        keep_aspect_ratio_policy=keep_aspect_ratio_policy,
+                        exclude_outside=exclude_outside,
+                        coordinate_transformation_mode=coordinate_transformation_mode,
+                        extrapolation_value=extrapolation_value,
+                    ),
+                    X.dtype,
+                )
+                if result is None:
+                    result = np.empty((batch_size, *chunk.shape), dtype=X.dtype)
+                result[index] = chunk
+        else:
+            for start in range(0, batch_size, chunk_size):
+                chunk_input = (
+                    batch_view[start : start + chunk_size]
+                    if batch_view is not None
+                    else permuted[
+                        np.unravel_index(
+                            np.arange(start, min(start + chunk_size, batch_size)),
+                            batch_shape,
+                        )
+                    ]
+                )
+                chunk = onnx.numpy_helper.saturate_cast(
+                    _interpolate_nd(
+                        chunk_input,
+                        fct,
+                        scale_factors=scales,
+                        output_size=sizes,
+                        axes=chunk_axes,
+                        roi=roi,
+                        keep_aspect_ratio_policy=keep_aspect_ratio_policy,
+                        exclude_outside=exclude_outside,
+                        coordinate_transformation_mode=coordinate_transformation_mode,
+                        extrapolation_value=extrapolation_value,
+                    ),
+                    X.dtype,
+                )
+                if result is None:
+                    result = np.empty((batch_size, *chunk.shape[1:]), dtype=X.dtype)
+                result[start : start + chunk_size] = chunk
+
+        if result is None:
+            raise RuntimeError("Resize axes interpolation produced no chunks.")
+        reshaped_result = result.reshape(batch_shape + result.shape[1:])
+        inverse_permutation = np.argsort(permutation)
+        output = np.transpose(reshaped_result, tuple(inverse_permutation))
+        return (output,)

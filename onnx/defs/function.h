@@ -30,7 +30,7 @@ class FunctionBodyHelper {
 
     AttributeProtoWrapper() = default;
 
-    // NOLINTNEXTLINE(google-explicit-constructor)
+    // NOLINTNEXTLINE(*constructor)
     AttributeProtoWrapper(AttributeProto attr_prot) : proto(std::move(attr_prot)) {}
 
     template <typename T>
