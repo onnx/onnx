@@ -45,5 +45,9 @@ def check_model_path(
     check_custom_domain: bool,
 ) -> None: ...
 def _open_external_data(
-    base_dir: str, location: str, tensor_name: str, read_only: bool
+    base_dir: str,
+    location: str,
+    tensor_name: str,
+    read_only: bool,
+    create_new: bool = False,
 ) -> int: ...

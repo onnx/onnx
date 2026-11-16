@@ -1470,6 +1470,80 @@ class TestWriteExternalDataTensorsOffsetOrder:
         assert (tmp_path / location).read_bytes() == second_bytes + first_bytes
 
 
+class TestSaveExternalDataAuthority:
+    def test_save_rejects_existing_sidecar_without_modifying_it(
+        self, tmp_path: Path
+    ) -> None:
+        tensor = from_array(np.array([1.0], dtype=np.float32), name="weight")
+        set_external_data(tensor, "weights.bin")
+        model = helper.make_model(
+            helper.make_graph([], "test", [], [], initializer=[tensor])
+        )
+        sidecar = tmp_path / "weights.bin"
+        sidecar.write_bytes(b"sentinel")
+
+        with pytest.raises(checker.ValidationError):
+            onnx.save_model(model, tmp_path / "model.onnx")
+        assert sidecar.read_bytes() == b"sentinel"
+
+    def test_late_collision_does_not_write_or_mutate_earlier_tensor(
+        self, tmp_path: Path
+    ) -> None:
+        first = from_array(np.array([1.0], dtype=np.float32), name="first")
+        second = from_array(np.array([2.0], dtype=np.float32), name="second")
+        set_external_data(first, "a.bin")
+        set_external_data(second, "z.bin")
+        model = helper.make_model(
+            helper.make_graph([], "test", [], [], initializer=[first, second])
+        )
+        (tmp_path / "z.bin").write_bytes(b"sentinel")
+
+        with pytest.raises(checker.ValidationError):
+            onnx.save_model(model, tmp_path / "model.onnx")
+
+        assert (tmp_path / "a.bin").read_bytes() == b""
+        assert (tmp_path / "z.bin").read_bytes() == b"sentinel"
+        assert first.HasField("raw_data")
+        assert second.HasField("raw_data")
+
+    def test_convert_does_not_use_working_directory_as_save_authority(
+        self, tmp_path: Path, monkeypatch
+    ) -> None:
+        working_dir = tmp_path / "working"
+        output_dir = tmp_path / "output"
+        working_dir.mkdir()
+        output_dir.mkdir()
+        (working_dir / "weights.bin").write_bytes(b"unrelated")
+        tensor = from_array(np.array([1.0], dtype=np.float32), name="weight")
+        model = helper.make_model(
+            helper.make_graph([], "test", [], [], initializer=[tensor])
+        )
+        monkeypatch.chdir(working_dir)
+
+        convert_model_to_external_data(model, location="weights.bin", size_threshold=0)
+        onnx.save_model(model, output_dir / "model.onnx")
+
+        assert (working_dir / "weights.bin").read_bytes() == b"unrelated"
+        assert (output_dir / "weights.bin").read_bytes() == np.array(
+            [1.0], dtype=np.float32
+        ).tobytes()
+
+    def test_save_creates_shared_sidecar_once(self, tmp_path: Path) -> None:
+        first = from_array(np.array([1.0], dtype=np.float32), name="first")
+        second = from_array(np.array([2.0], dtype=np.float32), name="second")
+        set_external_data(first, "weights.bin")
+        set_external_data(second, "weights.bin")
+        model = helper.make_model(
+            helper.make_graph([], "test", [], [], initializer=[first, second])
+        )
+
+        onnx.save_model(model, tmp_path / "model.onnx")
+
+        assert (tmp_path / "weights.bin").read_bytes() == np.array(
+            [1.0, 2.0], dtype=np.float32
+        ).tobytes()
+
+
 class TestExternalDataInfoSecurity:
     """Tests for ExternalDataInfo hardening against attribute injection and bounds.
 

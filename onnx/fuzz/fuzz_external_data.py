@@ -63,12 +63,19 @@ _original_open_external_data_fd = external_data_helper._open_external_data_fd
 
 
 def _checked_open_external_data_fd(
-    base_dir: str, location: str, tensor_name: str, read_only: bool
+    base_dir: str,
+    location: str,
+    tensor_name: str,
+    read_only: bool,
+    *,
+    create_new: bool = False,
 ) -> int:
     # Every external-data read and write, including ModelContainer.load, opens
     # through this helper. Checking the descriptor here reports an escape even
     # when a later bounds or reshape error aborts the operation.
-    fd = _original_open_external_data_fd(base_dir, location, tensor_name, read_only)
+    fd = _original_open_external_data_fd(
+        base_dir, location, tensor_name, read_only, create_new=create_new
+    )
     fd_stat = os.fstat(fd)
     sentinel_stat = _SENTINEL.stat()
     if (fd_stat.st_dev, fd_stat.st_ino) == (sentinel_stat.st_dev, sentinel_stat.st_ino):

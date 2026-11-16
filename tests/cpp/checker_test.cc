@@ -4,6 +4,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <string>
 
 #ifdef _WIN32
@@ -188,6 +189,27 @@ TEST(CHECKER, OpenExternalDataTest) {
     ASSERT_GE(fd.get(), 0);
   } // fd closed by ScopedFd
   EXPECT_TRUE(fs::exists(dir / "new.bin"));
+
+  // Exclusive write creates a new file and never opens an existing file.
+  {
+    std::ofstream ofs(dir / "existing.bin", std::ios::binary);
+    ofs << "sentinel";
+  }
+  EXPECT_THROW(
+      ONNX_NAMESPACE::checker::open_external_data(dir_utf8, "existing.bin", "t", false, true),
+      ONNX_NAMESPACE::checker::ValidationError);
+  {
+    std::ifstream ifs(dir / "existing.bin", std::ios::binary);
+    std::string content((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_EQ(content, "sentinel");
+  }
+  raw = ONNX_NAMESPACE::checker::open_external_data(dir_utf8, "exclusive.bin", "t", false, true);
+  ASSERT_GE(raw, 0);
+  {
+    ScopedFd fd(static_cast<int>(raw));
+    ASSERT_GE(fd.get(), 0);
+  }
+  EXPECT_TRUE(fs::exists(dir / "exclusive.bin"));
 
   // Reject invalid locations
   EXPECT_THROW(

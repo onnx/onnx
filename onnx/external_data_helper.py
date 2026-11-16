@@ -7,7 +7,8 @@ import os
 import re
 import uuid
 import warnings
-from itertools import chain
+from contextlib import ExitStack
+from itertools import chain, groupby
 from typing import IO, TYPE_CHECKING
 
 import onnx.checker as onnx_checker
@@ -25,10 +26,17 @@ if TYPE_CHECKING:
 
 
 def _open_external_data_fd(
-    base_dir: str, location: str, tensor_name: str, read_only: bool
+    base_dir: str,
+    location: str,
+    tensor_name: str,
+    read_only: bool,
+    *,
+    create_new: bool = False,
 ) -> int:
     """Open external data via C++ and return a CRT file descriptor."""
-    return c_checker._open_external_data(base_dir, location, tensor_name, read_only)
+    return c_checker._open_external_data(
+        base_dir, location, tensor_name, read_only, create_new
+    )
 
 
 # Security: 3-layer defense against malicious external_data entries (GHSA-538c-55jv-c5g9)
@@ -253,9 +261,8 @@ def convert_model_to_external_data(
         convert_attribute (bool): If true, convert all tensors to external data
                        If false, convert only non-attribute tensors to external data
 
-    Raise:
+    Raises:
         ValueError: If location is not a relative path.
-        FileExistsError: If a file already exists in location.
     """
     tensors = _get_initializer_tensors(model)
     if convert_attribute:
@@ -268,8 +275,6 @@ def convert_model_to_external_data(
                 raise ValueError(
                     "location must be a relative path that is relative to the model path."
                 )
-            if os.path.exists(location):
-                raise FileExistsError(f"External data file exists in {location}.")
             file_name = location
         for tensor in tensors:
             if tensor.HasField("raw_data") and len(tensor.raw_data) >= size_threshold:
@@ -331,6 +336,7 @@ def _open_external_data_file_for_write(
     tensor_name: str,
     *,
     truncate: bool = False,
+    create_new: bool = False,
 ) -> IO[bytes]:
     """Open an external-data file for writing and optionally truncate it safely.
 
@@ -339,7 +345,9 @@ def _open_external_data_file_for_write(
     ``open(..., "wb")`` or an ``O_TRUNC`` flag would modify the target before
     those post-open checks could reject it.
     """
-    fd = _open_external_data_fd(base_path, location, tensor_name, False)
+    fd = _open_external_data_fd(
+        base_path, location, tensor_name, False, create_new=create_new
+    )
     data_file = os.fdopen(fd, "r+b")
     if truncate:
         try:
@@ -464,7 +472,9 @@ def remove_external_data_field(tensor: TensorProto, field_key: str) -> None:
             del tensor.external_data[i]
 
 
-def write_external_data_tensors(model: ModelProto, filepath: str) -> ModelProto:
+def write_external_data_tensors(
+    model: ModelProto, filepath: str, *, create_new: bool = False
+) -> ModelProto:
     """Serializes data for all the tensors which have data location set to TensorProto.External.
 
     Note: This function also strips basepath information from all tensors' external_data fields.
@@ -472,6 +482,8 @@ def write_external_data_tensors(model: ModelProto, filepath: str) -> ModelProto:
     Arguments:
         model (ModelProto): Model object which is the source of tensors to serialize.
         filepath: System path to the directory which should be treated as base path for external data.
+        create_new: Require each destination file to be created by this call. This
+            prevents a model save from appending to an existing file.
 
     Returns:
         ModelProto: The modified model object.
@@ -498,8 +510,30 @@ def write_external_data_tensors(model: ModelProto, filepath: str) -> ModelProto:
             infos[id(tensor)].offset or 0,
         )
     )
-    for tensor in tensors_to_write:
-        save_external_data(tensor, filepath)
-        tensor.ClearField("raw_data")
+    if create_new:
+        opened_groups = []
+        with ExitStack() as stack:
+            for location, tensor_group in groupby(
+                tensors_to_write, key=lambda tensor: infos[id(tensor)].location
+            ):
+                tensors = list(tensor_group)
+                data_file = stack.enter_context(
+                    _open_external_data_file_for_write(
+                        filepath,
+                        location,
+                        tensors[0].name,
+                        create_new=True,
+                    )
+                )
+                opened_groups.append((tensors, data_file))
+            for tensors, data_file in opened_groups:
+                for tensor in tensors:
+                    _write_external_data_to_file(tensor, data_file, tensor.raw_data)
+        for tensor in tensors_to_write:
+            tensor.ClearField("raw_data")
+    else:
+        for tensor in tensors_to_write:
+            save_external_data(tensor, filepath)
+            tensor.ClearField("raw_data")
 
     return model
