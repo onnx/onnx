@@ -2375,6 +2375,26 @@ class TestSummarizeOperators:
         }
         assert summary.uses_only_standard_operators
 
+    def test_model_local_function_domain_not_imported(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 21]>
+            agraph (float[2] x) => (float[2] y) {
+                y = local.f(x)
+            }
+            <domain: "local", opset_import: ["" : 21]>
+            f (a) => (b) {
+                b = Relu(a)
+            }
+            """
+        )
+        summary = checker.summarize_operators(model)
+        assert self.kinds(summary) == {
+            ("local", "f"): (checker.OperatorKind.UNKNOWN, None, 1),
+        }
+        assert not summary.uses_only_standard_operators
+        assert not summary.all_operators_defined
+
     def test_model_local_function_with_custom_body(self) -> None:
         model = onnx.parser.parse_model(
             """
@@ -2396,10 +2416,9 @@ class TestSummarizeOperators:
         summary = checker.summarize_operators(model)
         # Nodes in a function resolve against the function's opset imports.
         assert self.kinds(summary) == {
-            ("", "Relu"): (checker.OperatorKind.STANDARD, 21, 1),
             ("com.example", "MyOp"): (checker.OperatorKind.UNKNOWN, 2, 1),
             ("local", "f"): (checker.OperatorKind.FUNCTION, 1, 1),
-            ("local", "g"): (checker.OperatorKind.FUNCTION, None, 1),
+            ("local", "g"): (checker.OperatorKind.UNKNOWN, None, 1),
         }
         assert not summary.uses_only_standard_operators
 

@@ -315,7 +315,7 @@ def summarize_operators(model: onnx.ModelProto) -> OperatorSummary:
             opset_version = opset_versions.get(domain)
             key = (domain, node.op_type, node.overload)
             function = functions.get(key)
-            if function is not None:
+            if function is not None and opset_version is not None:
                 kind = OperatorKind.FUNCTION
                 if key not in called:
                     called.add(key)
