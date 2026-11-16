@@ -524,22 +524,25 @@ class Runner:
         target_list: list[np.ndarray | list[Any]],
         model_type_proto: TypeProto,
     ) -> None:
+        base_dir = os.path.dirname(proto_filename)
         with open(proto_filename, "rb") as f:
             protobuf_content = f.read()
             if model_type_proto.HasField("sequence_type"):
                 sequence = onnx.SequenceProto()
                 sequence.ParseFromString(protobuf_content)
-                target_list.append(numpy_helper.to_list(sequence))
+                target_list.append(numpy_helper.to_list(sequence, base_dir))
             elif model_type_proto.HasField("tensor_type"):
                 tensor = onnx.TensorProto()
                 tensor.ParseFromString(protobuf_content)
-                t = numpy_helper.to_array(tensor)
+                t = numpy_helper.to_array(tensor, base_dir)
                 assert isinstance(t, np.ndarray)
                 target_list.append(t)
             elif model_type_proto.HasField("optional_type"):
                 optional = onnx.OptionalProto()
                 optional.ParseFromString(protobuf_content)
-                target_list.append(numpy_helper.to_optional(optional))  # type: ignore[arg-type]
+                target_list.append(
+                    numpy_helper.to_optional(optional, base_dir)  # type: ignore[arg-type]
+                )
             else:
                 print(
                     "Loading proto of that specific type (Map/Sparse Tensor) is currently not supported"

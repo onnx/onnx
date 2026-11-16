@@ -314,6 +314,41 @@ class TestNumpyHelper:
         with pytest.raises(IndexError, match="not the same"):
             numpy_helper.to_dict(m)
 
+    def test_external_data_requires_explicit_base_dir(
+        self, tmp_path, monkeypatch
+    ) -> None:
+        expected = np.array([1.0, 2.0], dtype=np.float32)
+        tensor = numpy_helper.from_array(expected, "external")
+        (tmp_path / "data.bin").write_bytes(tensor.raw_data)
+        onnx.external_data_helper.set_external_data(tensor, "data.bin")
+        tensor.ClearField("raw_data")
+
+        with pytest.raises(ValueError, match="explicit base_dir"):
+            numpy_helper.to_array(tensor)
+        np.testing.assert_array_equal(
+            numpy_helper.to_array(tensor, str(tmp_path)), expected
+        )
+
+        monkeypatch.chdir(tmp_path)
+        np.testing.assert_array_equal(numpy_helper.to_array(tensor, ""), expected)
+
+    def test_external_data_base_dir_propagates_through_containers(
+        self, tmp_path
+    ) -> None:
+        expected = np.array([3.0, 4.0], dtype=np.float32)
+        tensor = numpy_helper.from_array(expected, "external")
+        (tmp_path / "data.bin").write_bytes(tensor.raw_data)
+        onnx.external_data_helper.set_external_data(tensor, "data.bin")
+        tensor.ClearField("raw_data")
+        sequence = helper.make_sequence("sequence", onnx.SequenceProto.TENSOR, [tensor])
+        mapping = helper.make_map("map", onnx.TensorProto.INT64, [7], sequence)
+        optional = helper.make_optional("optional", onnx.OptionalProto.MAP, mapping)
+
+        with pytest.raises(ValueError, match="explicit base_dir"):
+            numpy_helper.to_optional(optional)
+        result = numpy_helper.to_optional(optional, str(tmp_path))
+        np.testing.assert_array_equal(result[7], expected)
+
     def test_from_dict_empty(self) -> None:
         with pytest.raises(ValueError):
             numpy_helper.from_dict({})
