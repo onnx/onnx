@@ -5,7 +5,21 @@ from __future__ import annotations
 
 from typing import Any
 
+import numpy as np
+
 from onnx.reference.op_run import OpRun
+
+
+def _get_axis(axis: int | np.ndarray) -> int:
+    """Returns ``axis`` as an integer for operators expecting a scalar axis input.
+
+    The specification asks for a 0-D tensor but ONNX Runtime, TVM and the ONNX
+    shape inference also accept a 1-element 1-D tensor, so both are allowed here.
+    """
+    arr = np.asarray(axis)
+    if arr.ndim > 1 or arr.size != 1:
+        raise ValueError(f"Axis must be a scalar tensor, got shape {arr.shape}.")
+    return int(arr.item())
 
 
 def _split_class_name(name):

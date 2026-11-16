@@ -6,13 +6,12 @@ from __future__ import annotations
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+from onnx.reference.ops._helpers import _get_axis
 
 
 class CumSum(OpRun):
     def _run(self, x, axis, exclusive=None, reverse=None):
-        axis = np.asarray(axis)
-        if axis.ndim != 0:
-            raise ValueError(f"Axis must be a rank-0 tensor, got `{axis.ndim}`.")
+        axis = _get_axis(axis)
         if reverse:
             rev_indices = [slice(0, s) for s in x.shape]
             rev_indices[axis] = slice(None, None, -1)

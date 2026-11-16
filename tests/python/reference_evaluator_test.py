@@ -9544,6 +9544,35 @@ class TestReferenceEvaluator:
         with pytest.raises(ValueError, match="positive"):
             ReferenceEvaluator(node).run(None, {"X": x, "K": k})
 
+    @pytest.mark.parametrize("op_type", ["CumSum", "CumProd"])
+    @pytest.mark.parametrize("axis_shape", [(), (1,)])
+    @pytest.mark.parametrize("axis", [0, -1])
+    def test_cum_op_axis_accepts_scalar_and_single_element_1d(
+        self, op_type, axis_shape, axis
+    ) -> None:
+        # ONNX Runtime, TVM and shape inference accept both the 0-D tensor the
+        # specification asks for and a 1-element 1-D tensor; the reference
+        # evaluator has to agree with them.
+        x = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32)
+        expected = (
+            np.cumsum(x, axis=axis) if op_type == "CumSum" else np.cumprod(x, axis=axis)
+        )
+        node = make_node(op_type, ["X", "axis"], ["Y"])
+        axis_value = np.array([axis], dtype=np.int64).reshape(axis_shape)
+
+        (got,) = ReferenceEvaluator(node).run(None, {"X": x, "axis": axis_value})
+
+        assert_array_equal(got, expected.astype(np.float32))
+
+    @pytest.mark.parametrize("op_type", ["CumSum", "CumProd"])
+    @pytest.mark.parametrize("axis_value", [np.array([0, 1]), np.array([[0]])])
+    def test_cum_op_axis_rejects_non_scalar(self, op_type, axis_value) -> None:
+        x = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32)
+        node = make_node(op_type, ["X", "axis"], ["Y"])
+
+        with pytest.raises(ValueError, match="scalar"):
+            ReferenceEvaluator(node).run(None, {"X": x, "axis": axis_value})
+
     @pytest.mark.parametrize(
         ("input_type", "to"),
         [
