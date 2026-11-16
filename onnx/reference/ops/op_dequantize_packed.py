@@ -93,6 +93,7 @@ _FP4 = np.array(
 )
 _UINT_DTYPES = {2: "<u2", 4: "<u4"}
 _NVFP4_ZERO_SCALE_CODE = 127
+_DECODE_CHUNK_ELEMENTS = 131072
 
 
 @lru_cache(maxsize=6)
@@ -714,7 +715,7 @@ def _decode_blocks_chunk(blocks: np.ndarray, out: np.ndarray, qtype: int) -> Non
 
 def _decode_blocks(blocks: np.ndarray, out: np.ndarray, qtype: int) -> None:
     block_size = out.shape[1]
-    chunk_size = max(1, 131072 // block_size)
+    chunk_size = max(1, _DECODE_CHUNK_ELEMENTS // block_size)
     for start in range(0, len(blocks), chunk_size):
         end = start + chunk_size
         _decode_blocks_chunk(blocks[start:end], out[start:end], qtype)

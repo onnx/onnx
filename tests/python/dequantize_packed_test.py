@@ -24,6 +24,7 @@ from onnx import (
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops import op_dequantize_packed
 from onnx.reference.ops.op_dequantize_packed import (
+    _DECODE_CHUNK_ELEMENTS,
     GGUF_BLOCK_SIZES,
     GGUF_FORMATS,
     _decode_block,
@@ -417,7 +418,7 @@ def test_output_dtype_order_and_storage(
 @pytest.mark.parametrize("qtype", sorted(GGUF_BLOCK_SIZES))
 def test_batched_decoding_chunk_boundary(specification, qtype: int) -> None:
     width, size = GGUF_BLOCK_SIZES[qtype]
-    chunk_size = max(1, 131072 // width)
+    chunk_size = max(1, _DECODE_CHUNK_ELEMENTS // width)
     count = chunk_size + 1
     corpus = _corpus(qtype)
     blocks = np.tile(corpus, (math.ceil(count / len(corpus)), 1))[:count]
