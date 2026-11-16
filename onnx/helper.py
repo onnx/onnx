@@ -235,7 +235,8 @@ def make_graph(
     graph.name = name
     graph.input.extend(inputs)
     graph.output.extend(outputs)
-    graph.initializer.extend(initializer)
+    for tensor in initializer:
+        graph.initializer.add().CopyFrom(tensor)
     graph.sparse_initializer.extend(sparse_initializer)
     graph.value_info.extend(value_info)
     if doc_string:
