@@ -31,7 +31,18 @@
 #include <fcntl.h>
 #include <io.h>
 #include <sys/stat.h>
+// path.h undefines the Windows SDK's OPTIONAL macro because it conflicts with
+// ONNX enum members. winternl.h still uses the annotation internally, so make
+// it available only while that SDK header is parsed.
+#ifndef OPTIONAL
+#define OPTIONAL
+#define ONNX_DEFINED_WINDOWS_OPTIONAL
+#endif
 #include <winternl.h>
+#ifdef ONNX_DEFINED_WINDOWS_OPTIONAL
+#undef OPTIONAL
+#undef ONNX_DEFINED_WINDOWS_OPTIONAL
+#endif
 #else
 #include <fcntl.h>
 #include <sys/stat.h>
