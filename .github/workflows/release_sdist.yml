@@ -13,10 +13,6 @@ on:
       build_mode:
         required: true
         type: string
-      python_versions:
-        required: false
-        type: string
-        default: '3.12'
 
 permissions:
   contents: read
@@ -25,33 +21,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}-sdist
 
 jobs:
-  parse-python-versions:
-    runs-on: ubuntu-latest
-    outputs:
-      python-matrix: ${{ steps.parse.outputs.matrix }}
-    steps:
-      - name: Parse Python versions
-        id: parse
-        run: |
-          versions="${PYTHON_VERSIONS}"
-          # Convert comma-separated to JSON array
-          matrix=$(echo "$versions" | jq -R -c 'split(",") | map(select(length > 0))')
-          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
-        env:
-          PYTHON_VERSIONS: ${{ inputs.python_versions }}
-
-      - name: Dump GITHUB_OUTPUT
-        if: always()
-        run: cat "$GITHUB_OUTPUT" || true
-
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
-    needs: parse-python-versions
     runs-on: ubuntu-24.04
-    strategy:
-      matrix:
-        python-version: ${{ fromJson(needs.parse-python-versions.outputs.python-matrix) }}
-        target-architecture: ['arm64']
 
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -59,10 +31,10 @@ jobs:
         persist-credentials: false
         submodules: true
 
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.12'
 
     - name: Install Python dependencies
       run: |
