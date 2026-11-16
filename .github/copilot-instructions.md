@@ -24,7 +24,6 @@ As a starting point, agent-authored PRs should structure their description with 
 - **Fix approach**: what was done, and any alternatives considered.
 - **Spec/compatibility impact**: does this change operator schemas, opset versions, the IR spec, or a public API in a way that could be backward-incompatible?
 - **Security impact**: does this touch model loading, external data handling, or parsing of untrusted input? See [SECURITY.md](../SECURITY.md).
-- **Tests**: what was added, modified, or removed.
 - **Auto-generated files**: were `docs/Operators.md`, `docs/Changelog.md`, protobuf files, or test data regenerated where applicable? See CLAUDE.md's Auto-Generated Files table.
 - **Backport**: does this need to land in an already-released version? If so, note the minimum affected version — see [RELEASE-MANAGEMENT.md](../RELEASE-MANAGEMENT.md)'s Long-Term Support section for the case-by-case backport policy.
 
