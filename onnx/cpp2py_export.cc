@@ -494,7 +494,8 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               -> nb::bytes {
             NodeProto proto{};
             ParseProtoFromPyBytesOrThrow(&proto, bytes);
-            if (op->HasContextDependentFunctionWithOpsetVersion(opset_version)) {
+            const auto versions = op->context_dependent_function_opset_versions();
+            if (!versions.empty() && opset_version >= versions.front()) {
               std::vector<TypeProto> input_types = ParseProtoVector<TypeProto>(input_types_bytes);
               FunctionBodyBuildContextImpl ctx(proto, input_types);
               FunctionProto func_proto;

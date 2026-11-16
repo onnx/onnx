@@ -43,10 +43,44 @@ ONNX_OPERATOR_SET_SCHEMA(
     28,
     OpSchema().FillUsing(ReduceFunctionOpFloatOnly("log sum", EMPTY_MINUS_INF, reduce_log_sum_func_body)));
 
+// Sum nonmaximal exponentials separately so adding a unit maximum cannot round
+// away a small residual. Account for tied maxima without adding them to the tail.
+static constexpr const char* reduce_log_sum_exp_func_body_29 = R"ONNX(
+  {
+    data_double = Cast <to = 11> (data)
+    zero = Constant <value = double {0}> ()
+    one = Constant <value = double {1}> ()
+    maximum = ReduceMax <keepdims = 1, noop_with_empty_axes: int = @noop_with_empty_axes> (data_double, axes)
+    infinite = IsInf (maximum)
+    safe_maximum = Where (infinite, zero, maximum)
+    safe_data = Where (infinite, zero, data_double)
+    shifted = Sub (safe_data, safe_maximum)
+    exponentials = Exp (shifted)
+    is_maximum = Equal (data_double, maximum)
+    others = Where (is_maximum, zero, exponentials)
+    maximum_mask = Cast <to = 11> (is_maximum)
+    maximum_count = ReduceSum <keepdims: int = @keepdims, noop_with_empty_axes: int = @noop_with_empty_axes> (maximum_mask, axes)
+    other_sum = ReduceSum <keepdims: int = @keepdims, noop_with_empty_axes: int = @noop_with_empty_axes> (others, axes)
+    safe_count = Max (maximum_count, one)
+    log_count = Log (safe_count)
+    residual = Div (other_sum, safe_count)
+    correction = Log1p (residual)
+    output_shape = Shape (maximum_count)
+    maximum_out = Reshape <allowzero = 1> (maximum, output_shape)
+    base = Add (maximum_out, log_count)
+    finite_result = Add (base, correction)
+    infinite_out = Reshape <allowzero = 1> (infinite, output_shape)
+    reduced_double = Where (infinite_out, maximum_out, finite_result)
+    reduced = CastLike (reduced_double, data)
+  }
+  )ONNX";
+
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceLogSumExp,
     28,
-    OpSchema().FillUsing(ReduceFunctionOpFloatOnly("log sum exponent", EMPTY_MINUS_INF, reduce_log_sum_exp_func_body)));
+    OpSchema()
+        .FillUsing(ReduceFunctionOpFloatOnly("log sum exponent", EMPTY_MINUS_INF, reduce_log_sum_exp_func_body))
+        .FunctionBody(reduce_log_sum_exp_func_body_29, 29));
 
 static constexpr const char* reduce_l1_func_body = R"ONNX(
   {
