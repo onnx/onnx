@@ -92,6 +92,9 @@ class SymbolTableImpl : public SymbolTable {
   }
 };
 
+struct GraphInferenceContext;
+using GraphScopeMap = std::unordered_map<const GraphProto*, GraphInferenceContext*>;
+
 struct GraphInferenceContext {
   using OuterScopeValueTypesMap = std::unordered_map<std::string, TypeProto*>;
 
@@ -102,7 +105,8 @@ struct GraphInferenceContext {
       ModelLocalFunctionsMap model_local_functions_in = {},
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
       DataValueMap* generated_shape_data_by_name_in = nullptr,
-      const int64_t ir_version_in = IR_VERSION)
+      const int64_t ir_version_in = IR_VERSION,
+      std::shared_ptr<GraphScopeMap> graph_scopes_in = nullptr)
       : owned_outer_scope_value_types_by_name{},
         outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
         opset_imports{std::move(opset_imports_in)},
@@ -110,7 +114,8 @@ struct GraphInferenceContext {
         model_local_functions{std::move(model_local_functions_in)},
         schema_registry{schema_registry_in},
         generated_shape_data_by_name{generated_shape_data_by_name_in},
-        ir_version{ir_version_in} {}
+        ir_version{ir_version_in},
+        graph_scopes{std::move(graph_scopes_in)} {}
 
   GraphInferenceContext(
       OuterScopeValueTypesMap&& outer_scope_value_types_by_name_in,
@@ -119,7 +124,8 @@ struct GraphInferenceContext {
       ModelLocalFunctionsMap model_local_functions_in = {},
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
       DataValueMap* generated_shape_data_by_name_in = nullptr,
-      const int64_t ir_version_in = IR_VERSION)
+      const int64_t ir_version_in = IR_VERSION,
+      std::shared_ptr<GraphScopeMap> graph_scopes_in = nullptr)
       // A heap-owned map keeps the raw view valid across context copies and moves
       // when a caller supplies a temporary that would otherwise dangle.
       : owned_outer_scope_value_types_by_name{
@@ -130,7 +136,8 @@ struct GraphInferenceContext {
         model_local_functions{std::move(model_local_functions_in)},
         schema_registry{schema_registry_in},
         generated_shape_data_by_name{generated_shape_data_by_name_in},
-        ir_version{ir_version_in} {}
+        ir_version{ir_version_in},
+        graph_scopes{std::move(graph_scopes_in)} {}
 
   // Lvalue maps remain borrowed so subgraph inference observes parent-scope
   // types added while the enclosing graph is processed.
@@ -143,6 +150,7 @@ struct GraphInferenceContext {
   const ISchemaRegistry* schema_registry;
   DataValueMap* generated_shape_data_by_name;
   const int64_t ir_version;
+  std::shared_ptr<GraphScopeMap> graph_scopes;
 };
 
 class GraphInferencerImpl : public GraphInferencer {
@@ -318,8 +326,15 @@ struct InferenceContextImpl : public InferenceContext {
         fail_type_inference("Attribute ", attr_name, " does not contain a graph.");
       }
 
-      auto new_inferencer =
-          std::make_unique<GraphInferencerImpl>(*attrNameToGraphProto->second, *graphInferenceContext_, options_);
+      GraphProto* graph = attrNameToGraphProto->second;
+      GraphInferenceContext* target_context = graphInferenceContext_;
+      if (graphInferenceContext_->graph_scopes != nullptr) {
+        auto scope_it = graphInferenceContext_->graph_scopes->find(graph);
+        if (scope_it != graphInferenceContext_->graph_scopes->end() && scope_it->second != nullptr) {
+          target_context = scope_it->second;
+        }
+      }
+      auto new_inferencer = std::make_unique<GraphInferencerImpl>(*graph, *target_context, options_);
       inferencer = new_inferencer.get();
       graphAttributeInferencers_.emplace(attr_name, std::move(new_inferencer));
     } else {

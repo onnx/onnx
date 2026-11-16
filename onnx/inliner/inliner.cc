@@ -270,6 +270,8 @@ class InliningRenamer : public internal::MutableVisitor {
       Rename(*y.mutable_name());
     for (auto& n : *graph.mutable_node())
       VisitNode(n);
+    for (auto& v : *graph.mutable_value_info())
+      LookupOrRename(*v.mutable_name(), false);
     rename_scopes.pop_back();
   }
 
@@ -286,6 +288,16 @@ class InliningRenamer : public internal::MutableVisitor {
   void LookupOrRename(std::string& name, bool is_new_def) {
     if (name.empty())
       return;
+    if (is_new_def) {
+      const auto& current_scope = rename_scopes.back();
+      auto iter = current_scope.find(name);
+      if (iter != current_scope.end()) {
+        name = iter->second;
+      } else {
+        Rename(name);
+      }
+      return;
+    }
     for (auto i = rename_scopes.size(); i > 0; --i) {
       const auto& map = rename_scopes[i - 1];
       auto iter = map.find(name);
@@ -294,13 +306,20 @@ class InliningRenamer : public internal::MutableVisitor {
         return;
       }
     }
-    if (is_new_def) {
-      Rename(name);
-    }
     // Otherwise, it is a reference to an outer-scope variable that should not be renamed.
   }
 
  public:
+  // Uniquifies only subgraph-local definitions inside an attribute's graph(s),
+  // leaving outer-scope captured variables untouched.
+  static void RenameSubgraphLocals(AttributeProto& attr, std::string unique_suffix, NameGenerator& generator) {
+    if (!attr.has_g() && attr.graphs_size() == 0) {
+      return;
+    }
+    InliningRenamer renamer(std::move(unique_suffix), generator);
+    renamer.VisitAttribute(attr);
+  }
+
   // Renames variables in a FunctionProto for inlining a particular call-site. This does the following:
   // (i)  Rename all intermediate variables in the function to ensure that they are unique (wrt the main graph).
   // (ii) Rename inputs and outputs using names of actual parameters.
@@ -584,11 +603,18 @@ struct InlinerImpl {
       FunctionProto callee;
       int64_t target_version = kNoConversion;
       if (GetCallee(node, callee, target_version)) {
-        // Bind attribute parameters
-        internal::AttributeBinder::BindAttributes(node, callee);
+        const std::string unique_suffix = "__" + std::to_string(++this->inline_count);
+        // Bind non-overridden default attributes first so default subgraphs are renamed in callee scope.
+        internal::AttributeBinder::BindDefaultAttributes(node, callee);
 
-        // Rename variable names in callee
-        InliningRenamer::Rename(node, callee, "__" + std::to_string(++this->inline_count), this->name_generator);
+        // Rename variable names in callee before splicing call-site subgraphs, whose free variables belong to caller
+        // scope.
+        InliningRenamer::Rename(node, callee, unique_suffix, this->name_generator);
+
+        // Bind call-site attributes and uniquify only subgraph-local definitions in call-site graphs.
+        internal::AttributeBinder::BindCallSiteAttributes(node, callee, [&](AttributeProto& attr) {
+          InliningRenamer::RenameSubgraphLocals(attr, unique_suffix, this->name_generator);
+        });
         if (target_version != kNoConversion) {
           ConvertVersion(model, node, callee, static_cast<int>(target_version));
         }
@@ -638,6 +664,7 @@ struct InlinerImpl {
    * @param function Mutable function
    */
   void ProcessFunction(FunctionProto& function) {
+    name_generator.ResetFor(function);
     auto* nodes = function.mutable_node();
     auto* value_infos = function.mutable_value_info();
     Process(*nodes, *value_infos);
