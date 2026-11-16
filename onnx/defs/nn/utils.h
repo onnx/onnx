@@ -11,6 +11,8 @@
 
 namespace ONNX_NAMESPACE::defs::nn::utils {
 
+OpSchema CausalConvWithStateSchema(bool dilated);
+
 extern const std::vector<int64_t> kMeanVarianceNormalizationDefaultAxes;
 
 bool BuildMeanVarianceNormalizationFunctionBody_opset13(

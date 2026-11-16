@@ -236,7 +236,14 @@ def pool(
             )
 
         valid = ~np.isnan(padded)
-        sums = np.sum(sliding_windows(np.where(valid, padded, 0)), axis=kernel_axes)
+        # Like np.mean above, accumulate float16 in float32: a float16 window
+        # sum overflows or loses precision even when the average is exact.
+        sum_dtype = np.float32 if padded.dtype == np.float16 else None
+        sums = np.sum(
+            sliding_windows(np.where(valid, padded, 0)),
+            axis=kernel_axes,
+            dtype=sum_dtype,
+        )
         counts = np.sum(sliding_windows(valid), axis=kernel_axes)
         averages = np.full_like(sums, np.nan)
         np.divide(sums, counts, out=averages, where=counts != 0)

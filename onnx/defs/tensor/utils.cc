@@ -43,6 +43,11 @@ static void GatherNDShapeInference(InferenceContext& ctx) {
   if (indices_last_dim < 0) {
     fail_shape_inference("Last dimension of `indices` input tensor in GatherND op must not be negative");
   }
+  if (indices_last_dim == 0) {
+    fail_shape_inference(
+        "Last dimension of `indices` input tensor in GatherND op must be greater than 0 "
+        "to form non-empty index tuples; got 0");
+  }
   const auto last_index_dimension = checkedAdd(indices_last_dim, batch_dims_data);
   if (last_index_dimension > data_rank) {
     fail_shape_inference(
@@ -99,18 +104,25 @@ OpSchema GatherNDSchema(bool allow_int32_indices) {
   return schema;
 }
 
-OpSchema ScatterNDSchema(bool allow_int32_indices) {
+OpSchema ScatterNDSchema(bool allow_int32_indices, bool allow_mean) {
   auto schema =
       OpSchema()
-          .SetDoc(kDoc_ScatterND_ver18)
+          .SetDoc(allow_mean ? kDoc_ScatterND_ver29 : kDoc_ScatterND_ver18)
           .Attr(
               "reduction",
-              "Type of reduction to apply: none (default), add, mul, max, min. "
-              "'none': no reduction applied. "
-              "'add':  reduction using the addition operation. "
-              "'mul':  reduction using the multiplication operation. "
-              "'max': reduction using the maximum operation. "
-              "'min': reduction using the minimum operation.",
+              allow_mean ? "Type of reduction to apply: none (default), add, mul, max, min, mean. "
+                           "'none': no reduction applied. "
+                           "'add': reduction using the addition operation. "
+                           "'mul': reduction using the multiplication operation. "
+                           "'max': reduction using the maximum operation. "
+                           "'min': reduction using the minimum operation. "
+                           "'mean': arithmetic mean of all contributions to each output element."
+                         : "Type of reduction to apply: none (default), add, mul, max, min. "
+                           "'none': no reduction applied. "
+                           "'add':  reduction using the addition operation. "
+                           "'mul':  reduction using the multiplication operation. "
+                           "'max': reduction using the maximum operation. "
+                           "'min': reduction using the minimum operation.",
               AttributeProto::STRING,
               std::string("none"))
           .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
@@ -134,10 +146,11 @@ OpSchema ScatterNDSchema(bool allow_int32_indices) {
               OpSchema::Differentiable)
           .Output(0, "output", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
           .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
-          .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+          .TypeAndShapeInferenceFunction(
+              allow_mean ? ScatterReductionShapeInference : propagateShapeAndTypeFromFirstInput);
   if (allow_int32_indices) {
     schema.SetDoc(
-        std::string(kDoc_ScatterND_ver18) +
+        std::string(allow_mean ? kDoc_ScatterND_ver29 : kDoc_ScatterND_ver18) +
         "\nOpset 29 adds support for int32 indices; int64 indices remain supported.\n");
     schema.TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to int32 or int64 tensors.");
   }
