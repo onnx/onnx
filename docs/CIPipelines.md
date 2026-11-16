@@ -10,7 +10,7 @@ SPDX-License-Identifier: Apache-2.0
 
 | Workflow | When it runs | What it does |
 |---|---|---|
-| [CI](/.github/workflows/main.yml) | Every PR, merge_group, push to main, daily (midnight UTC) | C++ and Python tests across Linux, Windows, macOS; Python 3.10–3.14 (including free-threading variants); doc generation; proto generation; node test generation; daily run reports code coverage to Codecov |
+| [CI](/.github/workflows/main.yml) | Every PR, merge_group, push to main, daily (midnight UTC) | C++ and Python tests across Linux, Windows, macOS; Python 3.11–3.14 (including free-threading variants); doc generation; proto generation; node test generation; daily run reports code coverage to Codecov |
 | [Windows\_No\_Exception\_CI](/.github/workflows/win_no_exception_ci.yml) | Push and PR to main and rel-\* | C++ tests compiled without exceptions; selective schema loading |
 | [Lint / Enforce style](/.github/workflows/lint.yml) | Every PR | Required — runs lintrunner (ruff, mypy, clang-format, etc.) and verifies auto-generated files are up to date |
 | [Require label](/.github/workflows/check_pr_label.yml) | Every PR | Requires at least one `topic:` or `module:` label (skipped for Dependabot PRs) |
@@ -23,7 +23,7 @@ SPDX-License-Identifier: Apache-2.0
 | [Create Releases](/.github/workflows/create_release.yml) | Push to main/rel-\*, PRs targeting rel-\* or labeled "run release CIs", weekly (Monday 00:00 UTC), workflow\_dispatch | Orchestrator — calls WindowsRelease, LinuxRelease, MacRelease, PyodideRelease, and sdistRelease as reusable workflows |
 | [WindowsRelease](/.github/workflows/release_windows_cibw.yml) | Called by Create Releases | Builds Windows wheels for x64, x86, and arm64; verifies with minimum supported packages (2)(3) |
 | [LinuxRelease](/.github/workflows/release_linux_cibw.yml) | Called by Create Releases | Builds Linux wheels for x86\_64 (manylinux\_2\_28) and aarch64; verifies with minimum supported packages (3) |
-| [MacRelease](/.github/workflows/release_macos_cibw.yml) | Called by Create Releases | Builds macOS wheels (macos-14, MACOSX\_DEPLOYMENT\_TARGET=12.0); verifies with minimum supported packages (3) |
+| [MacRelease](/.github/workflows/release_macos_cibw.yml) | Called by Create Releases | Builds macOS wheels (macos-15, MACOSX\_DEPLOYMENT\_TARGET=13.3); verifies with minimum supported packages (3) |
 | [PyodideRelease](/.github/workflows/release_pyodide_cibw.yml) | Called by Create Releases and on every push | Builds a Pyodide (WebAssembly) wheel on Ubuntu using `cibuildwheel` with a pre-downloaded host `protoc` and protobuf source; runs a basic import test (3) |
 | [sdistRelease](/.github/workflows/release_sdist.yml) | Called by Create Releases | Builds and tests source distribution |
 

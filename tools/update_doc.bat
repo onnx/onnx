@@ -12,8 +12,6 @@ python onnx\gen_proto.py -l --ml
 
 python -m pip install -e . --no-build-isolation
 
-python onnx\backend\test\cmd_tools.py generate-data
-
 python onnx\backend\test\stat_coverage.py
 
 python onnx\defs\gen_doc.py

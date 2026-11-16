@@ -37,6 +37,7 @@ class If(OpRun):
         else_branch=None,  # noqa: ARG002
         then_branch=None,  # noqa: ARG002
         attributes=None,
+        bindings=None,
     ):
         if cond.size != 1:
             raise ValueError(
@@ -45,13 +46,17 @@ class If(OpRun):
         cond_ = cond.item()
         if cond_:
             self._log("  -- then> {%r}", context)
-            outputs = self._run_then_branch(context, attributes=attributes)
+            outputs = self._run_then_branch(
+                context, attributes=attributes, bindings=bindings
+            )
             self._log("  -- then<")
             final = tuple(outputs)
             branch = "then"
         else:
             self._log("  -- else> {%r}", context)
-            outputs = self._run_else_branch(context, attributes=attributes)
+            outputs = self._run_else_branch(
+                context, attributes=attributes, bindings=bindings
+            )
             self._log("  -- else<")
             final = tuple(outputs)
             branch = "else"

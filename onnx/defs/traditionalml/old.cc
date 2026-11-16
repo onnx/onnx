@@ -5,29 +5,18 @@
 #include <string>
 #include <vector>
 
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/type_builders.h"
 
 #ifdef ONNX_ML
 namespace ONNX_NAMESPACE {
-static constexpr const char* LabelEncoder_ver1_doc = R"DOC(
-    Converts strings to integers and vice versa.<br>
-    If the string default value is set, it will convert integers to strings.
-    If the int default value is set, it will convert strings to integers.<br>
-    Each operator converts either integers to strings or strings to integers, depending
-    on which default value attribute is provided. Only one default value attribute
-    should be defined.<br>
-    When converting from integers to strings, the string is fetched from the
-    'classes_strings' list, by simple indexing.<br>
-    When converting from strings to integers, the string is looked up in the list
-    and the index at which it is found is used as the converted value.
-)DOC";
 
 ONNX_ML_OPERATOR_SET_SCHEMA(
     LabelEncoder,
     1,
     OpSchema()
-        .SetDoc(LabelEncoder_ver1_doc)
+        .SetDoc(kDoc_LabelEncoder_ver1)
         .Input(0, "X", "Input data.", "T1")
         .Output(0, "Y", "Output data. If strings are input, the output values are integers, and vice versa.", "T2")
         .TypeConstraint(
@@ -52,7 +41,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::STRING,
             std::string("_Unused"))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto input_elem_type = ctx.getInputType(0)->tensor_type().elem_type();
+          const auto* input_type = ctx.getInputType(0);
+          if (input_type == nullptr) {
+            return;
+          }
+          auto input_elem_type = input_type->tensor_type().elem_type();
           auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
           if (TensorProto::STRING == input_elem_type) {
             output_elem_type->set_elem_type(TensorProto::INT64);
@@ -61,23 +54,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* TreeEnsembleClassifier_ver1_doc = R"DOC(
-    Tree Ensemble classifier.  Returns the top class for each of N inputs.<br>
-    The attributes named 'nodes_X' form a sequence of tuples, associated by
-    index into the sequences, which must all be of equal length. These tuples
-    define the nodes.<br>
-    Similarly, all fields prefixed with 'class_' are tuples of votes at the leaves.
-    A leaf may have multiple votes, where each vote is weighted by
-    the associated class_weights index.<br>
-    One and only one of classlabels_strings or classlabels_int64s
-    will be defined. The class_ids are indices into this list.
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     TreeEnsembleClassifier,
     1,
     OpSchema()
-        .SetDoc(TreeEnsembleClassifier_ver1_doc)
+        .SetDoc(kDoc_TreeEnsembleClassifier_ver1)
         .Input(0, "X", "Input of shape [N,F]", "T1")
         .Output(0, "Y", "N, Top class for each point", "T2")
         .Output(1, "Z", "The class score for each class, for each point, a tensor of shape [N,E].", "tensor(float)")
@@ -162,25 +143,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* TreeEnsembleClassifier_ver3_doc = R"DOC(
-    Tree Ensemble classifier. Returns the top class for each of N inputs.<br>
-    The attributes named 'nodes_X' form a sequence of tuples, associated by
-    index into the sequences, which must all be of equal length. These tuples
-    define the nodes.<br>
-    Similarly, all fields prefixed with 'class_' are tuples of votes at the leaves.
-    A leaf may have multiple votes, where each vote is weighted by
-    the associated class_weights index.<br>
-    One and only one of classlabels_strings or classlabels_int64s
-    will be defined. The class_ids are indices into this list.
-    All fields ending with <i>_as_tensor</i> can be used instead of the
-    same parameter without the suffix if the element type is double and not float.
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     TreeEnsembleClassifier,
     3,
     OpSchema()
-        .SetDoc(TreeEnsembleClassifier_ver3_doc)
+        .SetDoc(kDoc_TreeEnsembleClassifier_ver3)
         .Input(0, "X", "Input of shape [N,F]", "T1")
         .Output(0, "Y", "N, Top class for each point", "T2")
         .Output(1, "Z", "The class score for each class, for each point, a tensor of shape [N,E].", "tensor(float)")
@@ -329,24 +296,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 1, {N, E});
         }));
 
-static constexpr const char* TreeEnsembleRegressor_ver1_doc = R"DOC(
-    Tree Ensemble regressor.  Returns the regressed values for each input in N.<br>
-    All args with nodes_ are fields of a tuple of tree nodes, and
-    it is assumed they are the same length, and an index i will decode the
-    tuple across these inputs.  Each node id can appear only once
-    for each tree id.<br>
-    All fields prefixed with target_ are tuples of votes at the leaves.<br>
-    A leaf may have multiple votes, where each vote is weighted by
-    the associated target_weights index.<br>
-    All trees must have their node ids start at 0 and increment by 1.<br>
-    Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     TreeEnsembleRegressor,
     1,
     OpSchema()
-        .SetDoc(TreeEnsembleRegressor_ver1_doc)
+        .SetDoc(kDoc_TreeEnsembleRegressor_ver1)
         .Input(0, "X", "Input of shape [N,F]", "T")
         .Output(0, "Y", "N classes", "tensor(float)")
         .TypeConstraint(
@@ -408,26 +362,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOATS,
             OPTIONAL_VALUE));
 
-static constexpr const char* TreeEnsembleRegressor_ver3_doc = R"DOC(
-    Tree Ensemble regressor.  Returns the regressed values for each input in N.<br>
-    All args with nodes_ are fields of a tuple of tree nodes, and
-    it is assumed they are the same length, and an index i will decode the
-    tuple across these inputs.  Each node id can appear only once
-    for each tree id.<br>
-    All fields prefixed with target_ are tuples of votes at the leaves.<br>
-    A leaf may have multiple votes, where each vote is weighted by
-    the associated target_weights index.<br>
-    All fields ending with <i>_as_tensor</i> can be used instead of the
-    same parameter without the suffix if the element type is double and not float.
-    All trees must have their node ids start at 0 and increment by 1.<br>
-    Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     TreeEnsembleRegressor,
     3,
     OpSchema()
-        .SetDoc(TreeEnsembleRegressor_ver3_doc)
+        .SetDoc(kDoc_TreeEnsembleRegressor_ver3)
         .Input(0, "X", "Input of shape [N,F]", "T")
         .Output(0, "Y", "N classes", "tensor(float)")
         .TypeConstraint(
@@ -542,31 +481,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {N, E});
         }));
 
-static constexpr const char* LabelEncoder_ver2_doc = R"DOC(
-    Maps each element in the input tensor to another value.<br>
-    The mapping is determined by the two parallel attributes, 'keys_*' and
-    'values_*' attribute. The i-th value in the specified 'keys_*' attribute
-    would be mapped to the i-th value in the specified 'values_*' attribute. It
-    implies that input's element type and the element type of the specified
-    'keys_*' should be identical while the output type is identical to the
-    specified 'values_*' attribute. If an input element can not be found in the
-    specified 'keys_*' attribute, the 'default_*' that matches the specified
-    'values_*' attribute may be used as its output value.<br>
-    Let's consider an example which maps a string tensor to an integer tensor.
-    Assume and 'keys_strings' is ["Amy", "Sally"], 'values_int64s' is [5, 6],
-    and 'default_int64' is '-1'.  The input ["Dori", "Amy", "Amy", "Sally",
-    "Sally"] would be mapped to [-1, 5, 5, 6, 6].<br>
-    Since this operator is an one-to-one mapping, its input and output shapes
-    are the same. Notice that only one of 'keys_*'/'values_*' can be set.<br>
-    For key look-up, bit-wise comparison is used so even a float NaN can be
-    mapped to a value in 'values_*' attribute.<br>
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     LabelEncoder,
     2,
     OpSchema()
-        .SetDoc(LabelEncoder_ver2_doc)
+        .SetDoc(kDoc_LabelEncoder_ver2)
         .Input(0, "X", "Input data. It can be either tensor or scalar.", "T1")
         .Output(0, "Y", "Output data.", "T2")
         .TypeConstraint("T1", {types::String, types::Int64, types::Float}, "The input type is a tensor of any shape.")
@@ -615,16 +534,18 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             fail_shape_inference("Only one of keys_*'s can be set in label encoder.");
           }
 
-          // Check if the specified keys_* matches input type.
-          auto input_elem_type = ctx.getInputType(0)->tensor_type().elem_type();
-          if (keys_strings_result && input_elem_type != TensorProto::STRING) {
-            fail_shape_inference("Input type is not string tensor but key_strings is set");
-          }
-          if (keys_int64s_result && input_elem_type != TensorProto::INT64) {
-            fail_shape_inference("Input type is not int64 tensor but keys_int64s is set");
-          }
-          if (keys_floats_result && input_elem_type != TensorProto::FLOAT) {
-            fail_shape_inference("Input type is not float tensor but keys_floats is set");
+          // Check if the specified keys_* matches input type, when the input type is known.
+          if (const auto* input_type = ctx.getInputType(0); input_type != nullptr) {
+            auto input_elem_type = input_type->tensor_type().elem_type();
+            if (keys_strings_result && input_elem_type != TensorProto::STRING) {
+              fail_shape_inference("Input type is not string tensor but key_strings is set");
+            }
+            if (keys_int64s_result && input_elem_type != TensorProto::INT64) {
+              fail_shape_inference("Input type is not int64 tensor but keys_int64s is set");
+            }
+            if (keys_floats_result && input_elem_type != TensorProto::FLOAT) {
+              fail_shape_inference("Input type is not float tensor but keys_floats is set");
+            }
           }
 
           // Load all values_* attributes.
@@ -652,7 +573,9 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             output_elem_type->set_elem_type(TensorProto::FLOAT);
 
           // Input and output shapes are the same.
-          propagateShapeFromInputToOutput(ctx, 0, 0);
+          if (hasInputShape(ctx, 0)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
         }));
 } // namespace ONNX_NAMESPACE
 #endif

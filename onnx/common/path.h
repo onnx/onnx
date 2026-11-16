@@ -6,6 +6,7 @@
 
 #include <filesystem>
 #include <string>
+#include <string_view>
 
 #ifdef _WIN32
 // windows.h has preproc definitions for min and max, which prevents from using std::min and std::max.
@@ -14,6 +15,8 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+// windows.h defines OPTIONAL, which clashes with enum members of the same name in onnx-data.pb.h.
+#undef OPTIONAL
 
 #include "onnx/checker.h"
 #endif
@@ -21,7 +24,7 @@
 namespace ONNX_NAMESPACE {
 
 #ifdef _WIN32
-inline std::wstring utf8str_to_wstring(const std::string& utf8str) {
+inline std::wstring utf8str_to_wstring(std::string_view utf8str) {
   if (utf8str.empty()) {
     return std::wstring();
   }
@@ -68,7 +71,7 @@ inline std::string wstring_to_utf8str(const std::wstring& ws_str) {
 // Construct a std::filesystem::path from a UTF-8 string.
 // On Windows, converts via wide-char so the result is independent of the
 // active code page.  On POSIX, UTF-8 is the native encoding.
-inline std::filesystem::path utf8_to_path(const std::string& utf8) {
+inline std::filesystem::path utf8_to_path(std::string_view utf8) {
 #ifdef _WIN32
   return std::filesystem::path(utf8str_to_wstring(utf8));
 #else

@@ -7,14 +7,156 @@
 #include <algorithm>
 #include <limits>
 #include <numeric>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "onnx/common/safe_math.h"
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
+static void GatherNDShapeInference(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (!hasNInputShapes(ctx, 2)) {
+    return;
+  }
+  const auto& data_shape = ctx.getInputType(0)->tensor_type().shape();
+  const auto data_rank = data_shape.dim_size();
+  const auto& indices_shape = ctx.getInputType(1)->tensor_type().shape();
+  const auto indices_rank = indices_shape.dim_size();
+  const int64_t batch_dims_data = getAttribute(ctx, "batch_dims", 0);
+  if (data_rank < 1 || indices_rank < 1) {
+    fail_shape_inference(
+        "Both `data` and `indices` input tensors in GatherND op "
+        "need to have rank larger than 0.");
+  }
+  if (batch_dims_data < 0) {
+    fail_shape_inference("attribute 'batch_dims' of 'GatherND' must not be negative");
+  }
+  if (!indices_shape.dim(indices_rank - 1).has_dim_value()) {
+    return;
+  }
+  const auto indices_last_dim = indices_shape.dim(indices_rank - 1).dim_value();
+  if (indices_last_dim < 0) {
+    fail_shape_inference("Last dimension of `indices` input tensor in GatherND op must not be negative");
+  }
+  if (indices_last_dim == 0) {
+    fail_shape_inference(
+        "Last dimension of `indices` input tensor in GatherND op must be greater than 0 "
+        "to form non-empty index tuples; got 0");
+  }
+  const auto last_index_dimension = checkedAdd(indices_last_dim, batch_dims_data);
+  if (last_index_dimension > data_rank) {
+    fail_shape_inference(
+        "Last dimension of `indices` input tensor in GatherND op "
+        "must not be larger than the rank of `data` tensor");
+  }
+  auto* output_shape = getOutputShape(ctx, 0);
+  for (int i = 0; i < indices_rank - 1; ++i) {
+    *output_shape->add_dim() = indices_shape.dim(i);
+  }
+  for (int i = static_cast<int>(last_index_dimension); i < data_rank; ++i) {
+    *output_shape->add_dim() = data_shape.dim(i);
+  }
+}
+
+OpSchema GatherNDSchema(bool allow_int32_indices) {
+  auto schema =
+      OpSchema()
+          .SetDoc(kDoc_GatherND_ver13)
+          .Attr(
+              "batch_dims",
+              "The number of leading batch dimensions shared by data and indices. "
+              "Index tuples address data axes starting at axis batch_dims.",
+              AttributeProto::INT,
+              static_cast<int64_t>(0))
+          .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+          .Input(
+              1,
+              "indices",
+              "Tensor of rank q >= 1. Each index must be in [-s, s-1], where s is the size of "
+              "the corresponding data axis after the batch dimensions. An out-of-bounds index is an error.",
+              allow_int32_indices ? "Tind" : "tensor(int64)",
+              OpSchema::Single,
+              true,
+              1,
+              OpSchema::NonDifferentiable)
+          .Output(
+              0,
+              "output",
+              "Tensor of rank q + r - indices_shape[-1] - 1 - batch_dims.",
+              "T",
+              OpSchema::Single,
+              true,
+              1,
+              OpSchema::Differentiable)
+          .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
+          .TypeAndShapeInferenceFunction(GatherNDShapeInference);
+  if (allow_int32_indices) {
+    schema.SetDoc(
+        std::string(kDoc_GatherND_ver13) +
+        "\nOpset 29 adds support for int32 indices; int64 indices remain supported.\n");
+    schema.TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to int32 or int64 tensors.");
+  }
+  return schema;
+}
+
+OpSchema ScatterNDSchema(bool allow_int32_indices, bool allow_mean) {
+  auto schema =
+      OpSchema()
+          .SetDoc(allow_mean ? kDoc_ScatterND_ver29 : kDoc_ScatterND_ver18)
+          .Attr(
+              "reduction",
+              allow_mean ? "Type of reduction to apply: none (default), add, mul, max, min, mean. "
+                           "'none': no reduction applied. "
+                           "'add': reduction using the addition operation. "
+                           "'mul': reduction using the multiplication operation. "
+                           "'max': reduction using the maximum operation. "
+                           "'min': reduction using the minimum operation. "
+                           "'mean': arithmetic mean of all contributions to each output element."
+                         : "Type of reduction to apply: none (default), add, mul, max, min. "
+                           "'none': no reduction applied. "
+                           "'add':  reduction using the addition operation. "
+                           "'mul':  reduction using the multiplication operation. "
+                           "'max': reduction using the maximum operation. "
+                           "'min': reduction using the minimum operation.",
+              AttributeProto::STRING,
+              std::string("none"))
+          .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+          .Input(
+              1,
+              "indices",
+              "Tensor of rank q >= 1.",
+              allow_int32_indices ? "Tind" : "tensor(int64)",
+              OpSchema::Single,
+              true,
+              1,
+              OpSchema::NonDifferentiable)
+          .Input(
+              2,
+              "updates",
+              "Tensor of rank q + r - indices_shape[-1] - 1.",
+              "T",
+              OpSchema::Single,
+              true,
+              1,
+              OpSchema::Differentiable)
+          .Output(0, "output", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+          .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
+          .TypeAndShapeInferenceFunction(
+              allow_mean ? ScatterReductionShapeInference : propagateShapeAndTypeFromFirstInput);
+  if (allow_int32_indices) {
+    schema.SetDoc(
+        std::string(allow_mean ? kDoc_ScatterND_ver29 : kDoc_ScatterND_ver18) +
+        "\nOpset 29 adds support for int32 indices; int64 indices remain supported.\n");
+    schema.TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to int32 or int64 tensors.");
+  }
+  return schema;
+}
+
 void resizeShapeInferenceHelper(
     const TensorShapeProto& input_shape,
     const std::vector<int64_t>& sizes_data,
@@ -49,18 +191,18 @@ void KeepAspectRatioHelper(
 
   bool has_unknown_dim = false;
   for (size_t i = 0; i < sizes_data.size(); i++) {
-    int d = axes.empty() ? i : axes[i];
+    int d = axes.empty() ? static_cast<int>(i) : static_cast<int>(axes[i]);
     if (!input_shape.dim(d).has_dim_value()) {
       has_unknown_dim = true;
       break;
     }
-    double s = sizes_data[i] / static_cast<double>(input_shape.dim(d).dim_value());
+    double s = static_cast<double>(sizes_data[i]) / static_cast<double>(input_shape.dim(d).dim_value());
     scale = reduce_f(scale, s);
   }
   // If there's at least one unknown dim we can't infer the output shape, since it
   // will depend on the original aspect ratio of the input.
   for (size_t i = 0; i < sizes_data.size(); i++) {
-    int d = axes.empty() ? i : axes[i];
+    int d = axes.empty() ? static_cast<int>(i) : static_cast<int>(axes[i]);
     sizes_data[i] = has_unknown_dim
         ? -1
         : static_cast<int64_t>(std::round(scale * static_cast<double>(input_shape.dim(d).dim_value())));
@@ -114,17 +256,17 @@ void gridSampleShapeInference(InferenceContext& ctx) {
 
   auto* output_shape = getOutputShape(ctx, 0);
   // N
-  Dim& N = *(output_shape->add_dim());
+  Dim& N = *output_shape->add_dim();
   // The first call sets the dimension using the dimensions from input_shape.
   unifyDim(input_shape.dim(0), N);
   // The second call checks the dimension using the dimensions from grid_shape.
   unifyDim(grid_shape.dim(0), N);
   // C
-  Dim& C = *(output_shape->add_dim());
+  Dim& C = *output_shape->add_dim();
   unifyDim(input_shape.dim(1), C);
   // Other Dimensions.
   for (int i = 0; i < num_dims - 2; ++i) {
-    Dim& D = *(output_shape->add_dim());
+    Dim& D = *output_shape->add_dim();
     unifyDim(grid_shape.dim(1 + i), D);
   }
 }
@@ -171,10 +313,8 @@ static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_versi
     scales = nullptr;
   }
 
-  if (opset_version >= 13) {
-    if (hasScalesInput + hasSizesInput != 1) {
-      fail_shape_inference("Either `sizes` or `scales` must be provided, but not both of them");
-    }
+  if ((opset_version >= 13) && (hasScalesInput + hasSizesInput != 1)) {
+    fail_shape_inference("Either `sizes` or `scales` must be provided, but not both of them");
   }
 
   const auto* const keep_aspect_ratio_policy_attr = ctx.getAttribute("keep_aspect_ratio_policy");
@@ -217,9 +357,9 @@ static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_versi
   std::vector<int64_t> axes;
   if (axes_attr) {
     axes = RetrieveValues<int64_t>(*axes_attr);
-    checkAxesRange(axes, rank_x);
-    adjustNegativeAxes(axes, rank_x);
-    checkDuplicateAxes(axes, rank_x);
+    checkAxesRange(axes, static_cast<int>(rank_x));
+    adjustNegativeAxes(axes, static_cast<int>(rank_x));
+    checkDuplicateAxes(axes, static_cast<int>(rank_x));
   }
   if (hasSizesInput) {
     if (!axes.empty()) {
@@ -250,10 +390,11 @@ static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_versi
     if (!axes.empty()) {
       std::vector<int64_t> tmp(rank_x);
       for (size_t i = 0; i < rank_x; i++) {
-        tmp[i] = input_shape.dim(i).has_dim_value() ? input_shape.dim(i).dim_value() : -1;
+        tmp[i] = input_shape.dim(static_cast<int>(i)).has_dim_value() ? input_shape.dim(static_cast<int>(i)).dim_value()
+                                                                      : -1;
       }
       for (size_t i = 0; i < axes.size(); i++) {
-        int d = axes[i];
+        int d = static_cast<int>(axes[i]);
         tmp[d] = sizes_data[i];
       }
       std::swap(tmp, sizes_data);
@@ -278,7 +419,7 @@ static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_versi
 
         std::vector<float> tmp(rank_x, 1.0f);
         for (size_t i = 0; i < axes.size(); i++) {
-          int d = axes[i];
+          int d = static_cast<int>(axes[i]);
           tmp[d] = scales_data[i];
         }
         std::swap(tmp, scales_data);
@@ -487,11 +628,11 @@ std::function<void(OpSchema&)> PadDocGenerator(
 
         for (size_t i = 0; i < num_axes; ++i) {
           auto axis = axes[i];
-          const auto& input_dim = input_shape.dim(axis);
+          const auto& input_dim = input_shape.dim(static_cast<int>(axis));
           auto& out_dim = *out_dims[axis];
-          auto total_pad = pads_data[i] + pads_data[num_axes + i];
+          auto total_pad = checkedAdd(pads_data[i], pads_data[num_axes + i]);
           if (input_dim.has_dim_value()) {
-            out_dim.set_dim_value(input_dim.dim_value() + total_pad);
+            out_dim.set_dim_value(checkedAdd(input_dim.dim_value(), total_pad));
           } else if (total_pad == 0) {
             out_dim = input_dim;
           }
@@ -499,5 +640,134 @@ std::function<void(OpSchema&)> PadDocGenerator(
       }
     });
   };
+}
+
+void oneHotShapeInference(InferenceContext& ctx, int version) {
+  // Check that the node has three inputs.
+  if (ctx.getNumInputs() != 3) {
+    fail_type_inference("OneHot node must have three inputs.");
+  }
+  // Before opset 11, 'indices' were required to be non-negative; opset 11
+  // relaxed this to allow negative indices that wrap around. We can only
+  // enforce the older constraint when 'indices' is available as a constant.
+  if (version < 11) {
+    if (const TensorProto* indices_data = ctx.getInputData(0)) {
+      auto is_negative = [](auto index) { return index < 0; };
+      bool has_negative = false;
+      if (indices_data->data_type() == TensorProto::INT64) {
+        const auto indices = ParseData<int64_t>(indices_data);
+        has_negative = std::any_of(indices.begin(), indices.end(), is_negative);
+      } else if (indices_data->data_type() == TensorProto::INT32) {
+        const auto indices = ParseData<int32_t>(indices_data);
+        has_negative = std::any_of(indices.begin(), indices.end(), is_negative);
+      } else if (indices_data->data_type() == TensorProto::FLOAT) {
+        const auto indices = ParseData<float>(indices_data);
+        has_negative = std::any_of(indices.begin(), indices.end(), is_negative);
+      } else if (indices_data->data_type() == TensorProto::DOUBLE) {
+        const auto indices = ParseData<double>(indices_data);
+        has_negative = std::any_of(indices.begin(), indices.end(), is_negative);
+      }
+      if (has_negative) {
+        fail_shape_inference("Input 'indices' must be non-negative for OneHot opset < 11.");
+      }
+    }
+  }
+  // Input 'depth' must be a scalar or a single-element vector.
+  // TODO(ONNX): Ideally to match spec for this input only Scalar should
+  // be allowed. Making this change now can affect backward
+  // compatibility for this op. Since this does not seem like a good
+  // justification to update version for this op, allowing both scalar
+  // and 1 element vector for now. In future when version update for
+  // this op is done we should only allow scalar or change the spec to
+  // allow both.
+  std::optional<int64_t> depth_value;
+  if (hasInputShape(ctx, 1)) {
+    const auto& depth_shape = getInputShape(ctx, 1);
+    if (depth_shape.dim_size() != 0 && depth_shape.dim_size() != 1) {
+      fail_type_inference("Input 'depth' must be a scalar or rank 1 tensor.");
+    }
+    // A rank-1 'depth' must hold at most one element. A zero-element tensor is
+    // tolerated here (the output depth dimension is simply left unknown) rather
+    // than rejected, but more than one element is an error.
+    if (depth_shape.dim_size() == 1 && depth_shape.dim(0).has_dim_value() && depth_shape.dim(0).dim_value() > 1) {
+      fail_type_inference("Input 'depth' must have at most one element.");
+    }
+    if (const TensorProto* depth_data = ctx.getInputData(1)) {
+      // Read the concrete 'depth' value from the parsed data rather than
+      // trusting the declared shape: the two can disagree (e.g. a scalar or
+      // dynamic-rank-1 value_info backed by a zero-element initializer). Guard
+      // the index so an empty parse leaves 'depth' unknown instead of reading
+      // out of bounds.
+      if (depth_data->data_type() == TensorProto::INT64) {
+        const auto depth_data_parsed = ParseData<int64_t>(depth_data);
+        if (!depth_data_parsed.empty()) {
+          depth_value = depth_data_parsed[0];
+        }
+      } else if (depth_data->data_type() == TensorProto::INT32) {
+        const auto depth_data_parsed = ParseData<int32_t>(depth_data);
+        if (!depth_data_parsed.empty()) {
+          depth_value = depth_data_parsed[0];
+        }
+      } else if (depth_data->data_type() == TensorProto::FLOAT) {
+        const auto depth_data_parsed = ParseData<float>(depth_data);
+        if (!depth_data_parsed.empty()) {
+          depth_value = static_cast<int64_t>(depth_data_parsed[0]);
+        }
+      }
+      // A negative 'depth' cannot describe a valid output dimension.
+      if (depth_value && *depth_value < 0) {
+        fail_shape_inference("Input 'depth' must be non-negative.");
+      }
+    }
+  }
+  // Input 'values' must be a two-element vector.
+  if (hasInputShape(ctx, 2)) {
+    const auto& values_shape = getInputShape(ctx, 2);
+    if (values_shape.dim_size() != 1) {
+      fail_type_inference("Input 'values' must be rank 1 tensor.");
+    }
+    if (values_shape.dim(0).has_dim_value() && values_shape.dim(0).dim_value() != 2) {
+      fail_type_inference("Input 'values' must have exactly two elements.");
+    }
+  }
+  // Set output type to be the same as the third input, 'values'.
+  propagateElemTypeFromInputToOutput(ctx, 2, 0);
+  // Set the output shape, if input 0 (indices) shape is available.
+  if (hasInputShape(ctx, 0)) {
+    const TensorShapeProto& indices_shape = ctx.getInputType(0)->tensor_type().shape();
+    int r = indices_shape.dim_size();
+    if (r < 1) {
+      fail_shape_inference("Indices tensor must have rank >= 1");
+    }
+    int out_rank = r + 1;
+    int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
+    if (axis < -out_rank || axis >= out_rank) {
+      // 'axis' may address any slot in the output (rank out_rank = rank(indices) + 1),
+      // including the newly inserted one, so the valid range is [-out_rank, out_rank-1].
+      fail_shape_inference("'axis' must be in [-rank(indices)-1, rank(indices)]");
+    }
+    if (axis < 0) {
+      axis += out_rank;
+    }
+    auto* output_shape = getOutputShape(ctx, 0);
+    for (int i = 0; i < out_rank; ++i) {
+      auto* dim = output_shape->add_dim();
+      if (i < axis) {
+        if (indices_shape.dim(i).has_dim_value()) {
+          dim->set_dim_value(indices_shape.dim(i).dim_value());
+        } else if (indices_shape.dim(i).has_dim_param()) {
+          dim->set_dim_param(indices_shape.dim(i).dim_param());
+        }
+      } else if (i > axis) {
+        if (indices_shape.dim(i - 1).has_dim_value()) {
+          dim->set_dim_value(indices_shape.dim(i - 1).dim_value());
+        } else if (indices_shape.dim(i - 1).has_dim_param()) {
+          dim->set_dim_param(indices_shape.dim(i - 1).dim_param());
+        }
+      } else if (depth_value) {
+        dim->set_dim_value(*depth_value);
+      }
+    }
+  }
 }
 } // namespace ONNX_NAMESPACE

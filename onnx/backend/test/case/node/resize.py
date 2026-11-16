@@ -309,7 +309,7 @@ class Resize(Base):
 
         scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
 
-        # [[[[1.       3.142857]]]]
+        # [[[[1. 4.]]]]
         output = interpolate_nd(
             data,
             lambda x, _: linear_coeffs(x),
@@ -497,9 +497,9 @@ class Resize(Base):
 
         scales = np.array([1.0, 1.0, 0.8, 0.8], dtype=np.float32)
 
-        # [[[[ 1.          2.39519159  3.79038317]
-        #    [ 6.58076634  7.97595793  9.37114951]
-        #    [12.16153268 13.55672427 14.95191585]]]]
+        # [[[[ 1.   2.5  4. ]
+        #    [ 7.   8.5 10. ]
+        #    [13.  14.5 16. ]]]]
         output = interpolate_nd(
             data,
             lambda x, _: cubic_coeffs(x),

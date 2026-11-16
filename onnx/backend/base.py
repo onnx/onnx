@@ -13,7 +13,7 @@ from onnx import IR_VERSION, ModelProto, NodeProto
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    import numpy
+    import numpy as np
 
 
 class DeviceType:
@@ -113,7 +113,7 @@ class Backend:
         inputs: Any,  # noqa: ARG003
         device: str = "CPU",  # noqa: ARG003
         outputs_info: (  # noqa: ARG003
-            Sequence[tuple[numpy.dtype, tuple[int, ...]]] | None
+            Sequence[tuple[np.dtype, tuple[int, ...]]] | None
         ) = None,
         **kwargs: dict[str, Any],
     ) -> tuple[Any, ...] | None:

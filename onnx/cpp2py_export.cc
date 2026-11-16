@@ -7,6 +7,7 @@
 #include <nanobind/stl/function.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/string_view.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/unordered_map.h>
 #include <nanobind/stl/unordered_set.h>
@@ -15,6 +16,7 @@
 #include <algorithm>
 #include <limits>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <unordered_map>
 #include <utility>
@@ -99,7 +101,7 @@ template <typename ProtoType>
 static std::vector<ProtoType> ParseProtoVector(const std::vector<nb::bytes>& bytes_vec) {
   std::vector<ProtoType> protos(bytes_vec.size());
   for (size_t i = 0; i < bytes_vec.size(); ++i) {
-    ParseProtoFromPyBytes(&protos[i], bytes_vec[i]);
+    ParseProtoFromPyBytesOrThrow(&protos[i], bytes_vec[i]);
   }
   return protos;
 }
@@ -111,9 +113,9 @@ static nb::object CastOrNone(const T* ptr) {
 }
 
 template <typename ProtoType>
-static std::tuple<bool, nb::bytes, nb::bytes> Parse(const char* cstr) {
+static std::tuple<bool, nb::bytes, nb::bytes> Parse(std::string_view text) {
   ProtoType proto{};
-  OnnxParser parser(cstr);
+  OnnxParser parser(text);
   auto status = parser.Parse(proto);
   const std::string& error_msg = status.ErrorMessage();
   return std::make_tuple(status.IsOK(), nb::bytes(error_msg.c_str(), error_msg.size()), ProtoToBytes(proto));
@@ -122,7 +124,7 @@ static std::tuple<bool, nb::bytes, nb::bytes> Parse(const char* cstr) {
 template <typename ProtoType>
 static std::string ProtoBytesToText(const nb::bytes& bytes) {
   ProtoType proto{};
-  ParseProtoFromPyBytes(&proto, bytes);
+  ParseProtoFromPyBytesOrThrow(&proto, bytes);
   return ProtoToString(proto);
 }
 
@@ -133,7 +135,7 @@ static std::pair<std::vector<Ts>, std::unordered_map<std::string, T*>> ParseProt
   std::unordered_map<std::string, T*> result;
   size_t i = 0;
   for (const auto& [key, bytes] : bytesMap) {
-    ParseProtoFromPyBytes(&values[i], bytes);
+    ParseProtoFromPyBytesOrThrow(&values[i], bytes);
     result[key] = &values[i];
     i++;
   }
@@ -150,7 +152,7 @@ static std::unordered_map<std::string, nb::bytes> CallNodeInferenceFunction(
     std::unordered_map<std::string, int> opsetImports,
     const int irVersion) {
   NodeProto node{};
-  ParseProtoFromPyBytes(&node, nodeBytes);
+  ParseProtoFromPyBytesOrThrow(&node, nodeBytes);
   // Early fail if node is badly defined - may throw ValidationError
   schema->Verify(node);
 
@@ -212,12 +214,14 @@ template <typename ProtoType, typename... Ctx>
 static auto MakeChecker(void (*check_fn)(const ProtoType&, const Ctx&...)) {
   return [check_fn](const nb::bytes& bytes, const Ctx&... ctx) {
     ProtoType proto{};
-    ParseProtoFromPyBytes(&proto, bytes);
+    ParseProtoFromPyBytesOrThrow(&proto, bytes);
     check_fn(proto, ctx...);
   };
 }
 
-NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-pro-type-cstyle-cast)
+// NOLINTBEGIN(cppcoreguidelines-pro-type-cstyle-cast, bugprone-signed-bitwise)
+NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
+  // NOLINTEND(cppcoreguidelines-pro-type-cstyle-cast, bugprone-signed-bitwise)
   // Disabling nanobind leak warnings
   // TODO(#7283): Avoid leaks if possible
   nb::set_leak_warnings(false);
@@ -299,7 +303,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-
             // Attributes with default values are not required
             auto bytes = nb::cast<nb::bytes>(default_value.attr("SerializeToString")());
             AttributeProto proto{};
-            ParseProtoFromPyBytes(&proto, bytes);
+            ParseProtoFromPyBytesOrThrow(&proto, bytes);
             new (self) OpSchema::Attribute(std::move(name), std::move(description), std::move(proto));
           },
           nb::arg("name"),
@@ -474,7 +478,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-
           "get_context_dependent_function",
           [](OpSchema* op, const nb::bytes& bytes, const std::vector<nb::bytes>& input_types_bytes) -> nb::bytes {
             NodeProto proto{};
-            ParseProtoFromPyBytes(&proto, bytes);
+            ParseProtoFromPyBytesOrThrow(&proto, bytes);
             if (op->HasContextDependentFunction()) {
               std::vector<TypeProto> input_types = ParseProtoVector<TypeProto>(input_types_bytes);
               FunctionBodyBuildContextImpl ctx(proto, input_types);
@@ -489,7 +493,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-
           [](OpSchema* op, int opset_version, const nb::bytes& bytes, const std::vector<nb::bytes>& input_types_bytes)
               -> nb::bytes {
             NodeProto proto{};
-            ParseProtoFromPyBytes(&proto, bytes);
+            ParseProtoFromPyBytesOrThrow(&proto, bytes);
             if (op->HasContextDependentFunctionWithOpsetVersion(opset_version)) {
               std::vector<TypeProto> input_types = ParseProtoVector<TypeProto>(input_types_bytes);
               FunctionBodyBuildContextImpl ctx(proto, input_types);
@@ -501,8 +505,10 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-
           })
       .def(
           "set_type_and_shape_inference_function",
-          [](OpSchema& op, const std::function<void(InferenceContext*)>& func) -> OpSchema& {
-            auto wrapper = [=](InferenceContext& ctx) { func(&ctx); };
+          [](OpSchema& op, std::function<void(InferenceContext*)> func) -> OpSchema& {
+            // Move nanobind's guarded Python-callable wrapper into the registered
+            // inference function so it remains valid after this binding returns.
+            auto wrapper = [func = std::move(func)](InferenceContext& ctx) { func(&ctx); };
             return op.TypeAndShapeInferenceFunction(wrapper);
           },
           nb::rv_policy::reference_internal)
@@ -604,9 +610,41 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-
   nb::class_<checker::LexicalScopeContext> lexical_scope_context(checker, "LexicalScopeContext");
   lexical_scope_context.def(nb::init<>());
 
-  nb::exception<checker::ValidationError>( // NOLINT(bugprone-unused-raii,bugprone-throw-keyword-missing)
-      checker,
-      "ValidationError");
+  // Created by hand rather than with nb::exception, which would register a second
+  // translator for ValidationError that sets only the message: this way, the one
+  // below is the only one.
+  const std::string validation_error_name = nb::cast<std::string>(checker.attr("__name__")) + ".ValidationError";
+  nb::object validation_error = nb::steal(PyErr_NewException(validation_error_name.c_str(), PyExc_Exception, nullptr));
+  if (!validation_error.is_valid()) {
+    throw nb::python_error();
+  }
+  // Errors raised elsewhere, e.g. from Python, have no code.
+  validation_error.attr("code") = nb::none();
+  checker.attr("ValidationError") = validation_error;
+  nb::register_exception_translator(
+      [](const std::exception_ptr& p, void* payload) {
+        try {
+          std::rethrow_exception(p);
+        } catch (const checker::ValidationError& e) {
+          auto* type = static_cast<PyObject*>(payload);
+          PyObject* error = PyObject_CallFunction(type, "s", e.what());
+          if (error == nullptr) {
+            return; // The failed call has set a Python error.
+          }
+          if (!e.code().empty()) {
+            PyObject* code = PyUnicode_FromStringAndSize(e.code().data(), static_cast<Py_ssize_t>(e.code().size()));
+            const bool set = code != nullptr && PyObject_SetAttrString(error, "code", code) == 0;
+            Py_XDECREF(code);
+            if (!set) {
+              Py_DECREF(error);
+              return; // A Python error is set.
+            }
+          }
+          PyErr_SetObject(type, error);
+          Py_DECREF(error);
+        }
+      },
+      validation_error.ptr());
 
   checker.def("check_value_info", MakeChecker(checker::check_value_info));
   checker.def("check_tensor", MakeChecker(checker::check_tensor));
@@ -621,7 +659,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-
       [](const nb::bytes& bytes, bool full_check, bool skip_opset_compatibility_check, bool check_custom_domain)
           -> void {
         ModelProto proto{};
-        ParseProtoFromPyBytes(&proto, bytes);
+        ParseProtoFromPyBytesOrThrow(&proto, bytes);
         checker::check_model(proto, full_check, skip_opset_compatibility_check, check_custom_domain);
       },
       nb::arg("bytes"),
@@ -650,8 +688,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-
 
   version_converter.def("convert_version", [](const nb::bytes& bytes, int target) {
     ModelProto proto{};
-    ParseProtoFromPyBytes(&proto, bytes);
-    shape_inference::InferShapes(proto);
+    ParseProtoFromPyBytesOrThrow(&proto, bytes);
     return ProtoToBytes(version_conversion::ConvertVersion(proto, target));
   });
 
@@ -661,7 +698,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-
 
   inliner.def("inline_local_functions", [](const nb::bytes& bytes, bool convert_version) {
     ModelProto model{};
-    ParseProtoFromPyBytes(&model, bytes);
+    ParseProtoFromPyBytesOrThrow(&model, bytes);
     inliner::InlineLocalFunctions(model, convert_version);
     return ProtoToBytes(model);
   });
@@ -673,7 +710,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-
       "inline_selected_functions",
       [](const nb::bytes& bytes, std::vector<std::pair<std::string, std::string>> function_ids, bool exclude) {
         ModelProto model{};
-        ParseProtoFromPyBytes(&model, bytes);
+        ParseProtoFromPyBytesOrThrow(&model, bytes);
         auto function_id_set = inliner::FunctionIdSet::Create(std::move(function_ids), exclude);
         inliner::InlineSelectedLocalFunctions(model, *function_id_set);
         return ProtoToBytes(model);
@@ -683,7 +720,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-
       "inline_selected_functions2",
       [](const nb::bytes& bytes, std::vector<std::pair<std::string, std::string>> function_ids, bool exclude) {
         ModelProto model{};
-        ParseProtoFromPyBytes(&model, bytes);
+        ParseProtoFromPyBytesOrThrow(&model, bytes);
         auto function_id_set = inliner::FunctionIdSet::Create(std::move(function_ids), exclude);
         inliner::InlineSelectedFunctions(model, *function_id_set, nullptr);
         return ProtoToBytes(model);
@@ -750,7 +787,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-
       "infer_shapes",
       [](const nb::bytes& bytes, bool check_type, bool strict_mode, bool data_prop) {
         ModelProto proto{};
-        ParseProtoFromPyBytes(&proto, bytes);
+        ParseProtoFromPyBytesOrThrow(&proto, bytes);
         ShapeInferenceOptions options{check_type, strict_mode ? 1 : 0, data_prop};
         shape_inference::InferShapes(proto, OpSchemaRegistry::Instance(), options);
         return ProtoToBytes(proto);
@@ -777,7 +814,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-
          const std::vector<nb::bytes>& input_types_bytes,
          const std::vector<nb::bytes>& attributes_bytes) -> std::vector<nb::bytes> {
         FunctionProto proto{};
-        ParseProtoFromPyBytes(&proto, function_proto_bytes);
+        ParseProtoFromPyBytesOrThrow(&proto, function_proto_bytes);
 
         std::vector<TypeProto> input_types = ParseProtoVector<TypeProto>(input_types_bytes);
         std::vector<AttributeProto> attributes = ParseProtoVector<AttributeProto>(attributes_bytes);

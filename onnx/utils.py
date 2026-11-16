@@ -113,19 +113,24 @@ class Extractor:
         # a node in a model graph may refer a function.
         # a function contains nodes, some of which may in turn refer a function.
         # we need to find functions referred by graph nodes and
-        # by nodes used to define functions.
+        # by nodes used to define functions, including their subgraphs.
         function_map: dict[tuple[str, str], FunctionProto] = {}
         for function in self.model.functions:
             function_map[(function.name, function.domain)] = function
         referred_local_functions: list[FunctionProto] = []
         queue = deque(nodes)
-        while queue:
+        while queue and function_map:
             node = queue.popleft()
             # check if the node is a function op
             if (node.op_type, node.domain) in function_map:
                 function = function_map.pop((node.op_type, node.domain))
                 referred_local_functions.append(function)
                 queue.extend(function.node)
+            for attribute in node.attribute:
+                if attribute.HasField("g"):
+                    queue.extend(attribute.g.node)
+                for graph in attribute.graphs:
+                    queue.extend(graph.node)
         # needs to be topologically sorted
         return referred_local_functions
 
@@ -203,9 +208,9 @@ def extract_model(
 
     The sub-model is defined by the names of the input and output tensors *exactly*.
 
-    Note: For control-flow operators, e.g. If and Loop, the _boundary of sub-model_,
-    which is defined by the input and output tensors, should not _cut through_ the
-    subgraph that is connected to the _main graph_ as attributes of these operators.
+    Note: For control-flow operators, e.g. If and Loop, the *boundary of sub-model*,
+    which is defined by the input and output tensors, should not *cut through* the
+    subgraph that is connected to the *main graph* as attributes of these operators.
 
     Note: When the extracted model size is larger than 2GB, the extra data will be saved in "output_path.data".
 

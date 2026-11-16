@@ -11,7 +11,7 @@ See also: [docs/ShapeInference.md](../../../docs/ShapeInference.md)
 |-----------|------|
 | Inference function | `onnx/defs/<domain>/defs.cc` (inline with schema) |
 | Utility functions | `onnx/defs/shape_inference.h` |
-| Tests | `onnx/test/shape_inference_test.py` |
+| Tests | `tests/python/shape_inference_test.py` |
 
 ## Type Inference vs. Shape Inference
 
@@ -134,7 +134,7 @@ Short one-liners (e.g., `propagateShapeAndTypeFromFirstInput`) are fine as direc
 ## After Making Changes
 
 ```bash
-pytest onnx/test/shape_inference_test.py -k "test_opname" -x
+pytest tests/python/shape_inference_test.py -k "test_opname" -x
 python onnx/defs/gen_doc.py
 lintrunner -a --output oneline
 ```
