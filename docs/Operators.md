@@ -193,7 +193,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#LayerNormalization">LayerNormalization</a>|<a href="Changelog.md#LayerNormalization-17">17</a>|17, 18|
 |<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-16">16</a>, <a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|16|
 |<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-16">16</a>, <a href="Changelog.md#LessOrEqual-12">12</a>|16|
-|<a href="#LinearAttention">LinearAttention</a>|<a href="Changelog.md#LinearAttention-27">27</a>|27|
+|<a href="#LinearAttention">LinearAttention</a>|<a href="Changelog.md#LinearAttention-29">29</a>, <a href="Changelog.md#LinearAttention-27">27</a>|29|
 |<a href="#LogCumSumExp">LogCumSumExp</a>|<a href="Changelog.md#LogCumSumExp-29">29</a>|29|
 |<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|13, 18, 29|
 |<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-29">29</a>, <a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|13, 18|
@@ -21551,48 +21551,95 @@ expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_uint64")
 
 ### <a name="LinearAttention"></a><a name="linearattention">**LinearAttention**</a>
 
-  Unified linear attention operator for autoregressive decoding (T=1) and prefill (T>1).
+  Unified recurrent linear attention for prefill and autoregressive decoding.
 
-  The query, key, value, and (where applicable) decay/beta inputs use 3D packed format
-  [B, T, H*D], where heads are flattened into the last dimension; q_num_heads and
-  kv_num_heads are always required and are used to unpack to 4D internally for computation.
-  The optional past_state and present_state are 4D with shape (B, H_kv, d_k, d_v).
+  Let B be the batch size, T the sequence length, d_k the key head width,
+  and d_v the value head width. The required positive attributes q_num_heads
+  and kv_num_heads specify the query head count H_q and key head count H_kv.
+  Both d_k and d_v must be positive; T may be zero. All sequence inputs share
+  the same B and T.
 
-  Group-query attention (GQA) is supported: q_num_heads must be a positive multiple of
-  kv_num_heads. When q_num_heads == kv_num_heads this reduces to multi-headed linear
-  attention; when q_num_heads > kv_num_heads each KV head (and its recurrent state) is
-  shared by `q_num_heads / kv_num_heads` query heads (multi-query attention is the
-  special case kv_num_heads == 1).
+  Inputs query, key and value have shapes [B,T,H_q*d_k], [B,T,H_kv*d_k]
+  and [B,T,H_v*d_v]. Heads are packed contiguously in the last dimension:
+  element j of head h has packed index h*d+j, where d is that input's head width.
 
-  The update_rule attribute selects the recurrence type:
-  - "linear": S_t = S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
-  - "gated": S_t = exp(g_t) * S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
-  - "delta": S_t = S_{t-1} + β_t * k_t ⊗ (v_t - S_{t-1}^T k_t); o_t = scale * q_t^T S_t
-  - "gated_delta": S_t = exp(g_t) * S_{t-1} + β_t * k_t ⊗ (v_t - exp(g_t) * S_{t-1}^T k_t); o_t = scale * q_t^T S_t
+  With v_num_heads=0 (default), H_v=H_kv and H_q must be a multiple of H_kv.
+  The output head count H_o is H_q. Query head h reads state head
+  floor(h/(H_q/H_kv)), so adjacent query heads share each state head.
+  State head h uses key head h.
 
-  where g_t is the decay (in log-space), β_t is the update rate, and ⊗ denotes outer product.
+  With v_num_heads>0, H_v=v_num_heads, H_q must equal H_kv, and H_v must be
+  a multiple of H_kv. H_o is H_v. Value/state head h uses query and key head
+  floor(h/(H_v/H_kv)). For H_kv=2 and H_v=6, this mapping is [0,0,0,1,1,1].
+  Negative v_num_heads is invalid. State, decay and beta use H_v heads.
 
-  Semantics: Equivalent to running the recurrent update sequentially for each token,
-  but may be implemented using chunk-parallel algorithms for GPU efficiency.
+  The output tensor output has shape [B,T,H_o*d_v], with contiguous head packing.
+  past_state and present_state have shape [B,H_v,d_k,d_v].
+  The initial state is past_state when supplied, otherwise zeros.
+  Input values and the initial state are converted to float32 for the recurrence
+  and output computation. The output tensor output has query's element type.
+  The state outputs have past_state's element type when supplied, otherwise
+  query's element type. A float32 past_state therefore retains float32 state
+  with float16 or bfloat16 activations.
 
+  For each batch element and token, let S be a state head's preceding
+  [d_k,d_v] matrix, k its mapped key vector, and v its value vector.
+  The update_rule attribute is one of "linear", "gated", "delta", or
+  "gated_delta" (default). Process tokens in increasing order t=0,...,T-1.
+  For each token, apply these steps in order:
+  1. For "gated" and "gated_delta", D = exp(decay) * S; otherwise D = S.
+     Decay is log-space [B,T,H_v] for per-head decay or [B,T,H_v*d_k]
+     for per-key-element decay, packed by head. It broadcasts over d_v.
+  2. For "delta" and "gated_delta", u = beta * (v - D^T k); otherwise u = v.
+     Beta has shape [B,T,H_v] for per-head rates or [B,T,1] shared by all heads.
+  3. S_new = D + k outer u, where (k outer u)[i,j] = k[i] * u[j].
+  4. For each output head, o = scale * q^T S_new using its mapped query and
+     state heads. The resulting vectors form output, and S_new is the
+     preceding state for the next token.
+
+  exp and scalar/vector multiplication are elementwise; transpose and
+  matrix-vector products act on the displayed head matrix/vector dimensions.
+
+  Decay must be supplied for "gated" and "gated_delta" and omitted otherwise.
+  Beta must be supplied for "delta" and "gated_delta" and omitted otherwise.
+  Q/K normalization is not performed by this operator. A zero scale attribute
+  (default) uses 1/sqrt(d_k). chunk_size (default 64) is an implementation hint
+  and does not change results.
+
+  present_state is the final state. The optional states output has shape
+  [B,T,H_v,d_k,d_v]; states[:,t,:,:,:] is the state after token t's complete
+  decay and update, converted to present_state's element type. These conversions
+  do not round the internal float32 recurrence between tokens. For T>0, the
+  last snapshot equals present_state. For T=0, output has shape [B,0,H_o*d_v],
+  states has shape [B,0,H_v,d_k,d_v], and present_state is the initial state.
+  Omitting states does not change output or present_state and does not require
+  intermediate-state storage. When requested, states contains B*T*H_v*d_k*d_v
+  elements.
+
+  The operator does not modify inputs or retain state between invocations.
+  The caller supplies any state carried from a preceding invocation.
 
 #### Version
 
-This version of the operator has been available since version 27 of the default ONNX operator set.
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#LinearAttention-27">27</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>chunk_size</tt> : int (default is 64)</dt>
-<dd>Chunk size for the chunk-parallel WY decomposition during prefill (T>1). Tuning hint; does not affect output correctness.</dd>
+<dd>Implementation hint for processing sequence chunks. Does not change results.</dd>
 <dt><tt>kv_num_heads</tt> : int (required)</dt>
-<dd>Number of key/value heads. Always required.</dd>
+<dd>Number of compact key heads. Always required.</dd>
 <dt><tt>q_num_heads</tt> : int (required)</dt>
 <dd>Number of query heads. Always required.</dd>
 <dt><tt>scale</tt> : float (default is 0.0)</dt>
 <dd>Output scaling factor. When 0.0 (default), derives d_k = query.shape[-1] / q_num_heads and uses 1/sqrt(d_k). Set explicitly to override.</dd>
 <dt><tt>update_rule</tt> : string (default is gated_delta)</dt>
 <dd>The update rule for the linear attention recurrence. One of: 'linear', 'gated', 'delta', 'gated_delta'. Default is 'gated_delta'.</dd>
+<dt><tt>v_num_heads</tt> : int (default is 0)</dt>
+<dd>Value/state head count. Zero (default) uses kv_num_heads and preserves query GQA. A positive value requires q_num_heads == kv_num_heads and must be a multiple of kv_num_heads. Q/K head h is repeated adjacently v_num_heads / kv_num_heads times. The output has v_num_heads heads, and value, state, decay and beta use this head count.</dd>
 </dl>
 
 #### Inputs (3 - 6)
@@ -21601,24 +21648,26 @@ This version of the operator has been available since version 27 of the default 
 <dt><tt>query</tt> (differentiable) : T</dt>
 <dd>Query vectors with 3D packed shape (B, T, H_q * d_k). Heads are packed into the last dimension.</dd>
 <dt><tt>key</tt> (differentiable) : T</dt>
-<dd>Key vectors with 3D packed shape (B, T, H_kv * d_k). Should be L2-normalized for delta/gated_delta modes.</dd>
+<dd>Key vectors with 3D packed shape (B, T, H_kv * d_k). The operator does not normalize these vectors.</dd>
 <dt><tt>value</tt> (differentiable) : T</dt>
-<dd>Value vectors with 3D packed shape (B, T, H_kv * d_v).</dd>
+<dd>Value vectors with 3D packed shape (B, T, H_v * d_v), where H_v is kv_num_heads unless a positive v_num_heads is specified.</dd>
 <dt><tt>past_state</tt> (optional, non-differentiable) : S</dt>
-<dd>Recurrent state from previous step with shape (B, H_kv, d_k, d_v). Always 4D. If not provided, defaults to zeros.</dd>
+<dd>Recurrent state from previous step with shape (B, H_v, d_k, d_v). Always 4D. If not provided, defaults to zeros.</dd>
 <dt><tt>decay</tt> (optional, differentiable) : T</dt>
-<dd>Exponential decay gate in log-space. 3D packed shape: (B, T, H_kv * d_k) for per-key-dimension decay (GLA/RWKV-6), or (B, T, H_kv) for per-head scalar decay (DeltaNet/RetNet). Required for 'gated' and 'gated_delta' modes.</dd>
+<dd>Exponential decay gate in log-space, with shape (B, T, H_v * d_k) or (B, T, H_v). Required for 'gated' and 'gated_delta' modes.</dd>
 <dt><tt>beta</tt> (optional, differentiable) : T</dt>
-<dd>Update rate (sigmoid output). 3D packed shape: (B, T, H_kv) or (B, T, 1). Required for 'delta' and 'gated_delta' modes.</dd>
+<dd>Update rate with shape (B, T, H_v) or (B, T, 1). Required for 'delta' and 'gated_delta' modes.</dd>
 </dl>
 
-#### Outputs
+#### Outputs (2 - 3)
 
 <dl>
 <dt><tt>output</tt> (differentiable) : T</dt>
-<dd>Attention output with 3D packed shape (B, T, H_q * d_v).</dd>
+<dd>Attention output with 3D packed shape (B, T, H_o * d_v), where H_o is q_num_heads unless a positive v_num_heads is specified.</dd>
 <dt><tt>present_state</tt> (non-differentiable) : S</dt>
-<dd>Updated recurrent state with shape (B, H_kv, d_k, d_v). Always 4D.</dd>
+<dd>Updated recurrent state with shape (B, H_v, d_k, d_v). Always 4D.</dd>
+<dt><tt>states</tt> (optional, non-differentiable) : S</dt>
+<dd>Optional recurrent state trajectory with shape (B, T, H_v, d_k, d_v), in the same type as present_state. Entry [:, t] is the state after token t's complete decay/update, before token t+1. For T > 0 the last entry equals present_state; for T = 0 the trajectory is empty. Omitting this output does not require storing intermediate states.</dd>
 </dl>
 
 #### Type Constraints
@@ -21627,11 +21676,64 @@ This version of the operator has been available since version 27 of the default 
 <dt><tt>T</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
 <dd>Constrain activation input and output types to float16, bfloat16, or float32 tensors.</dd>
 <dt><tt>S</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
-<dd>Constrain state types to float16, bfloat16, or float32 tensors. Should be float32 or the same as T for numerical stability on long sequences.</dd>
+<dd>State tensors have type float16, bfloat16, or float32. When past_state is omitted, state outputs have the activation type T.</dd>
 </dl>
 
 
 #### Examples
+
+<details>
+<summary>compact_value_heads</summary>
+
+```python
+# Scaled-down Gated DeltaNet examples: adjacent Q/K repeats, independent
+# value/state heads and gates. Real head ratios include 2, 3 and 8.
+rng = np.random.default_rng(0)
+for factor in (2, 3, 8):
+    b, t, hk, dk, dv = 1, 3, 2, 4, 5
+    hv = hk * factor
+    query = _l2_normalize(
+        rng.normal(size=(b, t, hk * dk)).astype(np.float16), hk
+    )
+    key = _l2_normalize(rng.normal(size=(b, t, hk * dk)).astype(np.float16), hk)
+    value = rng.normal(size=(b, t, hv * dv)).astype(np.float16)
+    state = rng.normal(size=(b, hv, dk, dv)).astype(np.float32)
+    decay = -rng.uniform(0.1, 0.9, (b, t, hv)).astype(np.float16)
+    beta = rng.uniform(0.1, 0.9, (b, t, hv)).astype(np.float16)
+    expanded = [
+        np.repeat(x.reshape(b, t, hk, dk), factor, axis=2).reshape(
+            b, t, hv * dk
+        )
+        for x in (query, key)
+    ]
+    expected = _compute(
+        *expanded,
+        value,
+        state,
+        decay,
+        beta,
+        q_num_heads=hv,
+        kv_num_heads=hv,
+    )
+    node = onnx.helper.make_node(
+        "LinearAttention",
+        ["query", "key", "value", "past_state", "decay", "beta"],
+        ["output", "present_state"],
+        q_num_heads=hk,
+        kv_num_heads=hk,
+        v_num_heads=hv,
+    )
+    expect(
+        node,
+        inputs=[query, key, value, state, decay, beta],
+        outputs=list(expected),
+        name=f"test_linear_attention_compact_value_heads_factor_{factor}",
+        opset_imports=[onnx.helper.make_opsetid("", 29)],
+    )
+```
+
+</details>
+
 
 <details>
 <summary>decode_step</summary>
@@ -22181,6 +22283,83 @@ expect(
     name="test_linear_attention_prefill_with_past",
     opset_imports=_OPSET,
 )
+```
+
+</details>
+
+
+<details>
+<summary>state_trajectory</summary>
+
+```python
+rng = np.random.default_rng(42)
+for rule in ("linear", "gated", "delta", "gated_delta"):
+    for length in (0, 3):
+        b, hk, hv, dk, dv = 2, 2, 4, 2, 3
+        query = rng.normal(size=(b, length, hk * dk)).astype(np.float16)
+        key = _l2_normalize(
+            rng.normal(size=(b, length, hk * dk)).astype(np.float16), hk
+        )
+        value = rng.normal(size=(b, length, hv * dv)).astype(np.float16)
+        state = rng.normal(size=(b, hv, dk, dv)).astype(np.float32)
+        decay = (
+            -rng.uniform(0.1, 0.9, (b, length, hv)).astype(np.float16)
+            if rule in ("gated", "gated_delta")
+            else None
+        )
+        beta = (
+            rng.uniform(0.1, 0.9, (b, length, hv)).astype(np.float16)
+            if rule in ("delta", "gated_delta")
+            else None
+        )
+        expanded = [
+            np.repeat(x.reshape(b, length, hk, dk), hv // hk, axis=2).reshape(
+                b, length, hv * dk
+            )
+            for x in (query, key)
+        ]
+        packed = [*expanded, value, state, decay, beta]
+        expected = _compute(
+            *packed, q_num_heads=hv, kv_num_heads=hv, update_rule=rule
+        )
+        snapshots = [
+            _compute(
+                *[
+                    x if x is None or i == 3 else x[:, :end]
+                    for i, x in enumerate(packed)
+                ],
+                q_num_heads=hv,
+                kv_num_heads=hv,
+                update_rule=rule,
+            )[1]
+            for end in range(1, length + 1)
+        ]
+        states = (
+            np.stack(snapshots, axis=1)
+            if snapshots
+            else np.empty((b, 0, hv, dk, dv), dtype=np.float32)
+        )
+        values = [query, key, value, state, decay, beta]
+        names = ["query", "key", "value", "past_state", "decay", "beta"]
+        node = onnx.helper.make_node(
+            "LinearAttention",
+            [
+                name if x is not None else ""
+                for name, x in zip(names, values, strict=True)
+            ],
+            ["output", "present_state", "states"],
+            q_num_heads=hk,
+            kv_num_heads=hk,
+            v_num_heads=hv,
+            update_rule=rule,
+        )
+        expect(
+            node,
+            inputs=[x for x in values if x is not None],
+            outputs=[*expected, states],
+            name=f"test_linear_attention_state_trajectory_{rule}_length_{length}",
+            opset_imports=[onnx.helper.make_opsetid("", 29)],
+        )
 ```
 
 </details>

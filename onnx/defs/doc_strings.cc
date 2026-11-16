@@ -2712,6 +2712,75 @@ const char kDoc_Mod_ver10[] = R"DOC(
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 )DOC";
+const char kDoc_LinearAttention_ver29[] = R"DOC(
+Unified recurrent linear attention for prefill and autoregressive decoding.
+
+Let B be the batch size, T the sequence length, d_k the key head width,
+and d_v the value head width. The required positive attributes q_num_heads
+and kv_num_heads specify the query head count H_q and key head count H_kv.
+Both d_k and d_v must be positive; T may be zero. All sequence inputs share
+the same B and T.
+
+Inputs query, key and value have shapes [B,T,H_q*d_k], [B,T,H_kv*d_k]
+and [B,T,H_v*d_v]. Heads are packed contiguously in the last dimension:
+element j of head h has packed index h*d+j, where d is that input's head width.
+
+With v_num_heads=0 (default), H_v=H_kv and H_q must be a multiple of H_kv.
+The output head count H_o is H_q. Query head h reads state head
+floor(h/(H_q/H_kv)), so adjacent query heads share each state head.
+State head h uses key head h.
+
+With v_num_heads>0, H_v=v_num_heads, H_q must equal H_kv, and H_v must be
+a multiple of H_kv. H_o is H_v. Value/state head h uses query and key head
+floor(h/(H_v/H_kv)). For H_kv=2 and H_v=6, this mapping is [0,0,0,1,1,1].
+Negative v_num_heads is invalid. State, decay and beta use H_v heads.
+
+The output tensor output has shape [B,T,H_o*d_v], with contiguous head packing.
+past_state and present_state have shape [B,H_v,d_k,d_v].
+The initial state is past_state when supplied, otherwise zeros.
+Input values and the initial state are converted to float32 for the recurrence
+and output computation. The output tensor output has query's element type.
+The state outputs have past_state's element type when supplied, otherwise
+query's element type. A float32 past_state therefore retains float32 state
+with float16 or bfloat16 activations.
+
+For each batch element and token, let S be a state head's preceding
+[d_k,d_v] matrix, k its mapped key vector, and v its value vector.
+The update_rule attribute is one of "linear", "gated", "delta", or
+"gated_delta" (default). Process tokens in increasing order t=0,...,T-1.
+For each token, apply these steps in order:
+1. For "gated" and "gated_delta", D = exp(decay) * S; otherwise D = S.
+   Decay is log-space [B,T,H_v] for per-head decay or [B,T,H_v*d_k]
+   for per-key-element decay, packed by head. It broadcasts over d_v.
+2. For "delta" and "gated_delta", u = beta * (v - D^T k); otherwise u = v.
+   Beta has shape [B,T,H_v] for per-head rates or [B,T,1] shared by all heads.
+3. S_new = D + k outer u, where (k outer u)[i,j] = k[i] * u[j].
+4. For each output head, o = scale * q^T S_new using its mapped query and
+   state heads. The resulting vectors form output, and S_new is the
+   preceding state for the next token.
+
+exp and scalar/vector multiplication are elementwise; transpose and
+matrix-vector products act on the displayed head matrix/vector dimensions.
+
+Decay must be supplied for "gated" and "gated_delta" and omitted otherwise.
+Beta must be supplied for "delta" and "gated_delta" and omitted otherwise.
+Q/K normalization is not performed by this operator. A zero scale attribute
+(default) uses 1/sqrt(d_k). chunk_size (default 64) is an implementation hint
+and does not change results.
+
+present_state is the final state. The optional states output has shape
+[B,T,H_v,d_k,d_v]; states[:,t,:,:,:] is the state after token t's complete
+decay and update, converted to present_state's element type. These conversions
+do not round the internal float32 recurrence between tokens. For T>0, the
+last snapshot equals present_state. For T=0, output has shape [B,0,H_o*d_v],
+states has shape [B,0,H_v,d_k,d_v], and present_state is the initial state.
+Omitting states does not change output or present_state and does not require
+intermediate-state storage. When requested, states contains B*T*H_v*d_k*d_v
+elements.
+
+The operator does not modify inputs or retain state between invocations.
+The caller supplies any state carried from a preceding invocation.
+)DOC";
 const char kDoc_LinearAttention_ver27[] = R"DOC(
 Unified linear attention operator for autoregressive decoding (T=1) and prefill (T>1).
 
@@ -6911,6 +6980,7 @@ const char kDoc_Floor_ver6[] = "";
 const char kDoc_Abs_ver6[] = "";
 const char kDoc_Mod_ver10[] = "";
 const char kDoc_LinearAttention_ver27[] = "";
+const char kDoc_LinearAttention_ver29[] = "";
 const char kDoc_CausalConvWithState_ver27[] = "";
 const char kDoc_Attention_ver25[] = "";
 const char kDoc_RotaryEmbedding_ver23[] = "";
