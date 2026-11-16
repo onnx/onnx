@@ -39,7 +39,10 @@ def _gather_nd_impl(
     output_data_buffer = []
 
     # Flatten 'indices' to 2D array.
-    reshaped_indices = indices.reshape(batch_dims_size, -1, indices.shape[-1])
+    indices_per_batch = int(np.prod(indices.shape[batch_dims:-1]))
+    reshaped_indices = indices.reshape(
+        batch_dims_size, indices_per_batch, indices.shape[-1]
+    )
 
     # Flatten 'data' to array of shape
     # (batch_dim_size, data.shape[batch_dimes:]).

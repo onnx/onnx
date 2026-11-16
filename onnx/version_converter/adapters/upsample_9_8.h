@@ -27,9 +27,13 @@ struct Upsample_9_8 final : public Adapter {
     ONNX_ASSERTM(inputs.size() == 2, "Upsample in opset 9 needs to have 2 inputs.")
     // Safe to access inputs[1] after assertion above
     std::string scale_input_name = inputs[1]->uniqueName();
+    Value* scales = inputs[1];
 
     for (const auto& initializer : initializers) {
       if (initializer.name() == inputs[1]->uniqueName()) {
+        ONNX_ASSERTM(
+            graph->is_constant_initializer(scales),
+            "Upsample scales must be constant; overridable initializers cannot be converted to attributes.")
         std::vector<float> value = ParseData<float>(&initializer);
         std::vector<double> d_values;
         d_values.reserve(value.size());
@@ -39,12 +43,8 @@ struct Upsample_9_8 final : public Adapter {
         node->fs_(kscales, std::move(d_values));
 
         node->removeInput(1);
-        graph->eraseInitializer(initializer.name());
-        for (size_t j = 0; j < graph->inputs().size(); j++) {
-          if (graph->inputs()[j]->uniqueName() == scale_input_name) {
-            graph->eraseInput(j);
-            break;
-          }
+        if (scales->uses().empty()) {
+          graph->eraseInitializer(scale_input_name);
         }
         return;
       }
@@ -60,7 +60,9 @@ struct Upsample_9_8 final : public Adapter {
         }
         node->fs_(kscales, std::move(d_values));
         node->removeInput(1);
-        op->destroy();
+        if (scales->uses().empty()) {
+          op->destroy();
+        }
         return;
       }
     }

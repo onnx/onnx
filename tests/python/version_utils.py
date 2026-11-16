@@ -8,9 +8,9 @@ from packaging.version import parse as version
 
 def numpy_older_than(ver: str) -> bool:
     """Returns True if the numpy version is older than the given version."""
-    import numpy  # noqa: PLC0415
+    import numpy as np  # noqa: PLC0415
 
-    return version(numpy.__version__) < version(ver)
+    return version(np.__version__) < version(ver)
 
 
 def pillow_older_than(ver: str) -> bool:

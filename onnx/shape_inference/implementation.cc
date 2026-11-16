@@ -66,10 +66,6 @@ std::string GetElemTypeString(const TypeProto_SparseTensor& type) {
   return ONNX_NAMESPACE::to_string(type.elem_type());
 }
 
-inline bool IsOnnxDomainOp(const NodeProto& node, const std::string& op_type) {
-  return (IsOnnxDomain(node.domain()) && (node.op_type() == op_type));
-}
-
 } // namespace
 
 template <class T>
@@ -429,7 +425,7 @@ class ShapeInferenceImplBase {
   }
 
   void ProcessConstant(const NodeProto& n) {
-    if (IsOnnxDomainOp(n, "Constant") && n.output().size() == 1) {
+    if (IsOnnxDomain(n.domain()) && n.op_type() == "Constant" && n.output().size() == 1) {
       const std::string& output_name = n.output(0);
       for (const auto& attr : n.attribute()) {
         if (attr.name() == "value") {
@@ -440,11 +436,11 @@ class ShapeInferenceImplBase {
               input_data_by_name_holder[output_name] = attr.t();
               input_data_by_name[output_name] = &input_data_by_name_holder[output_name];
             }
-          } else if (attr.type() == AttributeProto::SPARSE_TENSOR && attr.has_sparse_tensor()) {
-            if (reuse_constant_tensors) {
-              input_sparse_data_by_name[output_name] = &attr.sparse_tensor();
-            }
+          } else if (
+              attr.type() == AttributeProto::SPARSE_TENSOR && attr.has_sparse_tensor() && reuse_constant_tensors) {
+            input_sparse_data_by_name[output_name] = &attr.sparse_tensor();
           }
+
         } else {
           switch (attr.type()) {
             case AttributeProto::INTS: {
@@ -512,7 +508,7 @@ class ShapeInferenceImplBase {
         if (schema->has_type_and_shape_inference_function()) {
           schema->GetTypeAndShapeInferenceFunction()(ctx);
         } else if (schema->HasFunction()) {
-          ProcessCall(n, *(schema->GetFunction()), ctx);
+          ProcessCall(n, *schema->GetFunction(), ctx);
         } // else: rely on schema->CheckInputOutputType() down below.
         // check type-constraints specified via type variables
         if (options.check_type) {
@@ -521,7 +517,7 @@ class ShapeInferenceImplBase {
       } else if (!model_local_functions_map.empty()) {
         auto iter = model_local_functions_map.find(GetFunctionIdentifier(n));
         if (iter != model_local_functions_map.end()) {
-          ProcessCall(n, *(iter->second), ctx);
+          ProcessCall(n, *iter->second, ctx);
         } else {
           has_unsupported_op = true;
           return;
@@ -716,7 +712,7 @@ class ShapeInferenceImplBase {
         // Copy the type info to ctx
         // to pass back to main graph
         auto* type_proto = ctx.getOutputType(i);
-        type_proto->CopyFrom(*(iter->second));
+        type_proto->CopyFrom(*iter->second);
       }
     }
 

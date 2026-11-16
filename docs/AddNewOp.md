@@ -87,7 +87,7 @@ Domain subdirectories under `onnx/defs/`: `math/`, `nn/`, `tensor/`, `logical/`,
 [versioning doc](/docs/Versioning.md#operator-versioning)
 4. Write unit test, that cover main usage and corner cases.
     1. The testing examples will be extracted to the doc.
-    2. We also generate binary data for it.
+    2. The Python exporters and `expect(...)` calls in `onnx/backend/test/case/node/` are the source of truth for node tests. Backend tests discover these cases and build their models, inputs, and expected outputs in memory; do not commit generated `.onnx` or `.pb` fixtures under `onnx/backend/test/data/node/`.
     3. Example: [onnx/backend/test/case/node/abs.py](/onnx/backend/test/case/node/abs.py)
 5. Write upgrade and downgrade tests:
     1. Add at least one automatic upgrade test for your operator in [tests/python/version_converter/automatic_upgrade_test.py](/tests/python/version_converter/automatic_upgrade_test.py) using `_test_op_upgrade`. These tests create a given operator at a given opset version (usually the version the operator was introduced in) and test that the version converter is able to convert them to the highest available version. So for a new operator `_test_op_upgrade` will not test anything, but as soon as the operator gets updated in a future opset the test will automatically become nontrivial.
