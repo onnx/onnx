@@ -7260,6 +7260,41 @@ class TestReferenceEvaluator:
         assert output.shape == (4,)
         assert_allclose(output, np.array([10.0, 10.0, 20.0, 20.0], dtype=np.float32))
 
+    @pytest.mark.parametrize("opset", [11, 12])
+    def test_resize_tf_half_pixel_for_nn_unit_scale(self, opset):
+        # A unit scale still shifts coordinates by half a pixel in this mode,
+        # so it must not take the identity shortcut.
+        data = np.array([10, 20, 30], dtype=np.float32)
+        output = self._run_resize(
+            data,
+            roi=np.array([0, 1], dtype=np.float32),
+            scales=np.array([1], dtype=np.float32),
+            mode="nearest",
+            nearest_mode="ceil",
+            coordinate_transformation_mode="tf_half_pixel_for_nn",
+            opset=opset,
+        )
+        assert_allclose(output, np.array([20.0, 30.0, 30.0], dtype=np.float32))
+
+    @pytest.mark.parametrize(
+        ("extrapolation_value", "expected_fill"),
+        [(7.75, 8), (1e12, np.iinfo(np.int32).max), (-1e12, np.iinfo(np.int32).min)],
+    )
+    def test_resize_nearest_crop_and_resize_int_fill_saturates(
+        self, extrapolation_value, expected_fill
+    ):
+        data = np.array([10, 20], dtype=np.int32)
+        output = self._run_resize(
+            data,
+            roi=np.array([-0.5, 1], dtype=np.float32),
+            scales=np.array([2], dtype=np.float32),
+            mode="nearest",
+            coordinate_transformation_mode="tf_crop_and_resize",
+            extrapolation_value=extrapolation_value,
+        )
+        assert output.dtype == np.int32
+        assert output.tolist() == [expected_fill, 10, 10, 20]
+
     def test_resize_half_pixel_symmetric_nearest_downsample(self):
         data = np.arange(7, dtype=np.float32) * 10
         output = self._run_resize(

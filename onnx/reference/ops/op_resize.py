@@ -461,11 +461,15 @@ def _interpolate_1d_along_axis(
             )
             mask = is_extrapolated.reshape(mask_shape)
             fill_val = 0.0 if extrapolation_value is None else extrapolation_value
-            fill = (
-                fill_val
-                if result.dtype == object
-                else np.asarray(fill_val).astype(result.dtype)
-            )
+            if result.dtype == object:
+                fill = fill_val
+            elif result.dtype.kind in "bcUS":
+                fill = np.asarray(fill_val).astype(result.dtype)
+            else:
+                # Round and clamp like the interpolating path's _cast_output.
+                fill = onnx.numpy_helper.saturate_cast(
+                    np.asarray(fill_val, dtype=np.float64), result.dtype
+                )
             result = np.where(mask, fill, result)
         return result
 
@@ -583,6 +587,9 @@ def _interpolate_nd(
         if (
             math.isclose(axis_scale, 1.0)
             and axis_output == result.shape[axis]
+            # tf_half_pixel_for_nn shifts coordinates by half a pixel, so a
+            # unit scale is not an identity.
+            and kwargs.get("coordinate_transformation_mode") != "tf_half_pixel_for_nn"
             and (
                 roi is None
                 or (
