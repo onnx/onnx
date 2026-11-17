@@ -25,15 +25,23 @@ class ImageDecoder(OpRun):
             raise ImportError(
                 "Pillow must be installed to use the reference implementation of the ImageDecoder operator"
             ) from e
-        img = PIL.Image.open(io.BytesIO(encoded.tobytes()), formats=_SUPPORTED_FORMATS)
+        if pixel_format not in ("RGB", "BGR", "Grayscale"):
+            raise ValueError(f"pixel_format={pixel_format!r} is not supported.")
+        try:
+            img = PIL.Image.open(
+                io.BytesIO(encoded.tobytes()), formats=_SUPPORTED_FORMATS
+            )
+        except PIL.UnidentifiedImageError:
+            # The operator returns an empty matrix for an invalid format
+            # instead of failing.
+            channels = 1 if pixel_format == "Grayscale" else 3
+            return (np.empty((0, 0, channels), dtype=np.uint8),)
         if pixel_format == "BGR":
             decoded = np.array(img.convert("RGB"))[:, :, ::-1]
         elif pixel_format == "RGB":
             decoded = np.array(img.convert("RGB"))
-        elif pixel_format == "Grayscale":
+        else:
             img = img.convert("L")
             decoded = np.array(img)
             decoded = np.expand_dims(decoded, axis=2)  # (H, W) to (H, W, 1)
-        else:
-            raise ValueError(f"pixel_format={pixel_format!r} is not supported.")
         return (decoded,)
