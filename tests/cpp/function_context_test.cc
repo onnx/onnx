@@ -27,9 +27,6 @@ static TensorProto ToTensor(double value, TensorProto_DataType elem_type) {
     case TensorProto_DataType::TensorProto_DataType_DOUBLE:
       t.add_double_data(value);
       break;
-    // case TensorProto_DataType::TensorProto_DataType_FLOAT16:
-    //   t.add_int32_data(onnxruntime::math::floatToHalf((float)value));
-    //   break;
     default:
       assert(false);
   }

@@ -773,8 +773,7 @@ void OpSchema::ParseAndSetTypes(
     const auto& type = formal_parameter.GetTypeStr();
     DataTypeSet allowed_types;
     if (auto it = type_constraints_.find(type); it != type_constraints_.end()) {
-      auto& [types, description] = it->second;
-      allowed_types = types;
+      allowed_types = it->second.first;
     } else {
       allowed_types.emplace(Utils::DataTypeUtils::ToType(type));
     }
