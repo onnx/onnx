@@ -156,7 +156,7 @@ class FunctionBuilder {
   }
 
   template <typename T, typename... Args>
-  ONNX_API FunctionBuilder& AddAttributes(const std::string& attr_name, const T& attr_value, Args... args) {
+  ONNX_API FunctionBuilder& AddAttributes(const std::string& attr_name, const T& attr_value, const Args&... args) {
     AddAttributeToNode(attr_name, attr_value);
     if constexpr (sizeof...(args) > 0) {
       AddAttributes(args...);
