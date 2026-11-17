@@ -39,4 +39,4 @@ SPDX-License-Identifier: Apache-2.0
 
 - [Changelog](https://github.com/onnx/onnx/blob/main/docs/Changelog.md): per-opset history of every operator schema change.
 - [Test coverage](https://github.com/onnx/onnx/blob/main/docs/TestCoverage.md): which operators and attributes are exercised by the backend test suite.
-- [Technical details](https://onnx.ai/onnx/technical/index.html): notes on specific data types and mechanisms (e.g. low-bit float types, KV cache).
+- [Technical details](https://onnx.ai/onnx/technical/index.html): notes on specific data types and mechanisms (e.g. low-bit float types, KV cache, LinearAttention prefix-state recovery).
