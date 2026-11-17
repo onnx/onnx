@@ -17,6 +17,9 @@ from onnx import (
 )
 from onnx.reference import ReferenceEvaluator
 
+# NumPy array dimensions are constrained by np.intp even when total size is zero.
+_LARGE_EMPTY_ROW_DIM = min(2**61, np.iinfo(np.intp).max - 1)
+
 
 def evaluator(
     op: str, bits: int, function: bool = False, shape: tuple[int, ...] = (1,)
@@ -592,7 +595,7 @@ def test_unpack_arbitrary_bytes(bits: int, n: int, function: bool) -> None:
 
 
 @pytest.mark.parametrize("bits", range(1, 9))
-@pytest.mark.parametrize("n", [0, 9, 2**61, 2**61 + 1])
+@pytest.mark.parametrize("n", [0, 9, _LARGE_EMPTY_ROW_DIM, _LARGE_EMPTY_ROW_DIM + 1])
 @pytest.mark.parametrize("function", [False, True])
 def test_empty_rows_do_not_iterate(
     bits: int, n: int, function: bool, monkeypatch: pytest.MonkeyPatch
