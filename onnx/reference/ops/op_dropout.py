@@ -56,8 +56,9 @@ class Dropout_7(DropoutBase):
 class Dropout_12(DropoutBase):
     def _run(self, *inputs, seed=None):
         X = inputs[0]
-        ratio = 0.5 if len(inputs) <= 1 else inputs[1]
-        training_mode = False if len(inputs) <= 2 else inputs[2]
+        # Omitted optional inputs arrive as None, not truncated from inputs.
+        ratio = 0.5 if len(inputs) <= 1 or inputs[1] is None else inputs[1]
+        training_mode = False if len(inputs) <= 2 or inputs[2] is None else inputs[2]
         return self._private_run(
             X,
             seed=seed,
