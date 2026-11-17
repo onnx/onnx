@@ -113,7 +113,6 @@ ignore = ["W002"]
 [tool.pytest.ini_options]
 addopts = "--tb=short --color=yes"
 testpaths = ["tests"]
-pythonpath = ["tests/python"]
 
 [tool.mypy]
 follow_imports = "silent"
