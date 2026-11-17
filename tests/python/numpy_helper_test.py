@@ -69,6 +69,17 @@ class TestNumpyHelper:
             # Differing key types should raise a TypeError
             numpy_helper.from_dict({0: np.array(0.1), 1.1: np.array(0.9)})
 
+    def test_from_dict_unicode_array_values_differing_width(self) -> None:
+        arrays = [np.array(["cat"]), np.array(["bird"])]
+        map_proto = numpy_helper.from_dict(dict(enumerate(arrays)))
+        for tensor, expected in zip(
+            map_proto.values.tensor_values, arrays, strict=True
+        ):
+            assert tensor.data_type == onnx.TensorProto.STRING
+            np.testing.assert_array_equal(
+                numpy_helper.to_array(tensor), expected.astype(object), strict=True
+            )
+
     def test_from_dict_string_keys(self):
         map_proto = numpy_helper.from_dict(
             {"a": np.array([0.1]), "bb": np.array([0.9])}
