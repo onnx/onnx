@@ -53,22 +53,22 @@ Following function only automates the loading of a class
 any other proto class.
 
 ```{eval-rst}
-.. autofunction:: onnx.load
+.. autofunction:: onnx.load_model
 ```
 
 ```
-from onnx import load
+from onnx import load_model
 
-onnx_model = load("model.onnx")
+onnx_model = load_model("model.onnx")
 ```
 
 Or:
 
 ```
-from onnx import load
+from onnx import load_model
 
 with open("model.onnx", "rb") as f:
-    onnx_model = load(f)
+    onnx_model = load_model(f)
 ```
 
 Next function does the same from a bytes array.

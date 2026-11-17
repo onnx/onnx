@@ -229,10 +229,10 @@ The graph can be restored with function `load`:
 ```{eval-rst}
 .. exec_code::
 
-    from onnx import load
+    from onnx import load_model
 
     with open("linear_regression.onnx", "rb") as f:
-        onnx_model = load(f)
+        onnx_model = load_model(f)
 
     # display
     print(onnx_model)
@@ -462,10 +462,10 @@ what kind of metadata it has.
 ```{eval-rst}
 .. exec_code::
 
-    from onnx import load
+    from onnx import load_model
 
     with open("linear_regression.onnx", "rb") as f:
-        onnx_model = load(f)
+        onnx_model = load_model(f)
 
     for field in ['doc_string', 'domain', 'functions',
                   'ir_version', 'metadata_props', 'model_version',
@@ -480,10 +480,10 @@ graph was created. Two of them have a value:
 ```{eval-rst}
 .. exec_code::
 
-    from onnx import load
+    from onnx import load_model
 
     with open("linear_regression.onnx", "rb") as f:
-        onnx_model = load(f)
+        onnx_model = load_model(f)
 
     print("ir_version:", onnx_model.ir_version)
     for opset in onnx_model.opset_import:
@@ -499,10 +499,10 @@ Another one can be used.
 ```{eval-rst}
 .. exec_code::
 
-    from onnx import load
+    from onnx import load_model
 
     with open("linear_regression.onnx", "rb") as f:
-        onnx_model = load(f)
+        onnx_model = load_model(f)
 
     del onnx_model.opset_import[:]
     opset = onnx_model.opset_import.add()
@@ -527,10 +527,10 @@ number.
 ```{eval-rst}
 .. exec_code::
 
-    from onnx import load, helper
+    from onnx import helper, load_model
 
     with open("linear_regression.onnx", "rb") as f:
-        onnx_model = load(f)
+        onnx_model = load_model(f)
 
     onnx_model.model_version = 15
     onnx_model.producer_name = "something"
