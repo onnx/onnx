@@ -15,6 +15,7 @@ from onnx.helper import (
 )
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops._quant_utils import reshape_input as _reshape_input
+from onnx.reference.ops._quant_utils import reshape_multi_axis as _reshape_multi_axis
 
 _QUANT_TYPES = {
     TensorProto.UINT8,
@@ -57,8 +58,15 @@ class _CommonQuantizeLinear(OpRun):
         block_size: int | None = None,
         output_dtype: TensorProto.DataType | None = None,
         precision: int | None = None,
+        *,
+        _block_shape: list[int] | None = None,
     ) -> tuple[np.ndarray]:
-        y_scale = _reshape_input(y_scale, x.shape, axis, block_size)
+        def reshape(value):
+            if _block_shape is not None:
+                return _reshape_multi_axis(value, x.shape, _block_shape)
+            return _reshape_input(value, x.shape, axis, block_size)
+
+        y_scale = reshape(y_scale)
 
         # Determine output data type
         tensor_type = output_dtype
@@ -78,7 +86,7 @@ class _CommonQuantizeLinear(OpRun):
 
         # Compute
         if zero_point is not None:
-            zero_point = _reshape_input(zero_point, x.shape, axis, block_size)
+            zero_point = reshape(zero_point)
         if precision:
             precision_np = tensor_dtype_to_np_dtype(precision)
             x = x.astype(precision_np) / y_scale.astype(precision_np)
@@ -197,4 +205,37 @@ class QuantizeLinear_25(_CommonQuantizeLinear):
             block_size=block_size,
             output_dtype=output_dtype,
             precision=precision,
+        )
+
+
+class QuantizeLinear_29(_CommonQuantizeLinear):
+    def _run(
+        self,
+        x,
+        y_scale,
+        zero_point=None,
+        axis: int = 1,
+        saturate: bool = True,
+        block_size: int = 0,
+        output_dtype=None,
+        precision=None,
+        block_shape=None,
+    ):
+        if block_shape is not None:
+            if block_size != 0:
+                raise ValueError(
+                    "block_size must be zero when block_shape is specified."
+                )
+            if zero_point is not None and zero_point.shape != y_scale.shape:
+                raise ValueError("Scale and zero-point grid shapes must match.")
+        return super()._run(
+            x,
+            y_scale,
+            zero_point,
+            axis=axis,
+            saturate=saturate,
+            block_size=block_size,
+            output_dtype=output_dtype,
+            precision=precision,
+            _block_shape=block_shape,
         )

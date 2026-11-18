@@ -54,3 +54,28 @@ def reshape_input(
         )
     assert np.broadcast_shapes(shape, value.shape) == shape
     return value
+
+
+def reshape_multi_axis(
+    value: np.ndarray, shape: tuple[int, ...], block_shape: list[int]
+) -> np.ndarray:
+    if len(block_shape) != len(shape):
+        raise ValueError("block_shape must have one entry per input dimension.")
+    if any(
+        isinstance(size, (bool, np.bool_))
+        or not isinstance(size, (int, np.integer))
+        or size <= 0
+        for size in block_shape
+    ):
+        raise ValueError("block_shape entries must be positive integers.")
+    grid_shape = tuple(
+        (dim + size - 1) // size for dim, size in zip(shape, block_shape, strict=True)
+    )
+    if value.shape != grid_shape:
+        raise ValueError(
+            f"Expected scale/zero-point grid shape {grid_shape}, got {value.shape}."
+        )
+    for axis, size in enumerate(block_shape):
+        value = np.repeat(value, min(size, shape[axis]), axis=axis)
+        value = value[tuple(slice(dim) for dim in shape)]
+    return value[tuple(slice(dim) for dim in shape)]

@@ -14,6 +14,34 @@ from onnx.helper import make_tensor
 
 class DequantizeLinear(Base):
     @staticmethod
+    def export_multi_axis_blocked() -> None:
+        for name, shape, blocks in [
+            ("tiles", (256, 256), [128, 128]),
+            ("partial", (259, 257), [128, 128]),
+            ("experts", (2, 129, 131), [1, 128, 128]),
+        ]:
+            node = onnx.helper.make_node(
+                "DequantizeLinear", ["x", "x_scale"], ["y"], block_shape=blocks
+            )
+            x = np.ones(
+                shape,
+                dtype=onnx.helper.tensor_dtype_to_np_dtype(TensorProto.FLOAT8E4M3FN),
+            )
+            grid = tuple((d + b - 1) // b for d, b in zip(shape, blocks, strict=True))
+            x_scale = np.arange(1, np.prod(grid) + 1, dtype=np.float32).reshape(grid)
+            indices = np.ix_(
+                *(np.arange(d) // b for d, b in zip(shape, blocks, strict=True))
+            )
+            y = x.astype(np.float32) * x_scale[indices]
+            expect(
+                node,
+                inputs=[x, x_scale],
+                outputs=[y],
+                name=f"test_dequantizelinear_multi_axis_{name}",
+                opset_imports=[onnx.helper.make_opsetid("", 29)],
+            )
+
+    @staticmethod
     def export() -> None:
         node = onnx.helper.make_node(
             "DequantizeLinear",

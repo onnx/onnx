@@ -19,6 +19,69 @@ from onnx.reference import ReferenceEvaluator
 
 
 class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConversion):
+    @pytest.mark.parametrize(
+        ("scale_shape", "attrs"),
+        [([], {}), ([5], {"axis": 1}), ([3, 2], {"axis": 1, "block_size": 3})],
+    )
+    def test_DequantizeLinear_29_to_28(self, scale_shape, attrs) -> None:
+        self._test_op_downgrade(
+            "DequantizeLinear",
+            from_opset=28,
+            input_shapes=[[3, 5], scale_shape, scale_shape],
+            output_shapes=[[3, 5]],
+            input_types=[
+                onnx.TensorProto.INT8,
+                onnx.TensorProto.FLOAT,
+                onnx.TensorProto.INT8,
+            ],
+            attrs=attrs,
+        )
+
+    def test_DequantizeLinear_29_to_28_block_shape_fails(self) -> None:
+        with pytest.raises(RuntimeError, match="block_shape cannot be converted"):
+            self._test_op_downgrade(
+                "DequantizeLinear",
+                from_opset=28,
+                input_shapes=[[259, 257], [3, 3]],
+                output_shapes=[[259, 257]],
+                input_types=[onnx.TensorProto.FLOAT8E4M3FN, onnx.TensorProto.FLOAT],
+                attrs={"block_shape": [128, 128]},
+            )
+
+    @pytest.mark.parametrize(
+        ("scale_shape", "attrs"),
+        [([], {}), ([5], {"axis": 1}), ([3, 2], {"axis": 1, "block_size": 3})],
+    )
+    def test_QuantizeLinear_29_to_28(self, scale_shape, attrs) -> None:
+        self._test_op_downgrade(
+            "QuantizeLinear",
+            from_opset=28,
+            input_shapes=[[3, 5], scale_shape, scale_shape],
+            output_shapes=[[3, 5]],
+            input_types=[
+                onnx.TensorProto.FLOAT,
+                onnx.TensorProto.FLOAT,
+                onnx.TensorProto.INT8,
+            ],
+            output_types=[onnx.TensorProto.INT8],
+            attrs=attrs,
+        )
+
+    def test_QuantizeLinear_29_to_28_block_shape_fails(self) -> None:
+        with pytest.raises(RuntimeError, match="block_shape cannot be converted"):
+            self._test_op_downgrade(
+                "QuantizeLinear",
+                from_opset=28,
+                input_shapes=[[259, 257], [3, 3]],
+                output_shapes=[[259, 257]],
+                input_types=[onnx.TensorProto.FLOAT, onnx.TensorProto.FLOAT],
+                output_types=[onnx.TensorProto.FLOAT8E4M3FN],
+                attrs={
+                    "block_shape": [128, 128],
+                    "output_dtype": onnx.TensorProto.FLOAT8E4M3FN,
+                },
+            )
+
     @pytest.mark.parametrize("has_bias", [False, True])
     def test_Gemm_29_to_28(self, has_bias) -> None:
         self._test_op_downgrade(
