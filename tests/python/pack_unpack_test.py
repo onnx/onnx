@@ -17,8 +17,9 @@ from onnx import (
 )
 from onnx.reference import ReferenceEvaluator
 
-# NumPy array dimensions are constrained by np.intp even when total size is zero.
-_LARGE_EMPTY_ROW_DIM = min(2**61, np.iinfo(np.intp).max - 1)
+# NumPy constrains the product of nonzero dimensions by np.intp even when the
+# total size is zero. Leave room for the leading dimension in shape (2, 0, n).
+_LARGE_EMPTY_ROW_DIM = min(2**61, np.iinfo(np.intp).max // 2 - 1)
 
 
 def evaluator(
@@ -611,6 +612,7 @@ def test_empty_rows_do_not_iterate(
         "onnx.reference.ops.op_unpack.range", unexpected_range, raising=False
     )
     monkeypatch.setattr("onnx.reference.ops.op_range.Range._run", unexpected_range)
+    assert 2 * n <= np.iinfo(np.intp).max
     x = np.empty((2, 0, n), dtype=np.uint8)
     packed = evaluator("Pack", bits, function, x.shape).run(None, {"X": x})[0]
     assert packed.shape == (2, 0, (n * bits + 7) // 8)
