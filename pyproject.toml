@@ -271,7 +271,7 @@ required-imports = ["from __future__ import annotations"]
 # Op implementations take one parameter per input and attribute, fixed by the schema.
 "onnx/backend/test/case/node/**" = ["PLR0913", "PLR0917"]
 "onnx/reference/ops*/**" = ["PLR0913", "PLR0917"]
-"tests/python/reference_evaluator_test.py" = ["C408"]  # dict(...) -> { ... }
+"tests/python/reference/reference_evaluator_test.py" = ["C408"]  # dict(...) -> { ... }
 "tests/python/**" = [
     "PLR2004", # Magic numbers
     "S311", # Non-crypto random

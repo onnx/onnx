@@ -49,7 +49,7 @@ so, xo = Scan (s, x) <
 
 | Test file | Recommendation |
 |---|---|
-| `tests/python/shape_inference_test.py`, `tests/python/reference_evaluator_test.py` | Use `onnx.parser.parse_model(...)` for one-off fixtures. |
+| `tests/python/shape_inference_test.py`, `tests/python/reference/reference_evaluator_test.py` | Use `onnx.parser.parse_model(...)` for one-off fixtures. |
 | `onnx/backend/test/case/node/<op>.py` | Keep the outer `helper.make_node` + `expect(...)` (it drives data generation). For body-subgraph ops, build the body with `onnx.parser.parse_graph`. |
 | `tests/cpp/shape_inference_test.cc` | Use `OnnxParser` (`onnx/defs/parser.h`); pair with `shape_inference::InferShapes`. |
 | `tests/python/version_converter/automatic_upgrade_test.py` and similar harnesses | Keep the established `_test_op_upgrade` / `_test_op_downgrade` style — do not rewrite. |
