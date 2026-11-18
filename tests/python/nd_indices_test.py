@@ -213,6 +213,20 @@ def test_scatternd_schema_versions():
     ) == {"tensor(int32)", "tensor(int64)"}
 
 
+@pytest.mark.parametrize(
+    ("op", "input_count", "message"),
+    [
+        ("GatherND", 1, "GatherND requires at least two inputs"),
+        ("ScatterND", 2, "ScatterND requires at least three inputs"),
+    ],
+)
+def test_nd_indices_downgrade_rejects_missing_inputs(op, input_count, message):
+    model = _model(op, [2, 3], [1, 1], TensorProto.INT64)
+    del model.graph.node[0].input[input_count:]
+    with pytest.raises(RuntimeError, match=message):
+        version_converter.convert_version(model, 28)
+
+
 @pytest.mark.parametrize("index_dtype", [np.int32, np.int64])
 @pytest.mark.parametrize("value_dtype", [np.float64, np.int64, np.uint64])
 @pytest.mark.parametrize("whole_tensor", [False, True])

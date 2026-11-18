@@ -127,6 +127,8 @@ class NameGenerator : private internal::Visitor {
       Add(x.name());
     for (const auto& x : graph.initializer())
       Add(x.name());
+    for (const auto& x : graph.sparse_initializer())
+      Add(x.values().name());
     // Adding graph outputs is redundant for a valid graph, but we do it anyway,
     // to produce better results for invalid graphs.
     for (const auto& x : graph.output())
@@ -189,6 +191,7 @@ class InliningRenamer : public internal::MutableVisitor {
    * @param actual_name The actual parameter name to bind to.
    */
   void BindFormalToActual(const std::string& formal_name, const std::string& actual_name) {
+    generator.Add(actual_name);
     auto& current_scope = rename_scopes.back();
     current_scope[formal_name] = actual_name;
   }
@@ -221,11 +224,17 @@ class InliningRenamer : public internal::MutableVisitor {
     // However, if AP is empty, it is a missing optional parameter. This does not make any difference
     // for inputs. However, for outputs we use a unique dummy name to handle the case that it
     // is used in an output-context where it is not optional.
+    int actual_count = actuals.size();
+    if constexpr (isOutput) {
+      while (actual_count > formals.size() && actuals.Get(actual_count - 1).empty()) {
+        --actual_count;
+      }
+    }
     ONNX_ASSERTM(
-        actuals.size() <= formals.size(), "Number of actual parameters cannot exceed number of formal parameters")
+        actual_count <= formals.size(), "Number of actual parameters cannot exceed number of formal parameters")
     auto& current_scope = rename_scopes.back();
     int i = 0;
-    for (; i < actuals.size(); ++i) {
+    for (; i < actual_count; ++i) {
       std::string& formal = *formals.Mutable(i);
       std::string rename_as = actuals.Get(i);
       if (isOutput && rename_as.empty())
@@ -264,12 +273,32 @@ class InliningRenamer : public internal::MutableVisitor {
     rename_scopes.emplace_back();
     for (auto& x : *graph.mutable_input())
       Rename(*x.mutable_name());
-    for (auto& init : *graph.mutable_initializer())
-      Rename(*init.mutable_name());
-    for (auto& y : *graph.mutable_output())
-      Rename(*y.mutable_name());
+    for (auto& init : *graph.mutable_initializer()) {
+      auto binding = rename_scopes.back().find(init.name());
+      if (binding != rename_scopes.back().end())
+        init.set_name(binding->second);
+      else
+        Rename(*init.mutable_name());
+    }
+    for (auto& init : *graph.mutable_sparse_initializer()) {
+      auto* values = init.mutable_values();
+      auto binding = rename_scopes.back().find(values->name());
+      if (binding != rename_scopes.back().end())
+        values->set_name(binding->second);
+      else
+        Rename(*values->mutable_name());
+    }
     for (auto& n : *graph.mutable_node())
       VisitNode(n);
+    for (auto& y : *graph.mutable_output())
+      LookupOrRename(*y.mutable_name(), false);
+    for (auto& v : *graph.mutable_value_info())
+      LookupOrRename(*v.mutable_name(), false);
+    for (auto& annotation : *graph.mutable_quantization_annotation()) {
+      LookupOrRename(*annotation.mutable_tensor_name(), false);
+      for (auto& parameter : *annotation.mutable_quant_parameter_tensor_names())
+        LookupOrRename(*parameter.mutable_value(), false);
+    }
     rename_scopes.pop_back();
   }
 
@@ -286,7 +315,9 @@ class InliningRenamer : public internal::MutableVisitor {
   void LookupOrRename(std::string& name, bool is_new_def) {
     if (name.empty())
       return;
-    for (auto i = rename_scopes.size(); i > 0; --i) {
+    // Definitions can shadow outer scopes; references search all enclosing scopes.
+    const auto end_scope = is_new_def ? rename_scopes.size() - 1 : 0;
+    for (auto i = rename_scopes.size(); i > end_scope; --i) {
       const auto& map = rename_scopes[i - 1];
       auto iter = map.find(name);
       if (iter != map.end()) {
@@ -561,7 +592,11 @@ struct InlinerImpl {
         shape_inference::InferShapes(model); // TODO(ONNX): do shape inference incrementally
         std::vector<TypeProto> input_types;
         for (const auto& input : node.input()) {
-          input_types.emplace_back(GetType(model, input));
+          if (input.empty()) {
+            input_types.emplace_back();
+          } else {
+            input_types.emplace_back(GetType(model, input));
+          }
         }
         ONNX_NAMESPACE::FunctionBodyBuildContextImpl function_body_ctx(node, input_types);
         target_version = kNoConversion;
