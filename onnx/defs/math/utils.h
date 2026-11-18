@@ -53,4 +53,11 @@ void QLinearMatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx);
 
 int64_t MathOpTwoIntegers(std::string_view op_type, int64_t a, int64_t b);
 
+// Legacy Div leaves symbolic operands and division by zero unpropagated.
+void MathOpDataPropagator(DataPropagationContext& ctx, std::string_view op_type, bool legacy_division = false);
+
+void NegDataPropagator(DataPropagationContext& ctx);
+
+void ReluDataPropagator(DataPropagationContext& ctx);
+
 } // namespace ONNX_NAMESPACE::defs::math::utils

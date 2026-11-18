@@ -4,15 +4,755 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pytest
 from shape_inference_test_utils import TestShapeInferenceHelper
 
 import onnx.parser
 from onnx import TensorProto
 from onnx.helper import make_node, make_tensor, make_tensor_value_info
+from onnx.reference import ReferenceEvaluator
 
 
 class TestDataPropagation(TestShapeInferenceHelper):
+    @pytest.mark.parametrize("version", [18, 19, 21, 23, 24, 25, 27])
+    @pytest.mark.parametrize("index_type", [TensorProto.INT32, TensorProto.INT64])
+    @pytest.mark.parametrize("axis", [0, -1])
+    def test_pad_computed_integer_axes(
+        self, version: int, index_type: int, axis: int
+    ) -> None:
+        model = onnx.helper.make_model(
+            onnx.helper.make_graph(
+                [
+                    make_node("Add", ["axis", "zero"], ["axes"]),
+                    make_node("Pad", ["x", "pads", "", "axes"], ["y"]),
+                ],
+                "computed_pad_axes",
+                [make_tensor_value_info("x", TensorProto.FLOAT, [2, 3])],
+                [make_tensor_value_info("y", TensorProto.FLOAT, None)],
+                initializer=[
+                    make_tensor("axis", index_type, [1], [axis]),
+                    make_tensor("zero", index_type, [1], [0]),
+                    make_tensor("pads", TensorProto.INT64, [2], [1, 2]),
+                ],
+            ),
+            opset_imports=[onnx.helper.make_opsetid("", version)],
+        )
+        expected = [5, 3] if axis == 0 else [2, 6]
+        actual = ReferenceEvaluator(model).run(
+            None, {"x": np.zeros((2, 3), dtype=np.float32)}
+        )[0]
+        assert actual.shape == tuple(expected)
+        inferred = onnx.shape_inference.infer_shapes(
+            model, check_type=True, strict_mode=True, data_prop=True
+        )
+        assert inferred.graph.output[0] == make_tensor_value_info(
+            "y", TensorProto.FLOAT, expected
+        )
+
+    @pytest.mark.parametrize("symbolic_input", ["starts", "ends", "axes"])
+    def test_slice_symbolic_indices_do_not_default_to_zero(
+        self, symbolic_input: str
+    ) -> None:
+        model = onnx.helper.make_model(
+            onnx.helper.make_graph(
+                [
+                    make_node("Shape", ["x"], [symbolic_input]),
+                    make_node(
+                        "Slice", ["values", "starts", "ends", "axes"], ["target"]
+                    ),
+                    make_node("ConstantOfShape", ["target"], ["output"]),
+                ],
+                "symbolic_slice_indices",
+                [make_tensor_value_info("x", TensorProto.FLOAT, ["N"])],
+                [make_tensor_value_info("output", TensorProto.FLOAT, None)],
+                initializer=[
+                    make_tensor("values", TensorProto.INT64, [3], [2, 3, 4]),
+                    *[
+                        make_tensor(name, TensorProto.INT64, [1], [value])
+                        for name, value in (("starts", 0), ("ends", 2), ("axes", 0))
+                        if name != symbolic_input
+                    ],
+                ],
+            ),
+            opset_imports=[onnx.helper.make_opsetid("", 18)],
+        )
+        concrete_length = 0 if symbolic_input == "axes" else 1
+        actual = ReferenceEvaluator(model).run(
+            None, {"x": np.zeros(concrete_length, dtype=np.float32)}
+        )[0]
+        assert (
+            actual.shape
+            == {"starts": (3,), "ends": (2,), "axes": (2, 3)}[symbolic_input]
+        )
+        inferred = onnx.shape_inference.infer_shapes(
+            model, strict_mode=True, data_prop=True
+        )
+        assert not inferred.graph.output[0].type.tensor_type.HasField("shape")
+
+    @pytest.mark.parametrize("version", [13, 14, 19, 21, 23, 24, 27])
+    @pytest.mark.parametrize("operation", ["Identity", "Sub"])
+    def test_reshape_symbolic_special_values_remain_unknown(
+        self, version: int, operation: str
+    ) -> None:
+        expression = (
+            "target = Identity(shape)"
+            if operation == "Identity"
+            else "one = Constant<value=int64[1]{1}>() target = Sub(shape, one)"
+        )
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 7, opset_import: ["": {version}]>
+            g (float[N] x, float[4] y) => (z) {{
+                shape = Shape(x)
+                {expression}
+                z = Reshape(y, target)
+            }}
+            """
+        )
+        output = ReferenceEvaluator(model).run(
+            None,
+            {
+                "x": np.empty((0,), dtype=np.float32),
+                "y": np.zeros((4,), dtype=np.float32),
+            },
+        )[0]
+        assert output.shape == (4,)
+        inferred = onnx.shape_inference.infer_shapes(
+            model, check_type=True, strict_mode=True, data_prop=True
+        )
+        if version == 13:
+            assert not inferred.graph.output[0].type.tensor_type.HasField("shape")
+            return
+        dim = inferred.graph.output[0].type.tensor_type.shape.dim[0]
+        assert not dim.HasField("dim_value")
+        assert dim.dim_param not in {"N", "N - 1"}
+
+    @pytest.mark.parametrize("version", [14, 19, 21, 23, 24, 27])
+    @pytest.mark.parametrize("allowzero", [0, 1])
+    @pytest.mark.parametrize("expression", ["identity", "positive", "overflow"])
+    def test_reshape_symbolic_target_requires_bound(
+        self, version: int, allowzero: int, expression: str
+    ) -> None:
+        nodes = [make_node("Shape", ["x"], ["length"])]
+        if expression == "identity":
+            nodes.append(make_node("Identity", ["length"], ["target"]))
+        else:
+            nodes.extend(
+                [
+                    make_node(
+                        "Div" if expression == "positive" else "Mul",
+                        ["length", "two"],
+                        ["scaled"],
+                    ),
+                    make_node("Add", ["scaled", "one"], ["target"]),
+                ]
+            )
+        nodes.append(make_node("Reshape", ["y", "target"], ["z"], allowzero=allowzero))
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ("N",)), ("y", TensorProto.FLOAT, ("M",))],
+            nodes,
+            [],
+            initializer=[
+                make_tensor("two", TensorProto.INT64, (1,), [2]),
+                make_tensor("one", TensorProto.INT64, (1,), [1]),
+            ],
+        )
+        inferred = self._inferred(
+            graph,
+            data_prop=True,
+            opset_imports=[onnx.helper.make_opsetid("", version)],
+        )
+        dims = {
+            info.name: info.type.tensor_type.shape for info in inferred.graph.value_info
+        }
+        target = dims["z"].dim[0]
+        if expression == "positive" or (expression == "identity" and allowzero):
+            assert target.dim_param == ("N" if expression == "identity" else "N/2 + 1")
+        else:
+            assert target.dim_param not in {"N", "N*2 + 1"}
+
+    @pytest.mark.parametrize("version", [14, 19, 21, 23, 24, 27])
+    def test_reshape_zero_copy_same_axis_identity(self, version: int) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ("N",))],
+            [
+                make_node("Shape", ["x"], ["shape"]),
+                make_node("Reshape", ["x", "shape"], ["y"]),
+            ],
+            [],
+        )
+        inferred = self._inferred(
+            graph,
+            data_prop=True,
+            opset_imports=[onnx.helper.make_opsetid("", version)],
+        )
+        output = next(info for info in inferred.graph.value_info if info.name == "y")
+        assert (
+            output.type == make_tensor_value_info("y", TensorProto.FLOAT, ("N",)).type
+        )
+
+    @pytest.mark.parametrize("version", [14, 27])
+    @pytest.mark.parametrize(("width", "trim", "remaining"), [(8, 3, 5), (3, 8, 0)])
+    def test_relu_clamps_trimmed_sequence_length(
+        self, version: int, width: int, trim: int, remaining: int
+    ) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (width,))],
+            [
+                make_node("Shape", ["x"], ["length"]),
+                make_node("Sub", ["length", "trim"], ["difference"]),
+                make_node("Relu", ["difference"], ["shape"]),
+                make_node("ConstantOfShape", ["shape"], ["mask"]),
+            ],
+            [],
+            initializer=[make_tensor("trim", TensorProto.INT64, (1,), [trim])],
+        )
+        inferred = self._inferred(
+            graph,
+            data_prop=True,
+            opset_imports=[onnx.helper.make_opsetid("", version)],
+        )
+        output = next(info for info in inferred.graph.value_info if info.name == "mask")
+        assert (
+            output.type
+            == make_tensor_value_info("mask", TensorProto.FLOAT, (remaining,)).type
+        )
+
+    @pytest.mark.parametrize("version", [27])
+    @pytest.mark.parametrize("length", [128, 1000, 1001])
+    def test_range_position_endpoint_builds_mask_shape(
+        self, version: int, length: int
+    ) -> None:
+        graph = self._make_graph(
+            [],
+            [
+                make_node("Range", ["start", "limit", "delta"], ["positions"]),
+                make_node("Gather", ["positions", "last"], ["endpoint"]),
+                make_node("Add", ["endpoint", "one"], ["shape"]),
+                make_node("ConstantOfShape", ["shape"], ["mask"]),
+            ],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.INT64, (), [0]),
+                make_tensor("limit", TensorProto.INT64, (), [length]),
+                make_tensor("delta", TensorProto.INT64, (), [1]),
+                make_tensor("last", TensorProto.INT64, (1,), [length - 1]),
+                make_tensor("one", TensorProto.INT64, (1,), [1]),
+            ],
+        )
+        inferred = self._inferred(
+            graph,
+            data_prop=True,
+            opset_imports=[onnx.helper.make_opsetid("", version)],
+        )
+        output = next(info for info in inferred.graph.value_info if info.name == "mask")
+        dim = output.type.tensor_type.shape.dim[0]
+        if length <= 1000:
+            assert dim.HasField("dim_value")
+            assert dim.dim_value == length
+        else:
+            assert not dim.HasField("dim_value")
+
+    @pytest.mark.parametrize("version", [13, 14, 27])
+    @pytest.mark.parametrize("value", [1, 2])
+    def test_negated_constant_reshape_inferred_dimension(
+        self, version: int, value: int
+    ) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 3))],
+            [
+                make_node("Neg", ["one"], ["inferred_dim"]),
+                make_node("Concat", ["inferred_dim", "three"], ["shape"], axis=0),
+                make_node("Reshape", ["x", "shape"], ["y"]),
+            ],
+            [],
+            initializer=[
+                make_tensor("one", TensorProto.INT64, (1,), [value]),
+                make_tensor("three", TensorProto.INT64, (1,), [3]),
+            ],
+        )
+        if value == 2:
+            with pytest.raises(
+                onnx.shape_inference.InferenceError, match="Invalid dimension value"
+            ):
+                self._inferred(
+                    graph,
+                    data_prop=True,
+                    opset_imports=[onnx.helper.make_opsetid("", version)],
+                )
+            return
+        inferred = self._inferred(
+            graph,
+            data_prop=True,
+            opset_imports=[onnx.helper.make_opsetid("", version)],
+        )
+        output = next(info for info in inferred.graph.value_info if info.name == "y")
+        assert (
+            output.type == make_tensor_value_info("y", TensorProto.FLOAT, (2, 3)).type
+        )
+
+    def test_slice_multidimensional_records_do_not_publish_flat_slice(self) -> None:
+        graph = self._make_graph(
+            [],
+            [
+                make_node("Unsqueeze", ["values", "axes"], ["one_row"]),
+                make_node("Concat", ["one_row", "one_row"], ["matrix"], axis=0),
+                make_node(
+                    "Slice", ["matrix", "starts", "ends", "axes", "steps"], ["row"]
+                ),
+                make_node("Squeeze", ["row", "axes"], ["shape"]),
+                make_node("ConstantOfShape", ["shape"], ["y"]),
+            ],
+            [],
+            initializer=[
+                make_tensor("values", TensorProto.INT64, (2,), [4, 8]),
+                make_tensor("starts", TensorProto.INT64, (1,), [0]),
+                make_tensor("ends", TensorProto.INT64, (1,), [4]),
+                make_tensor("axes", TensorProto.INT64, (1,), [0]),
+                make_tensor("steps", TensorProto.INT64, (1,), [2]),
+            ],
+        )
+        inferred = self._inferred(graph, data_prop=True)
+        shape = next(
+            info.type.tensor_type.shape
+            for info in inferred.graph.value_info
+            if info.name == "y"
+        )
+        assert len(shape.dim) == 2
+        assert not any(dim.HasField("dim_value") for dim in shape.dim)
+
+    @pytest.mark.parametrize("version", [13, 19, 21, 23, 24, 25])
+    @pytest.mark.parametrize(
+        ("input_shape", "count"),
+        [
+            ((2, 3), 6),
+            ((1 << 32, 1 << 32, 0), 0),
+            ((1 << 32, 0, 1 << 32), 0),
+            ((0, 1 << 32, 1 << 32), 0),
+            (("N", 0), 0),
+            ((0, "N"), 0),
+        ],
+    )
+    def test_size_of_float_tensor_uses_shape(
+        self, version: int, input_shape: tuple[int | str, ...], count: int
+    ) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, input_shape)],
+            [
+                make_node("Size", ["x"], ["size"]),
+                make_node("Unsqueeze", ["size", "axis"], ["shape"]),
+                make_node("ConstantOfShape", ["shape"], ["y"]),
+            ],
+            [],
+            initializer=[make_tensor("axis", TensorProto.INT64, (1,), [0])],
+        )
+        inferred = self._inferred(
+            graph,
+            data_prop=True,
+            opset_imports=[onnx.helper.make_opsetid("", version)],
+        )
+        types = {info.name: info.type for info in inferred.graph.value_info}
+        for expected in [
+            make_tensor_value_info("size", TensorProto.INT64, ()),
+            make_tensor_value_info("shape", TensorProto.INT64, (1,)),
+            make_tensor_value_info("y", TensorProto.FLOAT, (count,)),
+        ]:
+            assert types[expected.name] == expected.type
+
+    def test_symbolic_int32_overflow_does_not_alias_dimension_arithmetic(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ("N",)), ("matrix", TensorProto.FLOAT, ("N", 2))],
+            [
+                make_node("Shape", ["x"], ["shape64"]),
+                make_node("Cast", ["shape64"], ["shape32"], to=TensorProto.INT32),
+                make_node("Mul", ["shape32", "two"], ["wrapped"]),
+                make_node("Cast", ["wrapped"], ["shape"], to=TensorProto.INT64),
+                make_node("ConstantOfShape", ["shape"], ["y"]),
+                make_node("Flatten", ["matrix"], ["flat"], axis=0),
+            ],
+            [],
+            initializer=[make_tensor("two", TensorProto.INT32, (1,), [2])],
+        )
+        inferred = self._inferred(graph, data_prop=True)
+        shapes = {
+            info.name: info.type.tensor_type.shape for info in inferred.graph.value_info
+        }
+        assert shapes["flat"].dim[1].dim_param == "N*2"
+        assert shapes["y"].dim[0].dim_param != "N*2"
+
+    @pytest.mark.parametrize("reverse", [False, True])
+    def test_symbolic_int64_wrap_does_not_alias_exact_dimension_product(
+        self, reverse: bool
+    ) -> None:
+        nodes = [
+            make_node("Shape", ["x"], ["shape"]),
+            make_node("Mul", ["shape", "four"], ["wrapped"]),
+            make_node("ConstantOfShape", ["wrapped"], ["y"]),
+            make_node("Mul", ["shape", "four"], ["again"]),
+            make_node("ConstantOfShape", ["again"], ["repeated"]),
+        ]
+        flat = make_node("Flatten", ["matrix"], ["flat"], axis=0)
+        if reverse:
+            nodes.insert(0, flat)
+        else:
+            nodes.append(flat)
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ("N",)), ("matrix", TensorProto.FLOAT, ("N", 4))],
+            nodes,
+            [],
+            initializer=[make_tensor("four", TensorProto.INT64, (1,), [4])],
+        )
+        inferred = self._inferred(graph, data_prop=True)
+        shapes = {
+            info.name: info.type.tensor_type.shape for info in inferred.graph.value_info
+        }
+        name = shapes["y"].dim[0].dim_param
+        assert name
+        assert name != shapes["flat"].dim[1].dim_param
+        assert shapes["repeated"] == shapes["y"]
+        n = (1 << 62) + 1
+        assert int(np.multiply(np.int64(n), np.int64(4))) == 4
+        assert n * 4 != 4
+
+    @pytest.mark.parametrize(
+        ("operation", "spelling"),
+        [("Add", "N + 2"), ("Sub", "N - 2"), ("Mul", "N*2"), ("Div", "N/2")],
+    )
+    @pytest.mark.parametrize("reverse", [False, True])
+    def test_expression_names_share_shape_and_data_provenance(
+        self, operation: str, spelling: str, reverse: bool
+    ) -> None:
+        nodes = [
+            make_node("Shape", ["x"], ["shape"]),
+            make_node(operation, ["shape", "two"], ["computed"]),
+            make_node("ConstantOfShape", ["computed"], ["y"]),
+            make_node(operation, ["shape", "two"], ["again"]),
+            make_node("ConstantOfShape", ["again"], ["repeated"]),
+        ]
+        flat = make_node("Flatten", ["matrix"], ["flat"], axis=0)
+        if reverse:
+            nodes.insert(0, flat)
+        else:
+            nodes.append(flat)
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, ("N",)),
+                ("matrix", TensorProto.FLOAT, ("N", 2)),
+                ("independent", TensorProto.FLOAT, (spelling,)),
+            ],
+            nodes,
+            [],
+            initializer=[make_tensor("two", TensorProto.INT64, (1,), [2])],
+        )
+        inferred = self._inferred(graph, data_prop=True)
+        shapes = {
+            info.name: info.type.tensor_type.shape for info in inferred.graph.value_info
+        }
+        name = shapes["y"].dim[0].dim_param
+        assert name and name != spelling
+        assert shapes["repeated"] == shapes["y"]
+        if operation == "Mul":
+            assert shapes["flat"].dim[1].dim_param != name
+
+    @pytest.mark.parametrize("op_type", ["Identity", "Neg"])
+    def test_large_nonconstant_integer_vector(self, op_type: str) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.INT64, (1 << 40,))],
+            [make_node(op_type, ["x"], ["y"])],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT64, (1 << 40,))],
+            data_prop=True,
+        )
+
+    def test_inconsistent_partial_value_count_is_discarded(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3,))],
+            [
+                make_node("Unsqueeze", ["pads", "axis"], ["matrix"]),
+                make_node("Gather", ["matrix", "index"], ["selected"]),
+                make_node("Add", ["selected", "zeros"], ["computed_pads"]),
+                make_node("Pad", ["x", "computed_pads"], ["y"]),
+            ],
+            [],
+            initializer=[
+                make_tensor("pads", TensorProto.INT64, (2,), [1, 2]),
+                make_tensor("axis", TensorProto.INT64, (1,), [0]),
+                make_tensor("index", TensorProto.INT64, (), [0]),
+                make_tensor("zeros", TensorProto.INT64, (2,), [0, 0]),
+            ],
+        )
+        inferred = self._inferred(graph, data_prop=True)
+        y = next(info for info in inferred.graph.value_info if info.name == "y")
+        dim = y.type.tensor_type.shape.dim[0]
+        assert not dim.HasField("dim_value") or dim.dim_value == 6
+
+    @pytest.mark.parametrize("version", [13, 27])
+    def test_if_branch_data_is_local(self, version: int) -> None:
+        model = onnx.parser.parse_model("""
+            <ir_version: 8, opset_import: ["" : 13]>
+            test (bool cond, float[N, 3] x) => (y) {
+                outer_shape = Shape(x)
+                y = If(cond) <
+                    then_branch = then_graph () => (branch_output) {
+                        local = Constant<value = int64[1] {2}>()
+                        shared = Identity(local)
+                        branch_output = ConstantOfShape(shared)
+                    },
+                    else_branch = else_graph () => (branch_output) {
+                        local = Constant<value = int64[1] {4}>()
+                        shared = Identity(local)
+                        branch_output = ConstantOfShape(shared)
+                    }
+                >
+                z = If(cond) <
+                    then_branch = outer_then () => (branch_output) {
+                        branch_shape = Identity(outer_shape)
+                        branch_output = ConstantOfShape(branch_shape)
+                    },
+                    else_branch = outer_else () => (branch_output) {
+                        branch_shape = Identity(outer_shape)
+                        branch_output = ConstantOfShape(branch_shape)
+                    }
+                >
+            }
+        """)
+        model.opset_import[0].version = version
+        inferred = self._inferred(model, data_prop=True)
+        assert (
+            not inferred.graph.output[0]
+            .type.tensor_type.shape.dim[0]
+            .HasField("dim_value")
+        )
+        z = next(info for info in inferred.graph.value_info if info.name == "z")
+        assert z.type.tensor_type.shape.dim[0].dim_param == "N"
+        assert z.type.tensor_type.shape.dim[1].dim_value == 3
+
+    @pytest.mark.parametrize("operation", ["Squeeze", "Gather"])
+    def test_partial_values_do_not_create_malformed_pad_data(
+        self, operation: str
+    ) -> None:
+        nodes = [
+            make_node("Unsqueeze", ["pads", "axis"], ["matrix"]),
+            make_node(
+                operation,
+                ["matrix", "runtime"]
+                if operation == "Squeeze"
+                else ["matrix", "index"],
+                ["propagated"],
+            ),
+            make_node("Pad", ["x", "propagated"], ["y"]),
+        ]
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3,)), ("runtime", TensorProto.INT64, (1,))],
+            nodes,
+            [],
+            initializer=[
+                make_tensor("pads", TensorProto.INT64, (2,), [1, 2]),
+                make_tensor("axis", TensorProto.INT64, (1,), [0]),
+                make_tensor("index", TensorProto.INT64, (), [0]),
+            ],
+        )
+        self._inferred(graph, data_prop=True)
+
+    @pytest.mark.parametrize(
+        ("op_type", "versions"), [("Neg", [6, 13]), ("Div", [7, 13, 14])]
+    )
+    def test_integer_unary_division_overflow(
+        self, op_type: str, versions: list[int]
+    ) -> None:
+        for version in versions:
+            graph = self._make_graph(
+                [],
+                [
+                    make_node(
+                        op_type,
+                        ["x"] if op_type == "Neg" else ["x", "minus_one"],
+                        ["y"],
+                    )
+                ],
+                [],
+                initializer=[
+                    make_tensor("x", TensorProto.INT64, (1,), [-(1 << 63)]),
+                    make_tensor("minus_one", TensorProto.INT64, (1,), [-1]),
+                ],
+            )
+            with pytest.raises(onnx.shape_inference.InferenceError, match="overflow"):
+                self._inferred(
+                    graph,
+                    data_prop=True,
+                    opset_imports=[onnx.helper.make_opsetid("", version)],
+                )
+
+    @pytest.mark.parametrize("version", [13, 14, 27])
+    def test_float_division_does_not_propagate_integer_quotient(
+        self, version: int
+    ) -> None:
+        graph = self._make_graph(
+            [],
+            [
+                make_node("Cast", ["a"], ["af"], to=TensorProto.FLOAT),
+                make_node("Cast", ["b"], ["bf"], to=TensorProto.FLOAT),
+                make_node("Div", ["af", "bf"], ["quotient"]),
+                make_node("Ceil", ["quotient"], ["rounded"]),
+                make_node("Cast", ["rounded"], ["shape"], to=TensorProto.INT64),
+                make_node("ConstantOfShape", ["shape"], ["y"]),
+            ],
+            [],
+            initializer=[
+                make_tensor("a", TensorProto.INT64, (1,), [5]),
+                make_tensor("b", TensorProto.INT64, (1,), [2]),
+            ],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("af", TensorProto.FLOAT, (1,)),
+                make_tensor_value_info("bf", TensorProto.FLOAT, (1,)),
+                make_tensor_value_info("quotient", TensorProto.FLOAT, (1,)),
+                make_tensor_value_info("rounded", TensorProto.FLOAT, (1,)),
+                make_tensor_value_info("shape", TensorProto.INT64, (1,)),
+                make_tensor_value_info("y", TensorProto.FLOAT, (None,)),
+            ],
+            data_prop=True,
+            opset_imports=[onnx.helper.make_opsetid("", version)],
+        )
+
+    def test_narrowing_cast_discards_out_of_range_data(self) -> None:
+        graph = self._make_graph(
+            [],
+            [
+                make_node("Cast", ["x"], ["narrowed"], to=TensorProto.INT32),
+                make_node("Cast", ["narrowed"], ["shape"], to=TensorProto.INT64),
+                make_node("Relu", ["shape"], ["positive_shape"]),
+                make_node("ConstantOfShape", ["positive_shape"], ["y"]),
+            ],
+            [],
+            initializer=[make_tensor("x", TensorProto.INT64, (1,), [1 << 31])],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("narrowed", TensorProto.INT32, (1,)),
+                make_tensor_value_info("shape", TensorProto.INT64, (1,)),
+                make_tensor_value_info("positive_shape", TensorProto.INT64, (1,)),
+                make_tensor_value_info("y", TensorProto.FLOAT, (None,)),
+            ],
+            data_prop=True,
+        )
+
+    @pytest.mark.parametrize("op_type", ["Add", "Mul"])
+    def test_symbolic_expression_growth_is_bounded(self, op_type: str) -> None:
+        nodes = [make_node("Shape", ["x"], ["value_0"])]
+        nodes.extend(
+            make_node(op_type, [f"value_{i}", f"value_{i}"], [f"value_{i + 1}"])
+            for i in range(16)
+        )
+        nodes.append(make_node("ConstantOfShape", ["value_16"], ["y"]))
+        graph = self._make_graph([("x", TensorProto.FLOAT, ("N",))], nodes, [])
+        inferred = self._inferred(graph, data_prop=True)
+        y = next(info for info in inferred.graph.value_info if info.name == "y")
+        dim = y.type.tensor_type.shape.dim[0]
+        assert not dim.HasField("dim_value")
+        assert len(dim.dim_param) <= 4096
+
+    @pytest.mark.parametrize(
+        ("start", "limit", "delta", "index", "expected_dim"),
+        [
+            (0, (1 << 53) + 1, 1 << 53, 1, 1 << 53),
+            (-(1 << 63), (1 << 63) - 1, (1 << 63) - 1, 2, (1 << 63) - 2),
+            ((1 << 63) - 1, -(1 << 63), -((1 << 63) - 1), 1, 0),
+            ((1 << 63) - 1, -(1 << 63), -(1 << 63), 0, (1 << 63) - 1),
+        ],
+    )
+    def test_range_exact_int64_data(
+        self, start: int, limit: int, delta: int, index: int, expected_dim: int
+    ) -> None:
+        graph = self._make_graph(
+            [],
+            [
+                make_node("Range", ["start", "limit", "delta"], ["values"]),
+                make_node("Gather", ["values", "index"], ["shape"]),
+                make_node("ConstantOfShape", ["shape"], ["y"]),
+            ],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.INT64, (), [start]),
+                make_tensor("limit", TensorProto.INT64, (), [limit]),
+                make_tensor("delta", TensorProto.INT64, (), [delta]),
+                make_tensor("index", TensorProto.INT64, (1,), [index]),
+            ],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "values", TensorProto.INT64, (len(range(start, limit, delta)),)
+                ),
+                make_tensor_value_info("shape", TensorProto.INT64, (1,)),
+                make_tensor_value_info("y", TensorProto.FLOAT, (expected_dim,)),
+            ],
+            data_prop=True,
+        )
+
+    @pytest.mark.parametrize("op_type", ["Add", "Sub", "Mul", "Div"])
+    @pytest.mark.parametrize("version", [13, 14])
+    def test_arithmetic_unknown_rank_broadcast(
+        self, op_type: str, version: int
+    ) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (4, 8)), ("axes", TensorProto.INT64, (None,))],
+            [
+                make_node("Shape", ["x"], ["values"]),
+                make_node("Unsqueeze", ["values", "axis"], ["matrix"]),
+                make_node("Squeeze", ["matrix", "axes"], ["unknown_rank"]),
+                make_node(op_type, ["unknown_rank", "divisors"], ["y"]),
+            ],
+            [],
+            initializer=[
+                make_tensor("axis", TensorProto.INT64, (1,), [1]),
+                make_tensor("divisors", TensorProto.INT64, (3,), [1, 2, 4]),
+            ],
+        )
+        inferred = self._inferred(
+            graph,
+            data_prop=True,
+            opset_imports=[onnx.helper.make_opsetid("", version)],
+        )
+        types = {info.name: info.type for info in inferred.graph.value_info}
+        assert not types["unknown_rank"].tensor_type.HasField("shape")
+        assert not types["y"].tensor_type.HasField("shape")
+
+    @pytest.mark.parametrize("op_type", ["Add", "Sub", "Mul", "Div"])
+    @pytest.mark.parametrize("version", [13, 18])
+    def test_arithmetic_multidimensional_broadcast(
+        self, op_type: str, version: int
+    ) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 7, opset_import: [ "" : 18]>
+            agraph () => (z)
+            <int64 start = {1}, int64 row_limit = {3}, int64 col_limit = {4},
+             int64 delta = {1}, int64[1] axis0 = {0}, int64[1] axis1 = {1}>
+            {
+                row_values = Range (start, row_limit, delta)
+                col_values = Range (start, col_limit, delta)
+                rows = Unsqueeze (row_values, axis1)
+                cols = Unsqueeze (col_values, axis0)
+                z = BINARY_OP (rows, cols)
+            }
+            """.replace("BINARY_OP", op_type)
+        )
+        model.opset_import[0].version = version
+        inferred = onnx.shape_inference.infer_shapes(
+            model, strict_mode=True, data_prop=True
+        )
+        dims = inferred.graph.output[0].type.tensor_type.shape.dim
+        assert [dim.dim_value for dim in dims] == [2, 3]
+
     def test_expand_symbolic_input(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.INT32, (3, 1, 2)), ("y", TensorProto.INT32, (1, 4, 2))],
@@ -332,3 +1072,107 @@ class TestDataPropagation(TestShapeInferenceHelper):
         inferred_model = onnx.shape_inference.infer_shapes(model, True, True, True)
         output = inferred_model.graph.output[0]
         assert output.type.tensor_type.shape.dim[0].dim_value == 256
+
+    def test_symbolic_add_produces_expression(self) -> None:
+        """Shape → Add → Reshape: symbolic dim expression propagates to Reshape output."""
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 7, opset_import: [ "" : 18]>
+            agraph (float[N, 3, H, W] x, float[M] y) => (z) {
+                shape = Shape (x)
+                delta = Constant <value = int64[4] {0, 2, 0, 0}> ()
+                new_shape = Add (shape, delta)
+                z = Reshape <allowzero=1> (y, new_shape)
+            }
+        """
+        )
+        inferred_model = onnx.shape_inference.infer_shapes(model, True, True, True)
+        output = inferred_model.graph.output[0]
+        dims = list(output.type.tensor_type.shape.dim)
+        assert len(dims) == 4
+        assert dims[0].dim_param == "N"
+        assert dims[1].dim_value == 5
+        assert dims[2].dim_param == "H"
+        assert dims[3].dim_param == "W"
+
+    def test_symbolic_sub_produces_expression(self) -> None:
+        """Shape → Sub → Reshape: symbolic dim expression propagates to Reshape output."""
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 7, opset_import: [ "" : 18]>
+            agraph (float[N, 4, H] x, float[M] y) => (z) {
+                shape = Shape (x)
+                delta = Constant <value = int64[3] {0, 1, 0}> ()
+                new_shape = Sub (shape, delta)
+                z = Reshape <allowzero=1> (y, new_shape)
+            }
+        """
+        )
+        inferred_model = onnx.shape_inference.infer_shapes(model, True, True, True)
+        output = inferred_model.graph.output[0]
+        dims = list(output.type.tensor_type.shape.dim)
+        assert len(dims) == 3
+        assert dims[0].dim_param == "N"
+        assert dims[1].dim_value == 3
+        assert dims[2].dim_param == "H"
+
+    def test_symbolic_mul_produces_expression(self) -> None:
+        """Shape → Mul → Reshape: symbolic dim expression propagates to Reshape output."""
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 7, opset_import: [ "" : 18]>
+            agraph (float[N, 3, H] x, float[M] y) => (z) {
+                shape = Shape (x)
+                scale = Constant <value = int64[3] {1, 2, 1}> ()
+                new_shape = Mul (shape, scale)
+                z = Reshape <allowzero=1> (y, new_shape)
+            }
+        """
+        )
+        inferred_model = onnx.shape_inference.infer_shapes(model, True, True, True)
+        output = inferred_model.graph.output[0]
+        dims = list(output.type.tensor_type.shape.dim)
+        assert len(dims) == 3
+        assert dims[0].dim_param == "N"
+        assert dims[1].dim_value == 6
+        assert dims[2].dim_param == "H"
+
+    def test_symbolic_shape_add_reshape(self) -> None:
+        """End-to-end: Shape → Add → Reshape with symbolic dims produces expression-based shape."""
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 7, opset_import: [ "" : 18]>
+            agraph (float[N, 3] x, float[M] y) => (z) {
+                shape = Shape (x)
+                delta = Constant <value = int64[2] {0, 2}> ()
+                new_shape = Add (shape, delta)
+                z = Reshape <allowzero=1> (y, new_shape)
+            }
+        """
+        )
+        inferred_model = onnx.shape_inference.infer_shapes(model, True, True, True)
+        output = inferred_model.graph.output[0]
+        dims = list(output.type.tensor_type.shape.dim)
+        assert len(dims) == 2
+        assert dims[0].dim_param == "N"
+        assert dims[1].dim_value == 5
+
+    def test_symbolic_shape_reshape(self) -> None:
+        """Shape values propagate through a runtime Reshape."""
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 7, opset_import: [ "" : 18]>
+            agraph (float[N, 3, H, W] x, float[M] y) => (z) {
+                shape = Shape (x)
+                z = Reshape <allowzero=1> (y, shape)
+            }
+        """
+        )
+        inferred_model = onnx.shape_inference.infer_shapes(model, True, True, True)
+        output = inferred_model.graph.output[0]
+        dims = list(output.type.tensor_type.shape.dim)
+        assert len(dims) == 4
+        assert dims[0].dim_param == "N"
+        assert dims[1].dim_value == 3
+        assert dims[2].dim_param == "H"
+        assert dims[3].dim_param == "W"

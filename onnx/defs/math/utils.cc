@@ -18,6 +18,73 @@
 
 namespace ONNX_NAMESPACE::defs::math::utils {
 
+void MathOpDataPropagator(DataPropagationContext& ctx, std::string_view op_type, bool legacy_division) {
+  for (size_t i = 0; i < 2; ++i) {
+    const auto* type = ctx.getInputType(i);
+    if (type == nullptr || !type->has_tensor_type() || !type->tensor_type().has_shape() ||
+        type->tensor_type().shape().dim_size() > 1) {
+      return;
+    }
+  }
+  const auto* input_0 = ctx.getInputData(0);
+  const auto* input_1 = ctx.getInputData(1);
+  if (input_0 == nullptr || input_1 == nullptr) {
+    return;
+  }
+  const int size_0 = input_0->dim_size();
+  const int size_1 = input_1->dim_size();
+  if (size_0 != size_1 && size_0 != 1 && size_1 != 1) {
+    if (legacy_division) {
+      return;
+    }
+    fail_shape_inference("Invalid rank for ", op_type, " broadcasting: (", size_0, ") vs (", size_1, ").");
+  }
+  TensorShapeProto tsp;
+  const int size_out = size_0 == 1 ? size_1 : size_0;
+  for (int i = 0; i < size_out; ++i) {
+    const auto& left = input_0->dim(size_0 == 1 ? 0 : i);
+    const auto& right = input_1->dim(size_1 == 1 ? 0 : i);
+    if (legacy_division && (!left.has_dim_value() || !right.has_dim_value() || right.dim_value() == 0)) {
+      tsp.add_dim();
+    } else if (left.has_dim_value() && right.has_dim_value()) {
+      tsp.add_dim()->set_dim_value(MathOpTwoIntegers(op_type, left.dim_value(), right.dim_value()));
+    } else {
+      *tsp.add_dim() = computeDimension(ctx.getSymbolTable(), "Int64" + std::string(op_type), left, right);
+    }
+  }
+  ctx.addOutputData(0, std::move(tsp));
+}
+
+void NegDataPropagator(DataPropagationContext& ctx) {
+  const auto* input = ctx.getInputData(0);
+  if (input == nullptr) {
+    return;
+  }
+  TensorShapeProto tsp;
+  for (const auto& dim : input->dim()) {
+    auto* output = tsp.add_dim();
+    if (dim.has_dim_value()) {
+      output->set_dim_value(checkedSubtract(0, dim.dim_value()));
+    }
+  }
+  ctx.addOutputData(0, std::move(tsp));
+}
+
+void ReluDataPropagator(DataPropagationContext& ctx) {
+  const auto* input = ctx.getInputData(0);
+  if (input == nullptr) {
+    return;
+  }
+  TensorShapeProto tsp;
+  for (const auto& dim : input->dim()) {
+    auto* output = tsp.add_dim();
+    if (dim.has_dim_value()) {
+      output->set_dim_value(std::max(static_cast<int64_t>(0), dim.dim_value()));
+    }
+  }
+  ctx.addOutputData(0, std::move(tsp));
+}
+
 std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_types) {
   return [allowed_types = std::move(allowed_types)](OpSchema& schema) {
     schema.SetDoc(kDoc_TopK_ver11)
@@ -161,6 +228,9 @@ int64_t MathOpTwoIntegers(std::string_view op_type, int64_t a, int64_t b) {
     checked_op = checked_sub_overflow;
   } else if (op_type == "Mul") {
     checked_op = checked_mul_overflow;
+  } else if (op_type == "Div") {
+    // Truncating division (toward zero), consistent with ONNX Div for integers
+    return checkedDivide(a, b);
   } else {
     fail_shape_inference("Wrong op_type name for running propagation: ", op_type);
   }

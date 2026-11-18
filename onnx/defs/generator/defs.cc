@@ -448,6 +448,44 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             return;
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          // Partial records represent INT32/INT64 values only, so these Range
+          // inputs and the length calculation are integral.
+          const auto* start_data = ctx.getInputData(0);
+          const auto* limit_data = ctx.getInputData(1);
+          const auto* delta_data = ctx.getInputData(2);
+          if (start_data == nullptr || limit_data == nullptr || delta_data == nullptr) {
+            return;
+          }
+          // Each input should be a scalar (TensorShapeProto with exactly one dim)
+          if (start_data->dim_size() != 1 || limit_data->dim_size() != 1 || delta_data->dim_size() != 1) {
+            return;
+          }
+          if (!start_data->dim(0).has_dim_value() || !limit_data->dim(0).has_dim_value() ||
+              !delta_data->dim(0).has_dim_value()) {
+            return;
+          }
+          int64_t start_val = start_data->dim(0).dim_value();
+          int64_t limit_val = limit_data->dim(0).dim_value();
+          int64_t delta_val = delta_data->dim(0).dim_value();
+          if (delta_val == 0) {
+            return;
+          }
+          const int64_t n = compute_integral_range_length(start_val, limit_val, delta_val);
+          // Cap output size to avoid excessive memory usage
+          if (n > 1000) {
+            return;
+          }
+          TensorShapeProto tsp;
+          int64_t value = start_val;
+          for (int64_t i = 0; i < n; ++i) {
+            tsp.mutable_dim()->Add()->set_dim_value(value);
+            if (i + 1 < n) {
+              value = checkedAdd(value, delta_val);
+            }
+          }
+          ctx.addOutputData(0, std::move(tsp));
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(

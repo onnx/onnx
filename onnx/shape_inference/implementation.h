@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -34,6 +35,31 @@ class SymbolTableImpl : public SymbolTable {
     AddExistingSymbolicDims(g.input());
     AddExistingSymbolicDims(g.output());
     AddExistingSymbolicDims(g.value_info());
+    for (const auto& node : g.node()) {
+      for (const auto& attribute : node.attribute()) {
+        AddTypeAttributeSymbols(attribute);
+      }
+    }
+  }
+  void addFromData(const DataValueMap& data) {
+    for (const auto& entry : data) {
+      for (const auto& dim : entry.second.dim()) {
+        if (dim.has_dim_param()) {
+          existing_symbols.insert(dim.dim_param());
+        }
+      }
+    }
+  }
+  void addFromFunction(const FunctionProto& function) {
+    AddExistingSymbolicDims(function.value_info());
+    for (const auto& attribute : function.attribute_proto()) {
+      AddAttributeSymbols(attribute);
+    }
+    for (const auto& node : function.node()) {
+      for (const auto& attribute : node.attribute()) {
+        AddAttributeSymbols(attribute);
+      }
+    }
   }
   // Creates a new unique symbol with the given prefix and adds it to the SymbolTable
   // Returns the newly created symbol
@@ -46,7 +72,163 @@ class SymbolTableImpl : public SymbolTable {
     return newSymbol;
   }
 
+  std::string createExpression(const std::string& op, const Dim& left, const Dim& right) override {
+    if ((!left.has_dim_value() && !left.has_dim_param()) || (!right.has_dim_value() && !right.has_dim_param())) {
+      return "";
+    }
+    const auto render = [this](const Dim& dim) {
+      const auto generated = dim.has_dim_param() ? expression_text_.find(dim.dim_param()) : expression_text_.end();
+      if (generated != expression_text_.end()) {
+        return generated->second.size() <= 1024 ? generated->second : std::string{};
+      }
+      return dimToString(dim);
+    };
+    const auto lhs = render(left);
+    const auto rhs = render(right);
+    if (lhs.empty() || rhs.empty() || lhs.size() > 1024 || rhs.size() > 1024) {
+      return "";
+    }
+    const auto token = [](const Dim& dim) {
+      return dim.has_dim_value() ? "i" + std::to_string(dim.dim_value()) : "s" + dim.dim_param();
+    };
+    const bool integer_data = op.compare(0, 5, "Int64") == 0;
+    const auto arithmetic_op = integer_data ? op.substr(5) : op;
+    ValueBounds bounds{};
+    const bool bounded = ComputeExpressionBounds(arithmetic_op, left, right, bounds);
+    // Tensor arithmetic may wrap; only proven overflow-free expressions share
+    // the identity of exact dimension arithmetic.
+    const std::vector<std::string> key{integer_data && !bounded ? op : arithmetic_op, token(left), token(right)};
+    const auto previous = expressions_.find(key);
+    if (previous != expressions_.end()) {
+      return previous->second;
+    }
+    std::string text;
+    if (arithmetic_op == "Add") {
+      text = lhs + " + " + rhs;
+    } else if (arithmetic_op == "Sub") {
+      text = lhs + " - " + wrapIfCompound(rhs);
+    } else if (arithmetic_op == "Mul") {
+      text = wrapIfCompound(lhs) + "*" + wrapIfCompound(rhs);
+    } else if (arithmetic_op == "Div") {
+      text = wrapIfCompound(lhs) + "/" + wrapIfCompound(rhs);
+    } else if (arithmetic_op == "FloorDiv") {
+      text = "floor(" + wrapIfCompound(lhs) + "/" + wrapIfCompound(rhs) + ")";
+    } else {
+      return "";
+    }
+    const auto name = existing_symbols.insert(text).second ? text : createNew(text + "__");
+    expressions_.emplace(key, name);
+    expression_text_.emplace(name, std::move(text));
+    if (bounded) {
+      value_bounds_.emplace(name, bounds);
+    }
+    return name;
+  }
+
+  bool getValueLowerBound(const Dim& value, int64_t& lower_bound) const override {
+    const auto bound = getValueLowerBound(value);
+    if (!bound.has_value()) {
+      return false;
+    }
+    lower_bound = *bound;
+    return true;
+  }
+  std::optional<int64_t> getValueLowerBound(const Dim& value) const override {
+    ValueBounds bounds{};
+    if (!GetValueBounds(value, bounds)) {
+      return std::nullopt;
+    }
+    return bounds.lower;
+  }
+
  private:
+  struct ValueBounds {
+    int64_t lower;
+    int64_t upper;
+  };
+
+  bool GetValueBounds(const Dim& dim, ValueBounds& bounds) const {
+    if (dim.has_dim_value()) {
+      bounds = {dim.dim_value(), dim.dim_value()};
+      return true;
+    }
+    if (dim.has_dim_param()) {
+      const auto found = value_bounds_.find(dim.dim_param());
+      if (found != value_bounds_.end()) {
+        bounds = found->second;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool ComputeExpressionBounds(const std::string& op, const Dim& left, const Dim& right, ValueBounds& result) const {
+    ValueBounds lhs{};
+    ValueBounds rhs{};
+    if (!GetValueBounds(left, lhs) || !GetValueBounds(right, rhs)) {
+      return false;
+    }
+    if (op == "Add") {
+      return !checked_add_overflow(lhs.lower, rhs.lower, &result.lower) &&
+          !checked_add_overflow(lhs.upper, rhs.upper, &result.upper);
+    }
+    if (op == "Sub") {
+      return !checked_sub_overflow(lhs.lower, rhs.upper, &result.lower) &&
+          !checked_sub_overflow(lhs.upper, rhs.lower, &result.upper);
+    }
+    if (op == "Mul") {
+      result = {std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::min()};
+      for (int64_t l : {lhs.lower, lhs.upper}) {
+        for (int64_t r : {rhs.lower, rhs.upper}) {
+          int64_t product = 0;
+          if (checked_mul_overflow(l, r, &product)) {
+            return false;
+          }
+          result.lower = std::min(result.lower, product);
+          result.upper = std::max(result.upper, product);
+        }
+      }
+      return true;
+    }
+    if ((op == "Div" || op == "FloorDiv") && right.has_dim_value() && right.dim_value() > 0) {
+      result = {lhs.lower / right.dim_value(), lhs.upper / right.dim_value()};
+      if (op == "FloorDiv") {
+        result.lower = checkedSubtract(result.lower, lhs.lower % right.dim_value() < 0 ? 1 : 0);
+        result.upper = checkedSubtract(result.upper, lhs.upper % right.dim_value() < 0 ? 1 : 0);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  void AddTypeAttributeSymbols(const AttributeProto& attribute) {
+    if (attribute.has_tp()) {
+      AddExistingSymbolicDims(attribute.tp());
+    }
+    for (const auto& type : attribute.type_protos()) {
+      AddExistingSymbolicDims(type);
+    }
+  }
+  void AddAttributeSymbols(const AttributeProto& attribute) {
+    AddTypeAttributeSymbols(attribute);
+    if (attribute.has_g()) {
+      AddGraphSymbols(attribute.g());
+    }
+    for (const auto& graph : attribute.graphs()) {
+      AddGraphSymbols(graph);
+    }
+  }
+  void AddGraphSymbols(const GraphProto& graph) {
+    addFromGraph(graph);
+    for (const auto& node : graph.node()) {
+      for (const auto& attribute : node.attribute()) {
+        AddAttributeSymbols(attribute);
+      }
+    }
+  }
+  std::map<std::vector<std::string>, std::string> expressions_;
+  std::unordered_map<std::string, std::string> expression_text_;
+  std::unordered_map<std::string, ValueBounds> value_bounds_;
   unsigned int index_{0};
   std::unordered_set<std::string> existing_symbols;
 
@@ -56,7 +238,13 @@ class SymbolTableImpl : public SymbolTable {
     if (tensorType.has_shape()) {
       for (int i = 0; i < tensorType.shape().dim_size(); ++i) {
         if (tensorType.shape().dim(i).has_dim_param()) {
-          existing_symbols.insert(tensorType.shape().dim(i).dim_param());
+          const auto& name = tensorType.shape().dim(i).dim_param();
+          existing_symbols.insert(name);
+          // Actual tensor dimensions are nonnegative. Arbitrary partial values
+          // reserved by addFromData do not acquire this constraint.
+          if (expression_text_.count(name) == 0) {
+            value_bounds_.emplace(name, ValueBounds{0, std::numeric_limits<int64_t>::max()});
+          }
         }
       }
     }
@@ -162,6 +350,9 @@ class GraphInferencerImpl : public GraphInferencer {
 };
 
 struct InferenceContextImpl : public InferenceContext {
+  SymbolTable* getSymbolTable() const override {
+    return graphInferenceContext_ != nullptr ? graphInferenceContext_->symbol_table : nullptr;
+  }
   InferenceContextImpl(
       NodeProto& n,
       const std::unordered_map<std::string, TypeProto*>& valueTypesByName,
@@ -191,7 +382,8 @@ struct InferenceContextImpl : public InferenceContext {
         allInputTypes_.push_back(nullptr);
       }
 
-      // input data can be in 1 of the 3 containers
+      // Concrete data may also have a symbolic representation after bridging
+      // partial data propagation results.
       // inputDataByName - this is when input is TensorProto
       // inputSparseDataByName - this is when input is SparseTensorProto
       // generatedShapeData - this is when input was generated as part of partial data propagation
@@ -199,7 +391,14 @@ struct InferenceContextImpl : public InferenceContext {
       if (inputDataIter != inputDataByName.cend()) {
         allInputData_.push_back(inputDataIter->second);
         allInputSparseData_.push_back(nullptr);
-        allShapeInputData_.push_back(nullptr);
+        const TensorShapeProto* shape_data = nullptr;
+        if (generatedShapeData != nullptr) {
+          const auto shape_it = generatedShapeData->find(input);
+          if (shape_it != generatedShapeData->cend()) {
+            shape_data = &shape_it->second;
+          }
+        }
+        allShapeInputData_.push_back(shape_data);
       } else {
         allInputData_.push_back(nullptr);
         const auto inputSparseDataIter = inputSparseDataByName.find(input);
@@ -363,8 +562,9 @@ struct DataPropagationContextImpl : public DataPropagationContext {
       NodeProto& n,
       const std::unordered_map<std::string, TypeProto*>& valueTypesByName,
       const std::unordered_map<std::string, const TensorProto*>& inputDataByName,
-      DataValueMap& generatedShapeData)
-      : generatedShapeData_(generatedShapeData) {
+      DataValueMap& generatedShapeData,
+      SymbolTable* symbols = nullptr)
+      : generatedShapeData_(generatedShapeData), symbols_(symbols) {
     size_t input_idx = 0;
 
     for (auto& attr : *n.mutable_attribute()) {
@@ -392,9 +592,10 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     size_t output_idx = 0;
     for (const auto& output : n.output()) {
       outputIndexToNameMap_.insert({output_idx++, output});
+      const auto type = valueTypesByName.find(output);
+      allOutputTypes_.push_back(
+          type != valueTypesByName.end() && type->second != nullptr ? *type->second : TypeProto{});
     }
-
-    allOutputTypes_.resize(n.output_size());
   }
 
   const AttributeProto* getAttribute(const std::string& name) const override {
@@ -404,6 +605,10 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     } else {
       return iter->second;
     }
+  }
+
+  SymbolTable* getSymbolTable() const override {
+    return symbols_;
   }
 
   size_t getNumInputs() const override {
@@ -439,6 +644,13 @@ struct DataPropagationContextImpl : public DataPropagationContext {
   const TensorShapeProto* getInputData(size_t index) override {
     if (index >= allInputData_.size()) {
       ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
+    }
+    // Integer-backed propagation cannot represent fractional or rounded floating values.
+    const auto* input_type = getInputType(index);
+    if (input_type == nullptr || !input_type->has_tensor_type() ||
+        (input_type->tensor_type().elem_type() != TensorProto::INT32 &&
+         input_type->tensor_type().elem_type() != TensorProto::INT64)) {
+      return nullptr;
     }
     const std::string input_name = inputIndexToNameMap_.at(index);
     // Gets it from previous data propagation
@@ -480,6 +692,9 @@ struct DataPropagationContextImpl : public DataPropagationContext {
         if (shape.dim_size() == 1 && shape.dim(0).has_dim_value()) {
           TensorShapeProto tsp;
           int64_t dim_value = shape.dim(0).dim_value();
+          if (dim_value < 0 || dim_value > 1000) {
+            return nullptr;
+          }
           for (int64_t i = 0; i < dim_value; ++i) {
             tsp.add_dim();
           }
@@ -497,6 +712,49 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     if (index >= outputIndexToNameMap_.size()) {
       ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
+    const auto* output_type = getOutputType(index);
+    if (!output_type->has_tensor_type()) {
+      return;
+    }
+    const auto elem_type = output_type->tensor_type().elem_type();
+    if (elem_type != TensorProto::INT32 && elem_type != TensorProto::INT64) {
+      return;
+    }
+    if (output_type->tensor_type().has_shape()) {
+      const auto& shape = output_type->tensor_type().shape();
+      bool concrete = true;
+      bool empty = false;
+      for (const auto& dim : shape.dim()) {
+        concrete = concrete && dim.has_dim_value() && dim.dim_value() >= 0;
+        empty = empty || (dim.has_dim_value() && dim.dim_value() == 0);
+      }
+      if (concrete) {
+        size_t count = empty ? 0 : 1;
+        if (!empty) {
+          for (const auto& dim : shape.dim()) {
+            if (static_cast<uint64_t>(dim.dim_value()) > static_cast<size_t>(tsp.dim_size()) / count) {
+              return;
+            }
+            count *= static_cast<size_t>(dim.dim_value());
+          }
+        }
+        if (count != static_cast<size_t>(tsp.dim_size())) {
+          return;
+        }
+      }
+    }
+    if (elem_type == TensorProto::INT32) {
+      for (const auto& dim : tsp.dim()) {
+        if (dim.has_dim_param() ||
+            (dim.has_dim_value() &&
+             (dim.dim_value() < std::numeric_limits<int32_t>::min() ||
+              dim.dim_value() > std::numeric_limits<int32_t>::max()))) {
+          // A narrowing Cast or INT32 arithmetic may wrap; discard the record,
+          // rather than publishing an unconverted value or rejecting the model.
+          return;
+        }
+      }
+    }
     auto [_, inserted] = generatedShapeData_.insert({outputIndexToNameMap_.at(index), std::move(tsp)});
     if (!inserted) {
       fail_shape_inference("Data for input  " + ONNX_NAMESPACE::to_string(index) + " already exists.");
@@ -509,6 +767,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
   std::vector<const TypeProto*> allInputTypes_;
   std::vector<TypeProto> allOutputTypes_;
   DataValueMap& generatedShapeData_;
+  SymbolTable* symbols_;
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
 };
 
