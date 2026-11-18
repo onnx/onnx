@@ -2509,17 +2509,8 @@ static bool BuildContextDependentFunctionBodySCE(
     const OpSchema& schema,
     FunctionProto& functionProto) {
   FunctionBuilder builder(functionProto);
-  // Using stable implementation of LogSoftmax
-  builder //
-      .Const("Shape3D", std::vector<int64_t>({0, 0, -1})) //
-      .Add(R"(
-        X_NCD = Reshape (scores, Shape3D)
-        X_NDC = Transpose <perm = [0, 2, 1]> (X_NCD)
-        X_LogSM = LogSoftmax <axis = 2> (X_NDC)
-        X_LogSM_NCD = Transpose <perm = [0, 2, 1]> (X_LogSM)
-        X_shape = Shape (scores)
-        X_Log = Reshape (X_LogSM_NCD, X_shape)
-      )");
+  // Since opset 13, LogSoftmax normalizes only the class axis.
+  builder.Add("X_Log = LogSoftmax <axis = 1> (scores)");
 
   // Review(mzs): Ideally we want to reuse the output from Log for sub-graph
   // output as well but looking at the graph resolve code it does not include
