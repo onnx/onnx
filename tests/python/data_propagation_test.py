@@ -299,6 +299,60 @@ class TestDataPropagation(TestShapeInferenceHelper):
         with pytest.raises(onnx.shape_inference.InferenceError):
             self._assert_inferred(graph, [], data_prop=True)
 
+    @pytest.mark.parametrize(
+        ("start", "end", "step", "expected"),
+        [
+            (0, 3, 2, (2, 4)),
+            (2, -4, -1, (4, 3, 2)),
+            (2, -4, -2, (4, 2)),
+            # Steps whose magnitude exceeds the input must select only the first
+            # element, without truncating to a 32-bit index.
+            (2, 0, -4294967196, (4,)),
+            (0, 3, 4294967295, (2,)),
+            (0, 3, 4294967296, (2,)),
+            (0, 3, (1 << 63) - 1, (2,)),
+            (2, -4, -(1 << 63), (4,)),
+        ],
+    )
+    def test_slice_step(
+        self, start: int, end: int, step: int, expected: tuple[int, ...]
+    ) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (2, 3, 4)),
+                ("starts", TensorProto.INT64, (1,)),
+                ("ends", TensorProto.INT64, (1,)),
+                ("axes", TensorProto.INT64, (1,)),
+                ("steps", TensorProto.INT64, (1,)),
+            ],
+            [
+                make_node("Shape", ["x"], ["shape"]),
+                make_node("Slice", ["shape", "starts", "ends", "axes", "steps"], ["y"]),
+                make_node(
+                    "ConstantOfShape",
+                    ["y"],
+                    ["z"],
+                    value=make_tensor("value", TensorProto.INT32, (1,), (0,)),
+                ),
+            ],
+            [],
+            initializer=[
+                make_tensor("starts", TensorProto.INT64, (1,), (start,)),
+                make_tensor("ends", TensorProto.INT64, (1,), (end,)),
+                make_tensor("axes", TensorProto.INT64, (1,), (0,)),
+                make_tensor("steps", TensorProto.INT64, (1,), (step,)),
+            ],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("shape", TensorProto.INT64, (3,)),
+                make_tensor_value_info("y", TensorProto.INT64, (len(expected),)),
+                make_tensor_value_info("z", TensorProto.INT32, expected),
+            ],
+            data_prop=True,
+        )
+
     def test_empty_tensor(self) -> None:
         """Test that a Concat with an empty tensor as input is handled correctly by data-propagation."""
         model = onnx.parser.parse_model(
