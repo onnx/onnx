@@ -285,22 +285,26 @@ def TestOneInput(data):
 
         if use_selected:
             # Select every other local function so both the "inline" and
-            # "keep" branches of FunctionIdSet are exercised.
+            # "keep" branches of FunctionIdSet are exercised. When schema
+            # functions are enabled, select some of them too: membership is
+            # checked before expansion, so include mode would otherwise never
+            # expand a schema function.
             ids = fn_names[::2]
+            if schema_functions:
+                ids = ids + [("", op) for op in _SCHEMA_FUNCTION_OPS[::2]]
             result = inliner.inline_selected_functions(
                 model, ids, exclude=exclude, inline_schema_functions=schema_functions
             )
         else:
             result = inliner.inline_local_functions(model, convert_version)
-
-        if run_checker:
-            checker.check_model(result)
     except Exception:
         # Malformed inputs raise expected errors (DecodeError,
         # ValidationError, ConvertError, RuntimeError, ...). Real bugs
         # surface as crashes, hangs, sanitizer reports, or the oracle below.
         return
 
+    # Run the oracle before the checker so a validation failure on the
+    # inlined model cannot hide a skipped call-site.
     if oracle:
         local = set(fn_names)
         for node in _iter_nodes(result.graph):
@@ -309,6 +313,12 @@ def TestOneInput(data):
                     f"inline_local_functions left a call to "
                     f"{node.domain}::{node.op_type} in the inlined graph"
                 )
+
+    if run_checker:
+        try:
+            checker.check_model(result)
+        except Exception:
+            return
 
 
 def main():
