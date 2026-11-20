@@ -7324,6 +7324,29 @@ class TestReferenceEvaluator:
         assert output.dtype == data.dtype
         assert output.tolist() == np.repeat(data, 2).tolist()
 
+    @pytest.mark.parametrize(
+        ("nearest_mode", "expected"),
+        [
+            ("round_prefer_floor", [2**53 + 1, 2**53 + 3, 2**53 + 3, 2**53 + 5]),
+            # The last output selects index 3, which lies outside the input;
+            # with exclude_outside its weight is dropped and the output is 0.
+            ("ceil", [2**53 + 1, 2**53 + 3, 2**53 + 5, 0]),
+        ],
+    )
+    def test_resize_nearest_exclude_outside_preserves_int64(
+        self, nearest_mode, expected
+    ):
+        data = np.array([2**53 + 1, 2**53 + 3, 2**53 + 5], dtype=np.int64)
+        output = self._run_resize(
+            data,
+            sizes=np.array([4], dtype=np.int64),
+            mode="nearest",
+            nearest_mode=nearest_mode,
+            exclude_outside=1,
+        )
+        assert output.dtype == np.int64
+        assert output.tolist() == expected
+
     def test_resize_partial_axes_nearest_preserves_int64(self):
         data = np.array(
             [

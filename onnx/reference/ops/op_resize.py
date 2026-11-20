@@ -449,16 +449,24 @@ def _interpolate_1d_along_axis(
         start = np.where(frac <= 0.5, x_ori_int, x_ori_int + 1) - (n - 1) // 2
     neighbor_idxes = start[:, None] + np.arange(n)[None, :]
 
-    if nearest and not exclude_outside:
+    if nearest:
         selected = neighbor_idxes[
             np.arange(output_width_int), np.argmax(coeffs, axis=-1)
         ]
         clamped = np.clip(selected, 0, input_width - 1).astype(np.intp)
         result = np.take(data, clamped, axis=axis)
+        mask_shape = (1,) * axis + (output_width_int,) + (1,) * (data.ndim - axis - 1)
+        if exclude_outside:
+            # Nearest weights are one-hot, so renormalizing after zeroing
+            # outside weights keeps an inside sample unchanged and leaves an
+            # all-zero row (the weighted path's guarded sum yields 0) when the
+            # selected sample lies outside the input.
+            outside = (selected < 0) | (selected >= input_width)
+            if outside.any():
+                result = np.where(
+                    outside.reshape(mask_shape), np.zeros((), dtype=data.dtype), result
+                )
         if is_extrapolated is not None and is_extrapolated.any():
-            mask_shape = (
-                (1,) * axis + (output_width_int,) + (1,) * (data.ndim - axis - 1)
-            )
             mask = is_extrapolated.reshape(mask_shape)
             fill_val = 0.0 if extrapolation_value is None else extrapolation_value
             if result.dtype == object:
@@ -579,8 +587,7 @@ def _interpolate_nd(
     # Separable interpolation: resize one axis at a time. This avoids the
     # O(prod(output_shape)) scan of the old implementation, which called the
     # recursive _interpolate_nd_with_x once per output element.
-    keep_dtype = nearest and not exclude_outside
-    result = data if keep_dtype or data.dtype == np.float64 else data.astype(np.float64)
+    result = data if nearest or data.dtype == np.float64 else data.astype(np.float64)
     for axis in axes:
         axis_scale = float(scale_factors[axis])
         axis_output = int(output_size[axis])
