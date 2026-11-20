@@ -1063,10 +1063,26 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
   enforce_non_empty_field(graph, name);
 
   for (const auto& value_info : graph.input()) {
-    check_value_info(value_info, ctx);
+    ONNX_TRY {
+      check_value_info(value_info, ctx);
+    }
+    ONNX_CATCH(ValidationError & ex) {
+      ONNX_HANDLE_EXCEPTION([&]() {
+        ex.AppendContext("Bad input specification for input. Name: " + value_info.name());
+        throw;
+      });
+    }
   }
   for (const auto& value_info : graph.output()) {
-    check_value_info(value_info, ctx);
+    ONNX_TRY {
+      check_value_info(value_info, ctx);
+    }
+    ONNX_CATCH(ValidationError & ex) {
+      ONNX_HANDLE_EXCEPTION([&]() {
+        ex.AppendContext("Bad output specification for output. Name: " + value_info.name());
+        throw;
+      });
+    }
   }
   // Intermediate value_info entries are optional annotations and are not
   // otherwise validated, but they must not use data types newer than the IR version.
@@ -1105,7 +1121,15 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
       fail_check_with_code(error_code::kNotSsa, name + " initializer name is not unique");
     }
 
-    check_tensor(init, ctx);
+    ONNX_TRY {
+      check_tensor(init, ctx);
+    }
+    ONNX_CATCH(ValidationError & ex) {
+      ONNX_HANDLE_EXCEPTION([&]() {
+        ex.AppendContext("Bad initializer specification for tensor. Name: " + init.name());
+        throw;
+      });
+    }
 
     if (ctx.get_ir_version() <= 0x00000003) {
       // Initializers are a subset of graph inputs for IR_VERSION <= 3
@@ -1131,7 +1155,15 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
           error_code::kNotSsa,
           name + " sparse initializer name is not unique across initializers and sparse_initializers");
     }
-    check_sparse_tensor(sparse_init, ctx);
+    ONNX_TRY {
+      check_sparse_tensor(sparse_init, ctx);
+    }
+    ONNX_CATCH(ValidationError & ex) {
+      ONNX_HANDLE_EXCEPTION([&]() {
+        ex.AppendContext("Bad sparse initializer specification for tensor. Name: " + values.name());
+        throw;
+      });
+    }
     lex_ctx.add(name);
   }
   std::unordered_set<std::string> used_experimental_ops;
@@ -1444,7 +1476,15 @@ void check_model_local_functions(
   ctx_copy.set_opset_imports(model_opset_imports);
 
   for (const auto& function_proto : model.functions()) {
-    check_function(function_proto, ctx_copy, parent_lex);
+    ONNX_TRY {
+      check_function(function_proto, ctx_copy, parent_lex);
+    }
+    ONNX_CATCH(ValidationError & ex) {
+      ONNX_HANDLE_EXCEPTION([&]() {
+        ex.AppendContext("Bad function specification for function. Name: " + function_proto.name());
+        throw;
+      });
+    }
   }
 }
 
