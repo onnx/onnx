@@ -503,14 +503,18 @@ class DefaultVersionConverter : public BaseVersionConverter {
         TensorProto_DataType_COMPLEX64,
         TensorProto_DataType_COMPLEX128,
         TensorProto_DataType_STRING};
+    const std::vector<TensorProto_DataType> transpose_12_unallowed_types = {TensorProto_DataType_BFLOAT16};
     registerAdapter(std::make_unique<CompatibleAdapter>("Constant", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<TypeRestriction>("Pad", OpSetID(13), OpSetID(12), pad_11_unallowed_types));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceSum", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("Squeeze", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("Unsqueeze", OpSetID(13), OpSetID(12)));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("Transpose", OpSetID(13), OpSetID(12), transpose_12_unallowed_types));
     registerAdapter(std::make_unique<Split_13_12>());
     registerAdapter(std::make_unique<Softmax_13_12>("Softmax"));
     registerAdapter(std::make_unique<Softmax_13_12>("LogSoftmax"));
+    registerAdapter(std::make_unique<Softmax_13_12>("Hardmax"));
 
     /******** 13 -> 14 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Add", OpSetID(13), OpSetID(14)));
