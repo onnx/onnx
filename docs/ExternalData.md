@@ -8,21 +8,21 @@ SPDX-License-Identifier: Apache-2.0
 
 ## Loading an ONNX Model with External Data
 
-* [Default] If the external data is under the same directory of the model, simply use `onnx.load_model()`
+* [Default] If the external data is under the same directory of the model, simply use `onnx.load()`
 
 ```python
 import onnx
 
-onnx_model = onnx.load_model("path/to/the/model.onnx")
+onnx_model = onnx.load("path/to/the/model.onnx")
 ```
 
-* If the external data is under another directory, use `load_external_data_for_model()` to specify the directory path and load after using `onnx.load_model()`
+* If the external data is under another directory, use `load_external_data_for_model()` to specify the directory path and load after using `onnx.load()`
 
 ```python
 import onnx
 from onnx.external_data_helper import load_external_data_for_model
 
-onnx_model = onnx.load_model("path/to/the/model.onnx", load_external_data=False)
+onnx_model = onnx.load("path/to/the/model.onnx", load_external_data=False)
 load_external_data_for_model(onnx_model, "data/directory/path/")
 # Then the onnx_model has loaded the external data from the specific directory
 ```

@@ -101,7 +101,7 @@ This section describes the security model for validating external data attribute
 
 An attacker provides a malicious ONNX model with crafted `external_data` entries in `TensorProto`. The `external_data` field is a repeated `StringStringEntryProto` — a key-value store that accepts arbitrary strings for both key and value.
 
-The attack is triggered during `onnx.load_model()` with no explicit checker invocation required. `ExternalDataInfo.__init__` processes these key-value pairs to populate object attributes.
+The attack is triggered during `onnx.load()` with no explicit checker invocation required. `ExternalDataInfo.__init__` processes these key-value pairs to populate object attributes.
 
 Attack vectors:
 

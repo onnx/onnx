@@ -14,26 +14,26 @@ The full API is described at [API Reference](https://onnx.ai/onnx/api).
 import onnx
 
 # onnx_model is an in-memory ModelProto
-onnx_model = onnx.load_model("path/to/the/model.onnx")
+onnx_model = onnx.load("path/to/the/model.onnx")
 ```
 
 ## Loading an ONNX Model with External Data
 
-* If the external data is under the same directory of the model, simply use `onnx.load_model()`
+* If the external data is under the same directory of the model, simply use `onnx.load()`
 
 ```python
 import onnx
 
-onnx_model = onnx.load_model("path/to/the/model.onnx")
+onnx_model = onnx.load("path/to/the/model.onnx")
 ```
 
-* If the external data is under another directory, use `load_external_data_for_model()` to specify the directory path and load after using `onnx.load_model()`
+* If the external data is under another directory, use `load_external_data_for_model()` to specify the directory path and load after using `onnx.load()`
 
 ```python
 import onnx
 from onnx.external_data_helper import load_external_data_for_model
 
-onnx_model = onnx.load_model("path/to/the/model.onnx", load_external_data=False)
+onnx_model = onnx.load("path/to/the/model.onnx", load_external_data=False)
 load_external_data_for_model(onnx_model, "data/directory/path/")
 # Then the onnx_model has loaded the external data from the specific directory
 ```
@@ -59,7 +59,7 @@ import onnx
 onnx_model = ...
 
 # Save the ONNX model
-onnx.save_model(onnx_model, "path/to/the/model.onnx")
+onnx.save(onnx_model, "path/to/the/model.onnx")
 ```
 
 ## Converting and Saving an ONNX Model to External Data
@@ -183,7 +183,7 @@ import onnx
 
 # Preprocessing: load the ONNX model
 model_path = "path/to/the/model.onnx"
-onnx_model = onnx.load_model(model_path)
+onnx_model = onnx.load(model_path)
 
 print(f"The model is:\n{onnx_model}")
 
@@ -295,7 +295,7 @@ from onnx import version_converter, helper
 
 # Preprocessing: load the model to be converted.
 model_path = "path/to/the/model.onnx"
-original_model = onnx.load_model(model_path)
+original_model = onnx.load(model_path)
 
 print(f"The model before conversion:\n{original_model}")
 
@@ -342,14 +342,14 @@ In this example we merge two models by connecting each output of the first model
 ```python
 import onnx
 
-model1 = onnx.load_model("path/to/model1.onnx")
+model1 = onnx.load("path/to/model1.onnx")
 # agraph (float[N] A, float[N] B) => (float[N] C, float[N] D)
 #   {
 #      C = Add(A, B)
 #      D = Sub(A, B)
 #   }
 
-model2 = onnx.load_model("path/to/model2.onnx")
+model2 = onnx.load("path/to/model2.onnx")
 #   agraph (float[N] X, float[N] Y) => (float[N] Z)
 #   {
 #      Z = Mul(X, Y)
@@ -390,7 +390,7 @@ initializers, sparse initializers and value infos.
 ```python
 import onnx
 
-model = onnx.load_model("path/to/the/model.onnx")
+model = onnx.load("path/to/the/model.onnx")
 # model - outputs: ["out0", "out1"], inputs: ["in0", "in1"]
 
 new_model = onnx.compose.add_prefix(model, prefix="m1/")
@@ -408,10 +408,10 @@ onnx.compose.add_prefix(model, prefix="m1/", inplace=True)
 import onnx
 
 # outputs: "out0", shape=[200, 200, 3]
-model1 = onnx.load_model("path/to/the/model1.onnx")
+model1 = onnx.load("path/to/the/model1.onnx")
 
 # outputs: "in0", shape=[N, 200, 200, 3]
-model2 = onnx.load_model("path/to/the/model2.onnx")
+model2 = onnx.load("path/to/the/model2.onnx")
 
 # outputs: "out0", shape=[1, 200, 200, 3]
 new_model1 = onnx.compose.expand_out_dims(model1, dim_idx=0)
@@ -439,7 +439,7 @@ The function runs model checker after the input/output sizes are updated.
 import onnx
 from onnx.tools import update_model_dims
 
-model = onnx.load_model("path/to/the/model.onnx")
+model = onnx.load("path/to/the/model.onnx")
 # Here both "seq", "batch" and -1 are dynamic using dim_param.
 variable_length_model = update_model_dims.update_inputs_outputs_dims(model, {"input_name": ["seq", "batch", 3, -1]}, {"output_name": ["seq", "batch", 1, -1]})
 ```
@@ -497,7 +497,7 @@ as schema-defined functions).
 import onnx
 import onnx.inliner
 
-model = onnx.load_model("path/to/the/model.onnx")
+model = onnx.load("path/to/the/model.onnx")
 inlined = onnx.inliner.inline_local_functions(model)
-onnx.save_model(inlined, "path/to/the/inlinedmodel.onnx")
+onnx.save(inlined, "path/to/the/inlinedmodel.onnx")
 ```
