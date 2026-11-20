@@ -78,8 +78,11 @@ Checks: >-
   -readability-use-anyofallof,
   -readability-use-concise-preprocessor-directives,
 
-# Checks that only fire on C++20 or later are disabled: the project builds as C++17
-# (CMAKE_CXX_STANDARD), so they are inert. Revisit them if the standard is raised.
+# Checks that only fire on C++20 or later (modernize-use-constraints,
+# modernize-use-designated-initializers, modernize-use-integer-sign-comparison,
+# modernize-use-ranges, modernize-use-starts-ends-with,
+# readability-container-contains) stay disabled for now and are enabled in
+# follow-up changes, one check per change.
 
 # Lint ONNX headers; exclude generated *.pb.h, third_party, deps, and hidden build/env dirs.
 HeaderFilterRegex: 'onnx/'
