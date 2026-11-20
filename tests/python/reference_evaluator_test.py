@@ -5242,6 +5242,9 @@ class TestReferenceEvaluator:
                 # saturate case
                 70000.0,
                 -70000.0,
+                # saturate before converting to an integer
+                1e20,
+                -1e20,
             ],
             dtype=np.float32,
         )
@@ -5255,6 +5258,8 @@ class TestReferenceEvaluator:
                 32766,
                 32769,
                 32765,
+                65535,
+                0,
                 65535,
                 0,
                 65535,
@@ -5306,6 +5311,9 @@ class TestReferenceEvaluator:
                 # saturate case
                 70000.0,
                 -70000.0,
+                # saturate before converting to an integer
+                1e20,
+                -1e20,
             ],
             dtype=np.float32,
         )
@@ -5321,6 +5329,8 @@ class TestReferenceEvaluator:
                 254,
                 32767,
                 -32767,
+                32767,
+                -32768,
                 32767,
                 -32768,
                 32767,
