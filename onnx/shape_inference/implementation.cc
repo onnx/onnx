@@ -581,7 +581,6 @@ class ShapeInferenceImplBase {
     // use shape info from input (input has priority over initializer)
     if (iter != value_types_by_name.end()) {
       checkShapesAndTypes(initializer_type, *iter->second);
-      // CheckTensorShapesAndTypes(*initializer_tensor_type, *iter->second->mutable_tensor_type());
     } else if (ir_version >= 4) {
       // Support IR>=4: some tensors can only exist in initializer and not in input
       // So shape_inference should make use of initializer shapes

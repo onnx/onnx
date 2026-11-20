@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 202/211 (95.73%, 5 generators excluded) common operators.
+Node tests have covered 203/212 (95.75%, 5 generators excluded) common operators.
 
 Node tests have covered 1/1 (100.00%, 0 generators excluded) experimental operators.
 
@@ -12662,6 +12662,257 @@ expect(
 </details>
 
 
+### GeGLU
+There are 6 test cases, listed as following:
+<details>
+<summary>approximate_none</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+    approximate="none",
+)
+a = np.array(
+    [
+        [[1.0, -2.0, 3.0], [4.0, -1.0, 0.5]],
+        [[-3.0, 2.0, -0.5], [-4.0, 0.0, 1.5]],
+    ],
+    dtype=np.float32,
+)
+b = np.array(
+    [
+        [[0.5, 1.0, -1.0], [2.0, 2.0, -1.0]],
+        [[0.5, 1.0, 1.5], [-2.0, 3.0, 0.25]],
+    ],
+    dtype=np.float32,
+)
+y = np.array(
+    [
+        [
+            [0.4206724, -0.045500264, -2.9959502],
+            [7.999747, -0.3173105, -0.34573123],
+        ],
+        [
+            [-0.002024847, 1.9544997, -0.23140316],
+            [0.00025336994, 0.0, 0.3499473],
+        ],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu_approximate_none",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>bfloat16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+a = np.array(
+    [[-3.0, -4.0, -1.0, 2.0], [-0.5, 1.5, -2.5, 0.75]], dtype=ml_dtypes.bfloat16
+)
+b = np.array(
+    [[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=ml_dtypes.bfloat16
+)
+y = np.array(
+    [
+        [-0.0020294189453125, -0.00012683868408203125, 0.158203125, 3.90625],
+        [-0.30859375, -1.3984375, -0.00775146484375, 0.578125],
+    ],
+    dtype=ml_dtypes.bfloat16,
+)
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu_bfloat16",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>double</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+a = np.array(
+    [[-3.0, -4.0, -1.0, 2.0], [-0.5, 1.5, -2.5, 0.75]], dtype=np.float64
+)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float64)
+y = np.array(
+    [
+        [
+            -0.002024847047445155,
+            -0.00012668496733247991,
+            0.15865525393145707,
+            3.908999472207283,
+        ],
+        [
+            -0.3085375387259869,
+            -1.399789198096713,
+            -0.007762081657220199,
+            0.5800294857173488,
+        ],
+    ],
+    dtype=np.float64,
+)
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu_double",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+a = np.array(
+    [[-3.0, -4.0, -1.0, 2.0], [-0.5, 1.5, -2.5, 0.75]], dtype=np.float16
+)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float16)
+y = np.array(
+    [
+        [
+            -0.002025604248046875,
+            -0.00012671947479248047,
+            0.15869140625,
+            3.908203125,
+        ],
+        [-0.30859375, -1.3994140625, -0.007762908935546875, 0.580078125],
+    ],
+    dtype=np.float16,
+)
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu_float16",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>geglu</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+a = np.array(
+    [
+        [[1.0, -2.0, 3.0], [4.0, -1.0, 0.5]],
+        [[-3.0, 2.0, -0.5], [-4.0, 0.0, 1.5]],
+    ],
+    dtype=np.float32,
+)
+b = np.array(
+    [
+        [[0.5, 1.0, -1.0], [2.0, 2.0, -1.0]],
+        [[0.5, 1.0, 1.5], [-2.0, 3.0, 0.25]],
+    ],
+    dtype=np.float32,
+)
+y = np.array(
+    [
+        [
+            [0.4206724, -0.045500264, -2.9959502],
+            [7.999747, -0.3173105, -0.34573123],
+        ],
+        [
+            [-0.002024847, 1.9544997, -0.23140316],
+            [0.00025336994, 0.0, 0.3499473],
+        ],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>tanh</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+    approximate="tanh",
+)
+y = np.array(
+    [
+        [
+            [0.420596, -0.045402307, -2.9963627],
+            [7.9998593, -0.31761602, -0.345714],
+        ],
+        [
+            [-0.001818696, 1.9545977, -0.23142898],
+            [0.0001404919, 0.0, 0.34989288],
+        ],
+    ],
+    dtype=np.float32,
+)
+a = np.array(
+    [
+        [[1.0, -2.0, 3.0], [4.0, -1.0, 0.5]],
+        [[-3.0, 2.0, -0.5], [-4.0, 0.0, 1.5]],
+    ],
+    dtype=np.float32,
+)
+b = np.array(
+    [
+        [[0.5, 1.0, -1.0], [2.0, 2.0, -1.0]],
+        [[0.5, 1.0, 1.5], [-2.0, 3.0, 0.25]],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu_tanh",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
 ### Gelu
 There are 2 test cases, listed as following:
 <details>
@@ -15934,7 +16185,58 @@ expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_uint64")
 
 
 ### LinearAttention
-There are 14 test cases, listed as following:
+There are 16 test cases, listed as following:
+<details>
+<summary>compact_value_heads</summary>
+
+```python
+# Scaled-down Gated DeltaNet examples: adjacent Q/K repeats, independent
+# value/state heads and gates. Real head ratios include 2, 3 and 8.
+rng = np.random.default_rng(0)
+for factor in (2, 3, 8):
+    b, t, hk, dk, dv = 1, 3, 2, 4, 5
+    hv = hk * factor
+    query = _l2_normalize(
+        rng.normal(size=(b, t, hk * dk)).astype(np.float16), hk
+    )
+    key = _l2_normalize(rng.normal(size=(b, t, hk * dk)).astype(np.float16), hk)
+    value = rng.normal(size=(b, t, hv * dv)).astype(np.float16)
+    state = rng.normal(size=(b, hv, dk, dv)).astype(np.float32)
+    decay = -rng.uniform(0.1, 0.9, (b, t, hv)).astype(np.float16)
+    beta = rng.uniform(0.1, 0.9, (b, t, hv)).astype(np.float16)
+    expanded = [
+        np.repeat(x.reshape(b, t, hk, dk), factor, axis=2).reshape(
+            b, t, hv * dk
+        )
+        for x in (query, key)
+    ]
+    expected = _compute(
+        *expanded,
+        value,
+        state,
+        decay,
+        beta,
+        q_num_heads=hv,
+        kv_num_heads=hv,
+    )
+    node = onnx.helper.make_node(
+        "LinearAttention",
+        ["query", "key", "value", "past_state", "decay", "beta"],
+        ["output", "present_state"],
+        q_num_heads=hk,
+        kv_num_heads=hk,
+        v_num_heads=hv,
+    )
+    expect(
+        node,
+        inputs=[query, key, value, state, decay, beta],
+        outputs=list(expected),
+        name=f"test_linear_attention_compact_value_heads_factor_{factor}",
+        opset_imports=[onnx.helper.make_opsetid("", 29)],
+    )
+```
+
+</details>
 <details>
 <summary>decode_step</summary>
 
@@ -16457,6 +16759,81 @@ expect(
     name="test_linear_attention_prefill_with_past",
     opset_imports=_OPSET,
 )
+```
+
+</details>
+<details>
+<summary>state_trajectory</summary>
+
+```python
+rng = np.random.default_rng(42)
+for rule in ("linear", "gated", "delta", "gated_delta"):
+    for length in (0, 3):
+        b, hk, hv, dk, dv = 2, 2, 4, 2, 3
+        query = rng.normal(size=(b, length, hk * dk)).astype(np.float16)
+        key = _l2_normalize(
+            rng.normal(size=(b, length, hk * dk)).astype(np.float16), hk
+        )
+        value = rng.normal(size=(b, length, hv * dv)).astype(np.float16)
+        state = rng.normal(size=(b, hv, dk, dv)).astype(np.float32)
+        decay = (
+            -rng.uniform(0.1, 0.9, (b, length, hv)).astype(np.float16)
+            if rule in ("gated", "gated_delta")
+            else None
+        )
+        beta = (
+            rng.uniform(0.1, 0.9, (b, length, hv)).astype(np.float16)
+            if rule in ("delta", "gated_delta")
+            else None
+        )
+        expanded = [
+            np.repeat(x.reshape(b, length, hk, dk), hv // hk, axis=2).reshape(
+                b, length, hv * dk
+            )
+            for x in (query, key)
+        ]
+        packed = [*expanded, value, state, decay, beta]
+        expected = _compute(
+            *packed, q_num_heads=hv, kv_num_heads=hv, update_rule=rule
+        )
+        snapshots = [
+            _compute(
+                *[
+                    x if x is None or i == 3 else x[:, :end]
+                    for i, x in enumerate(packed)
+                ],
+                q_num_heads=hv,
+                kv_num_heads=hv,
+                update_rule=rule,
+            )[1]
+            for end in range(1, length + 1)
+        ]
+        states = (
+            np.stack(snapshots, axis=1)
+            if snapshots
+            else np.empty((b, 0, hv, dk, dv), dtype=np.float32)
+        )
+        values = [query, key, value, state, decay, beta]
+        names = ["query", "key", "value", "past_state", "decay", "beta"]
+        node = onnx.helper.make_node(
+            "LinearAttention",
+            [
+                name if x is not None else ""
+                for name, x in zip(names, values, strict=True)
+            ],
+            ["output", "present_state", "states"],
+            q_num_heads=hk,
+            kv_num_heads=hk,
+            v_num_heads=hv,
+            update_rule=rule,
+        )
+        expect(
+            node,
+            inputs=[x for x in values if x is not None],
+            outputs=[*expected, states],
+            name=f"test_linear_attention_state_trajectory_{rule}_length_{length}",
+            opset_imports=[onnx.helper.make_opsetid("", 29)],
+        )
 ```
 
 </details>

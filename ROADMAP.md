@@ -12,9 +12,21 @@ SPDX-License-Identifier: Apache-2.0
 
 ---
 
+## Table of contents
+
+- [How to contribute](#how-to-contribute)
+- [Special Interest Groups & Working Groups](#special-interest-groups--working-groups)
+  - [SIG Architecture & Infrastructure](#sig-architecture--infrastructure)
+  - [Operator SIG](#operator-sig)
+  - [SONNX Working Group](#sonnx-working-group)
+  - [Optimizations SIG](#optimizations-sig)
+  - [Template for new SIG/WG sections](#sigwg-name)
+
+---
+
 ## How to contribute
 
-1. Find your SIG/WG section below (or add a new one following the template).
+1. Find your SIG/WG section below (or add a new one following the [template](#sigwg-name) and link it in the table of contents).
 2. Fill in your objectives per quarter.
 3. Submit a PR or send your input to the roadmap coordinator.
 
@@ -81,6 +93,8 @@ an unprioritized list of items for the next year.
 - Support for ternary-value quantization and single-bit quantization
 - FlexAttention
 
+---
+
 ### SONNX Working Group
 
 **Lead(s):** Eric JENN, Jean SOUYRIS
@@ -115,16 +129,67 @@ an unprioritized list of items for the next year.
 ### Optimizations SIG
 
 **Lead(s):** Freddy Chiu, Justin Chu
-**Last updated:** _2026-11-06_
 
-#### Q3 2026
+**Last updated:** 2026-11-13
+
+Note: All milestones are tentative. SIG projects: [onnx/optimizer](https://github.com/onnx/optimizer), [onnx-shape-inference](https://github.com/onnx/onnx-shape-inference), [neural-compressor](https://github.com/onnx/neural-compressor).
 
 #### Q4 2026
 - Migration of the onnx-shape-inference project as a SIG-owned project
+- onnx/optimizer: new release (last: v0.4.2, Jan 2026) with new fusion passes, a C++ IR entry point, ONNX function preservation, wheels for free-threaded Python and ARM, and many correctness fixes
+- onnx/optimizer: resolve the reported output-mismatch bugs found by differential testing
 
 #### Q1 2027
+- Fusion passes for LLM patterns (e.g. GELU, attention, rotary embeddings) that target the native `Attention` and `RotaryEmbedding` operators; coordinate with the ONNX Script rewriter to avoid duplicate work
+- Quantization: survey of ONNX-level quantization tools (ONNX Runtime quantization, AMD Quark, neural-compressor, vendor SDK forks) and a feature comparison for SDK users; decide the future role of neural-compressor
+- Differential-testing regression suite for optimization passes, built from the reported cases and run on a schedule
 
 #### Q2 2027
+- Quantization: shared QDQ conventions and reference recipes, so that vendor tools produce comparable results; align with the Operator SIG's quantized-format work (GGUF formats, low-bit quantization)
+- Lowered representation for kernel generators such as tinygrad: design note on an explicit form (e.g. no implicit broadcasting), using a separate domain only if needed (with the Operator SIG)
+- Clarify the roles of onnx/optimizer, onnx-shape-inference, onnxsim, and the ONNX Script optimizer (which passes and analyses live where)
+- Extend differential testing to the ONNX reference implementation, using the improved conformance test suite (Architecture & Infrastructure SIG)
+
+#### Q3 2027
+- onnx/optimizer: stable C++ API based on the IR entry point, so other tools can embed the passes
+- onnx/optimizer: pass that makes broadcasting explicit, as a first step toward the lowered representation
+- Quantized reference models in the shared test corpus
+- Evaluate a remote model executor (onnx-remote) for measuring and tuning models on devices without a native converter (e.g. Snapdragon phones)
+
+---
+
+
+### Probabilistic Programming Working Group
+
+**Lead(s):** Brian Parbhu, Adam Pocock (Oracle)
+
+**Last updated:** 2026-11-13
+
+Note: All milestones are tentative and depend on the Operator SIG review of the RNG proposal.
+
+#### Q4 2026
+- Deterministic, stateless random number generation: new PRNG state operators (`InitPRNG`, `SplitPRNG`) and updated `RandomNormal`, `RandomUniform`, `RandomNormalLike`, and `RandomUniformLike` with explicit PRNG state, reviewed and merged as one PR ([#8420](https://github.com/onnx/onnx/pull/8420))
+- Address Operator SIG feedback: documented rationale for the PRNG algorithm (Threefry vs. Philox and others), seeding semantics, and determinism guarantees (bit-exact PRNG state transitions; sampled values agree across platforms within a tolerance)
+
+#### Q1 2027
+- Align `Multinomial` and `Bernoulli` with the explicit PRNG state model
+- Propose a `Poisson` sampling operator
+- Build demo converter using the updated set of PRNG ops for a small set of Stan models
+
+#### Q2 2027
+- ONNX Runtime implementation of the updated random operators
+- Identify the distributions needed by real-world probabilistic programs (e.g. Stan models); likely candidates: Beta, Dirichlet, Gamma, Inverse Gamma
+- Define how distributions are represented in the specification (sampling and log-probability operators, and whether the spec relates them)
+
+#### Q3 2027
+- Special functions needed for distribution log-probabilities (e.g. `LogGamma`, `Digamma`)
+- Initial distribution operators (sampling and log-probability), validated against NumPy and SciPy
+- Initial converter from a probabilistic programming language, for demos
+
+#### Q4 2027
+- Decide how likelihood evaluation is expressed: dedicated operators or graphs generated by PPL exporters
+- Design of inference support (e.g. HMC): dedicated operators only for parts not expressible in ONNX; the rest (e.g. the Metropolis–Hastings test) as ONNX functions or converter-generated graphs
+- Extend the demo converter towards the first exporters (Stan, PyMC)
 
 ---
 
