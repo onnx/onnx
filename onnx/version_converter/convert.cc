@@ -83,6 +83,11 @@ void PropagateCapturedTensorTypes(const std::shared_ptr<Graph>& graph, const Cap
 } // namespace
 
 ModelProto ConvertVersion(const ModelProto& mp_in, int target_version) {
+  return ConvertVersion(mp_in, static_cast<int64_t>(target_version));
+}
+
+ModelProto ConvertVersion(const ModelProto& mp_in, int64_t target_version) {
+  checker::check_opset_version(target_version);
   ModelProto inferred_model = mp_in;
   shape_inference::InferShapes(inferred_model);
 
@@ -116,7 +121,9 @@ void DefaultVersionConverter::convert_graph(
   //  return mp_in;
   // }
 
-  // Check if versions are valid
+  // Validate before schema/adapter lookup, including direct converter calls.
+  checker::check_opset_version(initial_version.version(), initial_version.domain());
+  checker::check_opset_version(target_version.version(), target_version.domain());
   assertInVersionRange(initial_version.version());
   assertInVersionRange(target_version.version());
 
