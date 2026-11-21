@@ -786,8 +786,13 @@ static void
 check_sparse_tensor_indices_1(const TensorProto& indices, const SparseTensorProto& sparse_tensor_proto, size_t nnz) {
   int dense_rank = sparse_tensor_proto.dims_size();
   int64_t dense_size = 1;
-  for (int i = 0; i < dense_rank; ++i)
-    dense_size *= sparse_tensor_proto.dims(i);
+  bool dense_size_overflowed = false;
+  for (int i = 0; i < dense_rank; ++i) {
+    if (checked_mul_overflow(dense_size, sparse_tensor_proto.dims(i), &dense_size)) {
+      dense_size_overflowed = true;
+      break;
+    }
+  }
   if (static_cast<size_t>(indices.dims(0)) != nnz) {
     fail_check("Sparse tensor indices (", indices.name(), ") has ", indices.dims(0), " values, but NNZ is ", nnz);
   }
@@ -800,7 +805,10 @@ check_sparse_tensor_indices_1(const TensorProto& indices, const SparseTensorProt
   int64_t prev_index = -1;
   for (size_t i = 0; i < nnz; ++i) {
     int64_t curr_index = index_data[i]; // linearized index of i-th value
-    if (curr_index < 0 || curr_index >= dense_size) {
+    if (curr_index < 0) {
+      fail_check("Sparse tensor (", indices.name(), ") index value at position [", i, "] must be non-negative.");
+    }
+    if (!dense_size_overflowed && curr_index >= dense_size) {
       fail_check(
           "Sparse tensor (",
           indices.name(),
@@ -833,21 +841,27 @@ check_sparse_tensor_indices_2(const TensorProto& indices, const SparseTensorProt
   // Check if indices appear in ascending order, and if they have valid
   // values.
   const std::vector<int64_t> index_data = ParseData<int64_t>(&indices);
-  int64_t prev_index = -1;
+  const auto row_width = static_cast<size_t>(dense_rank);
   for (size_t i = 0; i < nnz; ++i) {
-    int64_t curr_index = 0; // linearized index of i-th value
+    const auto row_begin = index_data.cbegin() + static_cast<std::ptrdiff_t>(i * row_width);
+    const auto row_end = row_begin + static_cast<std::ptrdiff_t>(row_width);
     for (int j = 0; j < dense_rank; ++j) {
-      auto index_ij = index_data[(i * dense_rank) + j];
+      auto index_ij = row_begin[j];
       if ((index_ij < 0) || (index_ij >= sparse_tensor_proto.dims(j))) {
         fail_check("Sparse tensor (", indices.name(), ") index value at position [", i, ",", j, "] out of range.");
       }
-      curr_index = (curr_index * sparse_tensor_proto.dims(j)) + index_ij;
     }
-    if (curr_index <= prev_index) {
-      fail_check(
-          "Sparse tensor (", indices.name(), ") index value at position [", i, "] not in lexicographic sorted order.");
+    if (i > 0) {
+      const auto previous_row_begin = row_begin - static_cast<std::ptrdiff_t>(row_width);
+      if (!std::lexicographical_compare(previous_row_begin, row_begin, row_begin, row_end)) {
+        fail_check(
+            "Sparse tensor (",
+            indices.name(),
+            ") index value at position [",
+            i,
+            "] not in lexicographic sorted order.");
+      }
     }
-    prev_index = curr_index;
   }
 }
 
