@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import hashlib
+import math
 import re
 import struct
 from pathlib import Path
@@ -21,7 +22,9 @@ from onnx import (
     shape_inference,
 )
 from onnx.reference import ReferenceEvaluator
+from onnx.reference.ops import op_dequantize_packed
 from onnx.reference.ops.op_dequantize_packed import (
+    _DECODE_CHUNK_ELEMENTS,
     GGUF_BLOCK_SIZES,
     GGUF_FORMATS,
     _decode_block,
@@ -378,7 +381,7 @@ def test_complete_codebooks(name: str) -> None:
     assert digest == _CODEBOOK_DIGESTS[name]
 
 
-@pytest.mark.parametrize("qtype", [2, 8])
+@pytest.mark.parametrize("qtype", sorted(GGUF_BLOCK_SIZES))
 @pytest.mark.parametrize(
     "dtype",
     [TensorProto.FLOAT, TensorProto.FLOAT16, TensorProto.BFLOAT16, TensorProto.DOUBLE],
@@ -386,10 +389,11 @@ def test_complete_codebooks(name: str) -> None:
 def test_output_dtype_order_and_storage(
     qtype: int, dtype: int, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    width, _ = GGUF_BLOCK_SIZES[qtype]
     blocks = _corpus(qtype, 6)
     expected = np.stack(
         [_decode_block(block.tobytes(), qtype) for block in blocks]
-    ).reshape(2, 3, 32)
+    ).reshape(2, 3, width)
     decoded_buffers: list[np.ndarray] = []
     original_empty = np.empty
 
@@ -400,7 +404,7 @@ def test_output_dtype_order_and_storage(
         return allocated
 
     monkeypatch.setattr(np, "empty", track_empty)
-    actual = _run(blocks.ravel(), qtype, shape=[2, 3, 32], output_dtype=dtype)
+    actual = _run(blocks.ravel(), qtype, shape=[2, 3, width], output_dtype=dtype)
     np.testing.assert_array_equal(
         actual, expected.astype(helper.tensor_dtype_to_np_dtype(dtype))
     )
@@ -411,31 +415,52 @@ def test_output_dtype_order_and_storage(
     assert not np.shares_memory(actual, blocks)
 
 
-@pytest.mark.parametrize("qtype", [2, 8])
-@pytest.mark.parametrize("count", [1, 4095, 4096, 4097, 8193])
-def test_q4_0_q8_0_batched_decoding(qtype: int, count: int) -> None:
-    blocks = _corpus(qtype, count)
-    expected = np.stack([_decode_block(block.tobytes(), qtype) for block in blocks])
-    actual = _run(blocks.ravel(), qtype, [count, 32])
-    np.testing.assert_array_equal(actual.view(np.uint32), expected.view(np.uint32))
+@pytest.mark.parametrize("qtype", sorted(GGUF_BLOCK_SIZES))
+def test_batched_decoding_chunk_boundary(specification, qtype: int) -> None:
+    width, size = GGUF_BLOCK_SIZES[qtype]
+    chunk_size = max(1, _DECODE_CHUNK_ELEMENTS // width)
+    count = chunk_size + 1
+    corpus = _corpus(qtype)
+    blocks = np.tile(corpus, (math.ceil(count / len(corpus)), 1))[:count]
+    expected_corpus = np.array(
+        [
+            specification["decode_block"](block.tobytes(), _GGMLType(qtype).name)
+            for block in corpus
+        ],
+        dtype=np.float32,
+    )
+    expected = np.tile(expected_corpus, (math.ceil(count / len(expected_corpus)), 1))[
+        :count
+    ]
+    actual = _run(blocks.ravel(), qtype, [count, width])
+    assert blocks.shape == (count, size)
+    assert actual.shape == (count, width)
+    np.testing.assert_array_equal(np.isnan(actual), np.isnan(expected))
+    non_nan = ~np.isnan(expected)
+    np.testing.assert_array_equal(
+        actual[non_nan].view(np.uint32), expected[non_nan].view(np.uint32)
+    )
 
 
-@pytest.mark.parametrize("qtype", [2, 8])
+@pytest.mark.parametrize("qtype", sorted(GGUF_BLOCK_SIZES))
 @pytest.mark.parametrize("stride", [-2, -1, 1, 2])
-def test_q4_0_q8_0_readonly_strided_input(qtype: int, stride: int) -> None:
-    blocks = _corpus(qtype)
+def test_batched_readonly_strided_input(qtype: int, stride: int) -> None:
+    width, _ = GGUF_BLOCK_SIZES[qtype]
+    blocks = _corpus(qtype, 8)
     storage = np.empty(blocks.size * abs(stride), dtype=np.uint8)
     x = storage[::stride]
     x[:] = blocks.ravel()
     x.flags.writeable = False
     expected = np.stack([_decode_block(block.tobytes(), qtype) for block in blocks])
-    actual = _run(x, qtype, [len(blocks), 32])
+    actual = _run(x, qtype, [len(blocks), width])
     np.testing.assert_array_equal(actual.view(np.uint32), expected.view(np.uint32))
     np.testing.assert_array_equal(x, blocks.ravel())
 
 
-@pytest.mark.parametrize("qtype", [2, 8])
-def test_q4_0_q8_0_batched_ieee_scales(specification, qtype: int) -> None:
+@pytest.mark.parametrize(
+    "qtype", sorted(set(GGUF_BLOCK_SIZES) - {_GGMLType.MXFP4, _GGMLType.NVFP4})
+)
+def test_batched_ieee_scales(specification, qtype: int) -> None:
     scale_bits = [
         0,
         0x8000,
@@ -454,7 +479,24 @@ def test_q4_0_q8_0_batched_ieee_scales(specification, qtype: int) -> None:
     ]
     blocks = _corpus(qtype, len(scale_bits))
     for block, bits in zip(blocks, scale_bits, strict=True):
-        block[:2] = np.frombuffer(struct.pack("<H", bits), dtype=np.uint8)
+        if qtype == _GGMLType.Q8_K:
+            block[:4] = np.frombuffer(
+                struct.pack("<f", struct.unpack("<e", bits.to_bytes(2, "little"))[0]),
+                dtype=np.uint8,
+            )
+        elif qtype == _GGMLType.IQ1_M:
+            for j in range(4):
+                offset = 48 + 2 * j
+                word = int.from_bytes(block[offset : offset + 2], "little") & 0x0FFF
+                block[offset : offset + 2] = np.frombuffer(
+                    struct.pack("<H", word | (((bits >> (4 * j)) & 15) << 12)),
+                    dtype=np.uint8,
+                )
+        else:
+            offset = {10: 80, 11: 108, 14: 208, 34: 52, 35: 64}.get(qtype, 0)
+            block[offset : offset + 2] = np.frombuffer(
+                struct.pack("<H", bits), dtype=np.uint8
+            )
     expected = np.array(
         [
             specification["decode_block"](block.tobytes(), _GGMLType(qtype).name)
@@ -462,13 +504,29 @@ def test_q4_0_q8_0_batched_ieee_scales(specification, qtype: int) -> None:
         ],
         dtype=np.float32,
     )
+    width, _ = GGUF_BLOCK_SIZES[qtype]
     with np.errstate(invalid="ignore"):
-        actual = _run(blocks.ravel(), qtype, [len(blocks), 32])
+        actual = _run(blocks.ravel(), qtype, [len(blocks), width])
     np.testing.assert_array_equal(actual, expected)
     non_nan = ~np.isnan(expected)
     np.testing.assert_array_equal(
         actual[non_nan].view(np.uint32), expected[non_nan].view(np.uint32)
     )
+
+
+@pytest.mark.parametrize("qtype", sorted(GGUF_BLOCK_SIZES))
+def test_runtime_does_not_use_scalar_block_decoder(
+    qtype: int, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    width, _ = GGUF_BLOCK_SIZES[qtype]
+
+    def fail_scalar_decoder(*_args, **_kwargs):
+        raise AssertionError("runtime used the scalar block decoder")
+
+    monkeypatch.setattr(op_dequantize_packed, "_decode_block", fail_scalar_decoder)
+    blocks = _corpus(qtype, 2)
+    actual = _run(blocks.ravel(), qtype, [2, width])
+    assert actual.shape == (2, width)
 
 
 def test_default_output_dtype() -> None:

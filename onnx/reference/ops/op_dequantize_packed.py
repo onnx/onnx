@@ -91,6 +91,9 @@ _FP4 = np.array(
     [0, 1, 2, 3, 4, 6, 8, 12, 0, -1, -2, -3, -4, -6, -8, -12],
     dtype=np.float32,
 )
+_UINT_DTYPES = {2: "<u2", 4: "<u4"}
+_NVFP4_ZERO_SCALE_CODE = 127
+_DECODE_CHUNK_ELEMENTS = 131072
 
 
 @lru_cache(maxsize=6)
@@ -363,21 +366,359 @@ def _decode_block(block: bytes, qtype: int) -> np.ndarray:  # noqa: PLR0911
     raise ValueError(f"Unsupported quantized ggml_type: {qtype}")
 
 
-def _decode_q4_0_q8_0(blocks: np.ndarray, out: np.ndarray, qtype: int) -> None:
-    # Bound temporary storage independently of the number of packed blocks.
-    chunk_size = 4096
-    for start in range(0, len(blocks), chunk_size):
-        chunk = blocks[start : start + chunk_size]
-        decoded = out[start : start + chunk_size]
-        # Copy only the scales so the little-endian view also accepts strided input.
-        scales = np.ascontiguousarray(chunk[:, :2]).view("<f2").astype(np.float32)
-        quants = chunk[:, 2:]
-        if qtype == _GGMLType.Q4_0:
-            # Low nibbles precede high nibbles within each 32-value block.
-            np.multiply((quants & 15).astype(np.int8) - 8, scales, out=decoded[:, :16])
-            np.multiply((quants >> 4).astype(np.int8) - 8, scales, out=decoded[:, 16:])
+def _batch_half(blocks: np.ndarray, offset: int = 0) -> np.ndarray:
+    return (
+        np.ascontiguousarray(blocks[:, offset : offset + 2])
+        .view("<f2")
+        .reshape(-1)
+        .astype(np.float32)
+    )
+
+
+def _batch_uint(blocks: np.ndarray, offset: int, size: int = 2) -> np.ndarray:
+    data = np.ascontiguousarray(blocks[:, offset : offset + size])
+    dtype = _UINT_DTYPES.get(size)
+    if dtype is None:
+        raise ValueError(f"Unsupported integer byte width: {size}")
+    return data.view(dtype).reshape(-1)
+
+
+def _batch_unpack(data: np.ndarray, bits: int, group: int) -> np.ndarray:
+    packed = data.reshape(len(data), -1, group)
+    shifts = np.arange(0, 8, bits, dtype=np.uint8)
+    return (
+        ((packed[:, :, None, :] >> shifts[None, None, :, None]) & ((1 << bits) - 1))
+        .reshape(len(data), -1)
+        .astype(np.int32)
+    )
+
+
+def _batch_signs(index: np.ndarray, parity: bool = False) -> np.ndarray:
+    if parity:
+        parity_bit = np.zeros_like(index)
+        for shift in range(7):
+            parity_bit ^= (index >> shift) & 1
+        index = index | (parity_bit << 7)
+    bits = ((index[:, None] >> np.arange(8, dtype=index.dtype)[None, :]) & 1).astype(
+        np.float32
+    )
+    return np.float32(1) - np.float32(2) * bits
+
+
+def _decode_iq_blocks(blocks: np.ndarray, out: np.ndarray, qtype: int) -> None:
+    d = _batch_half(blocks)
+    if qtype == _GGMLType.IQ1_M:
+        scales = np.stack([_batch_uint(blocks, 48 + 2 * j) for j in range(4)], axis=1)
+        scale_bits = np.zeros(len(blocks), dtype=np.uint16)
+        for j in range(4):
+            scale_bits |= ((scales[:, j] >> 12) << (4 * j)).astype(np.uint16)
+        d = scale_bits.astype("<u2", copy=False).view("<f2").astype(np.float32)
+    for group in range(8):
+        aux = None
+        if qtype == _GGMLType.IQ2_XXS:
+            aux = _batch_uint(blocks, 6 + 8 * group, 4)
+        elif qtype == _GGMLType.IQ3_XXS:
+            aux = _batch_uint(blocks, 66 + 4 * group, 4)
+        for lane in range(4):
+            i = 4 * group + lane
+            decoded = out[:, 8 * i : 8 * i + 8]
+            if qtype in (_GGMLType.IQ2_XXS, _GGMLType.IQ2_XS, _GGMLType.IQ2_S):
+                if qtype == _GGMLType.IQ2_XXS:
+                    assert aux is not None
+                    index = blocks[:, 2 + 8 * group + lane]
+                    sign = _batch_signs(
+                        ((aux >> (7 * lane)) & 127).astype(np.uint32), parity=True
+                    )
+                    scale = d * (np.float32(0.5) + (aux >> 28).astype(np.float32))
+                    scale *= np.float32(0.25)
+                    name = "iq2xxs_grid"
+                elif qtype == _GGMLType.IQ2_XS:
+                    word = _batch_uint(blocks, 2 + 2 * i)
+                    index = word & 511
+                    sign = _batch_signs((word >> 9).astype(np.uint16), parity=True)
+                    nibble = (blocks[:, 66 + group] >> np.uint8(4 * (lane // 2))) & 15
+                    scale = d * (np.float32(0.5) + nibble.astype(np.float32))
+                    scale *= np.float32(0.25)
+                    name = "iq2xs_grid"
+                else:
+                    index = blocks[:, 2 + i].astype(np.uint16) | (
+                        ((blocks[:, 66 + group] >> np.uint8(2 * lane)) & 3).astype(
+                            np.uint16
+                        )
+                        << 8
+                    )
+                    sign = _batch_signs(blocks[:, 34 + i])
+                    nibble = (blocks[:, 74 + group] >> np.uint8(4 * (lane // 2))) & 15
+                    scale = d * (np.float32(0.5) + nibble.astype(np.float32))
+                    scale *= np.float32(0.25)
+                    name = "iq2s_grid"
+                np.multiply(scale[:, None], _grid(name)[index], out=decoded)
+                np.multiply(decoded, sign, out=decoded)
+            elif qtype in (_GGMLType.IQ3_XXS, _GGMLType.IQ3_S):
+                if qtype == _GGMLType.IQ3_XXS:
+                    assert aux is not None
+                    indices = blocks[:, 2 + 2 * i : 2 + 2 * i + 2]
+                    sign = _batch_signs(
+                        ((aux >> (7 * lane)) & 127).astype(np.uint32), parity=True
+                    )
+                    scale = d * (np.float32(0.5) + (aux >> 28).astype(np.float32))
+                    scale *= np.float32(0.5)
+                    name = "iq3xxs_grid"
+                else:
+                    high = blocks[:, 66 + group]
+                    indices = blocks[:, 2 + 2 * i : 2 + 2 * i + 2].astype(np.uint16)
+                    indices |= np.stack(
+                        [
+                            ((high >> np.uint8(2 * lane + j)) & 1).astype(np.uint16)
+                            << 8
+                            for j in range(2)
+                        ],
+                        axis=1,
+                    )
+                    sign = _batch_signs(blocks[:, 74 + i])
+                    nibble = (
+                        blocks[:, 106 + group // 2] >> np.uint8(4 * (group % 2))
+                    ) & 15
+                    scale = d * (
+                        np.float32(1) + np.float32(2) * nibble.astype(np.float32)
+                    )
+                    name = "iq3s_grid"
+                values = _grid(name)[indices].reshape(len(blocks), 8)
+                np.multiply(scale[:, None], values, out=decoded)
+                np.multiply(decoded, sign, out=decoded)
+            else:
+                if qtype == _GGMLType.IQ1_S:
+                    high = _batch_uint(blocks, 34 + 2 * group)
+                    index = blocks[:, 2 + i].astype(np.uint16) | (
+                        ((high >> (3 * lane)) & 7).astype(np.uint16) << 8
+                    )
+                    scale = d * (
+                        np.float32(2) * ((high >> 12) & 7).astype(np.float32)
+                        + np.float32(1)
+                    )
+                    delta = np.where(
+                        high & 0x8000, np.float32(-0.125), np.float32(0.125)
+                    )
+                else:
+                    high = blocks[:, 32 + i // 2] >> np.uint8(4 * (i % 2))
+                    index = blocks[:, i].astype(np.uint16) | (
+                        (high & 7).astype(np.uint16) << 8
+                    )
+                    scale_code = (
+                        scales[:, group // 2] >> (6 * (group % 2) + 3 * (lane // 2))
+                    ) & 7
+                    scale = d * (
+                        np.float32(2) * scale_code.astype(np.float32) + np.float32(1)
+                    )
+                    delta = np.where(high & 8, np.float32(-0.125), np.float32(0.125))
+                values = _grid("iq1s_grid")[index] + delta[:, None]
+                np.multiply(scale[:, None], values, out=decoded)
+
+
+def _decode_blocks_chunk(blocks: np.ndarray, out: np.ndarray, qtype: int) -> None:  # noqa: PLR0911
+    if qtype in (
+        _GGMLType.IQ2_XXS,
+        _GGMLType.IQ2_XS,
+        _GGMLType.IQ3_XXS,
+        _GGMLType.IQ1_S,
+        _GGMLType.IQ3_S,
+        _GGMLType.IQ2_S,
+        _GGMLType.IQ1_M,
+    ):
+        _decode_iq_blocks(blocks, out, qtype)
+        return
+    if qtype in (
+        _GGMLType.Q4_0,
+        _GGMLType.Q4_1,
+        _GGMLType.Q5_0,
+        _GGMLType.Q5_1,
+        _GGMLType.IQ4_NL,
+    ):
+        affine = qtype in (_GGMLType.Q4_1, _GGMLType.Q5_1)
+        offset = 4 if affine else 2
+        quant_offset = offset + (4 if qtype in (_GGMLType.Q5_0, _GGMLType.Q5_1) else 0)
+        q = _batch_unpack(blocks[:, quant_offset:], 4, 16)
+        if qtype in (_GGMLType.Q5_0, _GGMLType.Q5_1):
+            high = _batch_uint(blocks, offset, 4)
+            q |= (
+                ((high[:, None] >> np.arange(32, dtype=np.uint32)[None, :]) & 1) << 4
+            ).astype(np.int32)
+        if qtype == _GGMLType.IQ4_NL:
+            np.multiply(_batch_half(blocks)[:, None], _IQ4[q], out=out)
+            return
+        if not affine:
+            q -= 16 if qtype == _GGMLType.Q5_0 else 8
+        np.multiply(_batch_half(blocks)[:, None], q.astype(np.float32), out=out)
+        if affine:
+            np.add(out, _batch_half(blocks, 2)[:, None], out=out)
+        return
+    if qtype in (_GGMLType.Q8_0, _GGMLType.Q8_1, _GGMLType.Q8_K):
+        offset = 2 if qtype == _GGMLType.Q8_0 else 4
+        count = 256 if qtype == _GGMLType.Q8_K else 32
+        if qtype == _GGMLType.Q8_K:
+            d = (
+                np.ascontiguousarray(blocks[:, :4])
+                .view("<f4")
+                .reshape(-1)
+                .astype(np.float32)
+            )
         else:
-            np.multiply(quants.view(np.int8), scales, out=decoded)
+            d = _batch_half(blocks)
+        np.multiply(
+            blocks[:, offset : offset + count].view(np.int8).astype(np.float32),
+            d[:, None],
+            out=out,
+        )
+        return
+    if qtype in (_GGMLType.Q2_K, _GGMLType.Q3_K):
+        offset = 16 if qtype == _GGMLType.Q2_K else 32
+        q = _batch_unpack(blocks[:, offset : offset + 64], 2, 32)
+        if qtype == _GGMLType.Q2_K:
+            scales = blocks[:, :16]
+            d, m = _batch_half(blocks, 80), _batch_half(blocks, 82)
+            group_scales = d[:, None] * (scales & 15).astype(np.float32)
+            decoded = out.reshape(len(blocks), 16, 16)
+            np.multiply(
+                group_scales[:, :, None],
+                q.reshape(len(blocks), 16, 16).astype(np.float32),
+                out=decoded,
+            )
+            minima = m[:, None] * (scales >> 4).astype(np.float32)
+            np.subtract(decoded, minima[:, :, None], out=decoded)
+            return
+        low = _batch_unpack(blocks[:, 96:104], 4, 8)
+        high = _batch_unpack(blocks[:, 104:108], 2, 4)
+        scales = low | (high << 4)
+        scales -= 32
+        q -= (1 - _batch_unpack(blocks[:, :32], 1, 32)) * 4
+        group_scales = _batch_half(blocks, 108)[:, None] * scales.astype(np.float32)
+        np.multiply(
+            group_scales[:, :, None],
+            q.reshape(len(blocks), 16, 16).astype(np.float32),
+            out=out.reshape(len(blocks), 16, 16),
+        )
+        return
+    if qtype in (_GGMLType.Q4_K, _GGMLType.Q5_K):
+        scales = blocks[:, 4:16]
+        sc = np.empty((len(blocks), 8), dtype=np.float32)
+        mn = np.empty((len(blocks), 8), dtype=np.float32)
+        sc[:, :4] = scales[:, :4] & 63
+        sc[:, 4:] = (scales[:, 8:12] & 15) | ((scales[:, :4] >> 6) << 4)
+        mn[:, :4] = scales[:, 4:8] & 63
+        mn[:, 4:] = (scales[:, 8:12] >> 4) | ((scales[:, 4:8] >> 6) << 4)
+        q = _batch_unpack(blocks[:, 16 if qtype == _GGMLType.Q4_K else 48 :], 4, 32)
+        if qtype == _GGMLType.Q5_K:
+            q |= _batch_unpack(blocks[:, 16:48], 1, 32) << 4
+        decoded = out.reshape(len(blocks), 8, 32)
+        group_scales = _batch_half(blocks)[:, None] * sc
+        np.multiply(
+            group_scales[:, :, None],
+            q.reshape(len(blocks), 8, 32).astype(np.float32),
+            out=decoded,
+        )
+        minima = _batch_half(blocks, 2)[:, None] * mn
+        np.subtract(decoded, minima[:, :, None], out=decoded)
+        return
+    if qtype == _GGMLType.Q6_K:
+        q = (
+            _batch_unpack(blocks[:, :128], 4, 64)
+            | (_batch_unpack(blocks[:, 128:192], 2, 32) << 4)
+        ) - 32
+        scales = blocks[:, 192:208].view(np.int8).astype(np.float32)
+        group_scales = _batch_half(blocks, 208)[:, None] * scales
+        np.multiply(
+            group_scales[:, :, None],
+            q.reshape(len(blocks), 16, 16).astype(np.float32),
+            out=out.reshape(len(blocks), 16, 16),
+        )
+        return
+    if qtype == _GGMLType.IQ4_XS:
+        high = _batch_uint(blocks, 2)
+        scales = np.stack(
+            [
+                ((blocks[:, 4 + j // 2] >> np.uint8(4 * (j % 2))) & 15).astype(np.int32)
+                | (((high >> (2 * j)) & 3).astype(np.int32) << 4)
+                for j in range(8)
+            ],
+            axis=1,
+        )
+        scales -= 32
+        q = _batch_unpack(blocks[:, 8:], 4, 16)
+        group_scales = _batch_half(blocks)[:, None] * scales.astype(np.float32)
+        np.multiply(
+            group_scales[:, :, None],
+            _IQ4[q].reshape(len(blocks), 8, 32),
+            out=out.reshape(len(blocks), 8, 32),
+        )
+        return
+    if qtype == _GGMLType.TQ1_0:
+        offset = 0
+        for start, width, planes in ((0, 32, 5), (32, 16, 5), (48, 4, 4)):
+            data = blocks[:, start : start + width].astype(np.uint32)
+            for plane in range(planes):
+                values = ((data * 3**plane) & 255) * 3 // 256
+                out[:, offset : offset + width] = values.astype(np.float32) - 1
+                offset += width
+        np.multiply(out, _batch_half(blocks, 52)[:, None], out=out)
+        return
+    if qtype == _GGMLType.TQ2_0:
+        q = _batch_unpack(blocks[:, :64], 2, 32)
+        q -= 1
+        np.multiply(_batch_half(blocks, 64)[:, None], q.astype(np.float32), out=out)
+        return
+    if qtype == _GGMLType.MXFP4:
+        e = blocks[:, 0].astype(np.uint32)
+        bits = np.where(
+            e <= 1, np.uint32(0x00200000) << e, (e - 1) << np.uint32(23)
+        ).astype("<u4")
+        d = bits.view("<f4").astype(np.float32)
+        q = _batch_unpack(blocks[:, 1:], 4, 16)
+        np.multiply(d[:, None], _FP4[q], out=out)
+        return
+    if qtype == _GGMLType.NVFP4:
+        e = blocks[:, :4]
+        exponent = (e >> 3) & 15
+        mantissa = e & 7
+        d = np.where(
+            (e == 0) | (e == _NVFP4_ZERO_SCALE_CODE),
+            0.0,
+            np.where(
+                exponent == 0,
+                np.ldexp(mantissa.astype(np.float64), -10),
+                np.ldexp(
+                    1.0 + mantissa.astype(np.float64) / 8.0,
+                    exponent.astype(np.int16) - 8,
+                ),
+            ),
+        ).astype(np.float32)
+        q = _batch_unpack(blocks[:, 4:].reshape(-1, 8), 4, 8).reshape(
+            len(blocks), 4, 16
+        )
+        np.multiply(
+            d[:, :, None],
+            _FP4[q],
+            out=out.reshape(len(blocks), 4, 16),
+        )
+        return
+    if qtype == _GGMLType.Q1_0:
+        q = np.unpackbits(blocks[:, 2:], axis=1, bitorder="little")
+        d = _batch_half(blocks)[:, None]
+        np.copyto(out, np.where(q != 0, d, -d))
+        return
+    if qtype == _GGMLType.Q2_0:
+        q = _batch_unpack(blocks[:, 2:], 2, 1)
+        q -= 1
+        np.multiply(_batch_half(blocks)[:, None], q.astype(np.float32), out=out)
+        return
+    raise ValueError(f"Unsupported quantized ggml_type: {qtype}")
+
+
+def _decode_blocks(blocks: np.ndarray, out: np.ndarray, qtype: int) -> None:
+    block_size = out.shape[1]
+    chunk_size = max(1, _DECODE_CHUNK_ELEMENTS // block_size)
+    for start in range(0, len(blocks), chunk_size):
+        end = start + chunk_size
+        _decode_blocks_chunk(blocks[start:end], out[start:end], qtype)
 
 
 class DequantizePacked(OpRun):
@@ -415,13 +756,7 @@ class DequantizePacked(OpRun):
             )
         out = np.empty(count, dtype=np.float32)
         blocks = x.reshape(-1, block_bytes)
-        if qtype in (_GGMLType.Q4_0, _GGMLType.Q8_0):
-            _decode_q4_0_q8_0(blocks, out.reshape(-1, block_size), qtype)
-        else:
-            for j, block in enumerate(blocks):
-                out[j * block_size : (j + 1) * block_size] = _decode_block(
-                    block.tobytes(), qtype
-                )
+        _decode_blocks(blocks, out.reshape(-1, block_size), qtype)
         return (
             out.reshape(tuple(shape)).astype(
                 helper.tensor_dtype_to_np_dtype(output_dtype), copy=False
