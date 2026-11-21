@@ -767,6 +767,28 @@ class TestComposeFunctions:
             (y,) = ReferenceEvaluator(m2).run(None, {"X": x})
             assert list(y.shape) == expected_shape
 
+    def test_expand_out_dim_symbolic_and_unknown_dims(self) -> None:
+        """Symbolic and unknown output dimensions are kept instead of becoming 0."""
+        m1 = _load_model(
+            """
+            <ir_version: 8, opset_import: [ "": 13]>
+            agraph (float[N, ?, 3] X) => (float[N, ?, 3] Y)
+            {
+                Y = Identity(X)
+            }
+            """
+        )
+        for dim_idx, expected_shape in [
+            (0, [1, "N", None, 3]),
+            (1, ["N", 1, None, 3]),
+            (-1, ["N", None, 3, 1]),
+        ]:
+            m2 = compose.expand_out_dim(m1, dim_idx)
+            checker.check_model(m2, full_check=True)
+            assert m2.graph.output[0] == helper.make_tensor_value_info(
+                "Y", TensorProto.FLOAT, expected_shape
+            )
+
     def _test_overlapping_names(
         self,
         inputs0: Sequence[str] = ("i0", "i1"),
