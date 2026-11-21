@@ -185,69 +185,104 @@ class ModelContainer:
         folder = os.path.dirname(file_path)
         if not os.path.exists(folder):
             raise FileNotFoundError(f"Folder {folder!r} does not exist.")
-        proto = self.model_proto.SerializeToString()
-        copy = onnx.ModelProto()
-        copy.ParseFromString(proto)
-        prefix = os.path.splitext(os.path.split(file_path)[-1])[0]
-
-        shared_data_file = None
-        if all_tensors_to_one_file:
-            file_weight = f"{os.path.split(file_path)[1]}.weight"
-            shared_data_file = ext_data._open_external_data_file_for_write(
-                folder, file_weight, "ModelContainer", truncate=True
-            )
-
+        external_data_context = ext_data._ExternalDataContext(folder)
+        model_file = None
         try:
-            for tensor in ext_data._get_all_tensors(copy):
-                if not ext_data.uses_external_data(tensor):
-                    continue
-                prop: onnx.StringStringEntryProto | None = None
-                for ext in tensor.external_data:
-                    if ext.key == "location":
-                        prop = ext
-                if prop is None:
-                    raise RuntimeError(
-                        f"No location found for tensor name {tensor.name!r}."
-                    )
-                if prop.value not in self.large_initializers:
-                    raise RuntimeError(
-                        f"Unable to find large tensor named {tensor.name!r} "
-                        f"with location {prop.value!r} in "
-                        f"{sorted(self.large_initializers)}."
-                    )
-                np_tensor = self.large_initializers[prop.value]
+            model_file = ext_data._open_model_file_for_write(
+                external_data_context,
+                os.path.basename(file_path),
+                truncate=False,
+                existing_only=True,
+            )
+        except onnx.checker.ValidationError as error:
+            if error.code != "external-data-file-missing":
+                raise
+        try:
+            proto = self.model_proto.SerializeToString()
+            copy = onnx.ModelProto()
+            copy.ParseFromString(proto)
+            prefix = os.path.splitext(os.path.split(file_path)[-1])[0]
 
-                tensor_bytes = onnx.numpy_helper.tobytes_little_endian(np_tensor)
+            shared_data_file = None
+            if all_tensors_to_one_file:
+                file_weight = f"{os.path.split(file_path)[1]}.weight"
+                shared_data_file = ext_data._open_external_data_file_for_write(
+                    folder,
+                    file_weight,
+                    "ModelContainer",
+                    truncate=True,
+                    context=external_data_context,
+                )
 
-                if all_tensors_to_one_file:
-                    location = file_weight
-                    data_file = shared_data_file
-                    if data_file is None:
-                        raise RuntimeError("Shared external-data file is not open.")
-                else:
-                    location = f"{_clean_name(prefix, prop.value, unique_names)}.weight"
-                    prop.value = location
-                    data_file = ext_data._open_external_data_file_for_write(
-                        folder, location, tensor.name, truncate=True
-                    )
+            try:
+                for tensor in ext_data._get_all_tensors(copy):
+                    if not ext_data.uses_external_data(tensor):
+                        continue
+                    prop: onnx.StringStringEntryProto | None = None
+                    for ext in tensor.external_data:
+                        if ext.key == "location":
+                            prop = ext
+                    if prop is None:
+                        raise RuntimeError(
+                            f"No location found for tensor name {tensor.name!r}."
+                        )
+                    if prop.value not in self.large_initializers:
+                        raise RuntimeError(
+                            f"Unable to find large tensor named {tensor.name!r} "
+                            f"with location {prop.value!r} in "
+                            f"{sorted(self.large_initializers)}."
+                        )
+                    np_tensor = self.large_initializers[prop.value]
 
-                # Route the actual write through the hardened primitive shared with
-                # save_external_data without copying the payload into the protobuf.
-                _set_external_data(tensor, location=location)
-                try:
-                    ext_data._write_external_data_to_file(
-                        tensor, data_file, tensor_bytes
-                    )
-                finally:
-                    if not all_tensors_to_one_file and data_file is not None:
-                        data_file.close()
+                    tensor_bytes = onnx.numpy_helper.tobytes_little_endian(np_tensor)
+
+                    if all_tensors_to_one_file:
+                        location = file_weight
+                        data_file = shared_data_file
+                        if data_file is None:
+                            raise RuntimeError("Shared external-data file is not open.")
+                    else:
+                        location = (
+                            f"{_clean_name(prefix, prop.value, unique_names)}.weight"
+                        )
+                        prop.value = location
+                        data_file = ext_data._open_external_data_file_for_write(
+                            folder,
+                            location,
+                            tensor.name,
+                            truncate=True,
+                            context=external_data_context,
+                        )
+
+                    # Route the actual write through the hardened primitive shared with
+                    # save_external_data without copying the payload into the protobuf.
+                    _set_external_data(tensor, location=location)
+                    try:
+                        ext_data._write_external_data_to_file(
+                            tensor, data_file, tensor_bytes
+                        )
+                    finally:
+                        if not all_tensors_to_one_file and data_file is not None:
+                            data_file.close()
+            finally:
+                if shared_data_file is not None:
+                    shared_data_file.close()
+
+            serialized = copy.SerializeToString()
+            if model_file is None:
+                model_file = ext_data._open_model_file_for_write(
+                    external_data_context,
+                    os.path.basename(file_path),
+                    truncate=False,
+                    create_new=True,
+                )
+            model_file.seek(0)
+            model_file.truncate()
+            model_file.write(serialized)
+            return copy
         finally:
-            if shared_data_file is not None:
-                shared_data_file.close()
-
-        with open(file_path, "wb") as f:
-            f.write(copy.SerializeToString())
-        return copy
+            if model_file is not None:
+                model_file.close()
 
     def save(
         self,
@@ -282,15 +317,26 @@ class ModelContainer:
                 look into the model without executing it and method
                 :meth:`_load_large_initializers` can be used to load them later
         """
-        self.model_proto_ = onnx.load_model(file_path, load_external_data=False)
+        base_dir = os.path.dirname(file_path)
+        external_data_context = ext_data._ExternalDataContext(base_dir)
+        self.model_proto_ = onnx.load_model(
+            file_path,
+            load_external_data=False,
+            _external_data_context=external_data_context,
+        )
         if load_large_initializers:
-            self._load_large_initializers(file_path)
+            self._load_large_initializers(file_path, external_data_context)
 
-    def _load_large_initializers(self, file_path):
+    def _load_large_initializers(
+        self,
+        file_path,
+        external_data_context: ext_data._ExternalDataContext | None = None,
+    ):
         """Loads large initializers.
 
         Arguments:
             file_path: model file, the weight are expected to be in the same folder as this file
+            external_data_context: optional pinned authority shared with the main model open
         """
         if self.model_proto_ is None:
             raise RuntimeError("A model must be loaded before loading the weights.")
@@ -300,12 +346,19 @@ class ModelContainer:
             if not ext_data.uses_external_data(tensor):
                 continue
 
+            if external_data_context is None:
+                external_data_context = ext_data._ExternalDataContext(base_dir)
+
             info = ext_data.ExternalDataInfo(tensor)
             key = f"#t{i}"
             _set_external_data(tensor, location=key)
 
             fd = ext_data._open_external_data_fd(
-                base_dir, info.location, tensor.name, True
+                base_dir,
+                info.location,
+                tensor.name,
+                True,
+                context=external_data_context,
             )
             with os.fdopen(fd, "rb") as data_file:
                 raw_data = ext_data._validate_external_data_file_bounds(

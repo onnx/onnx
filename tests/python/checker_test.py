@@ -409,6 +409,30 @@ class TestChecker:
             with pytest.raises(checker.ValidationError):
                 checker.check_model(model_path)
 
+    @pytest.mark.skipif(os.name == "nt", reason="Backslash is a separator on Windows")
+    def test_check_model_path_treats_backslash_as_filename_character(
+        self, tmp_path: Path
+    ) -> None:
+        requested_path = tmp_path / "directory\\model.onnx"
+        requested_path.write_bytes(b"not a protobuf model")
+
+        # A checker that splits POSIX paths on backslashes would open this
+        # different, valid model instead of the requested malformed file.
+        alternate_dir = tmp_path / "directory\\"
+        alternate_dir.mkdir()
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        alternate_model = helper.make_model(graph, producer_name="test")
+        (alternate_dir / "model.onnx").write_bytes(alternate_model.SerializeToString())
+
+        with pytest.raises(checker.ValidationError, match="Unable to parse"):
+            checker.check_model(str(requested_path))
+
     def test_check_model_protobuf_size_boundary(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:

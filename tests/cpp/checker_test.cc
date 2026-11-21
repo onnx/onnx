@@ -227,4 +227,104 @@ TEST(CHECKER, OpenExternalDataTest) {
 #endif
 }
 
+TEST(CHECKER, ExternalDataContextPinsBaseDirectoryIdentity) {
+#ifndef ONNX_NO_EXCEPTIONS
+  fs::path base = fs::temp_directory_path() / "onnx_external_data_authority_test";
+  fs::path original = fs::temp_directory_path() / "onnx_external_data_authority_original";
+  fs::remove_all(base);
+  fs::remove_all(original);
+  fs::create_directories(base);
+  {
+    std::ofstream ofs(base / "data.bin", std::ios::binary);
+    ofs << "original";
+  }
+  {
+    std::ofstream ofs(base / "model.onnx", std::ios::binary);
+    ofs << "main";
+  }
+
+  {
+    ONNX_NAMESPACE::checker::ExternalDataContext context(path_to_utf8(base));
+
+    // Replace the pathname after authorization. Later reads, metadata checks,
+    // and creations must stay attached to the originally opened directory.
+    fs::rename(base, original);
+    fs::create_directories(base);
+    {
+      std::ofstream ofs(base / "data.bin", std::ios::binary);
+      ofs << "replacement";
+    }
+    {
+      std::ofstream ofs(base / "model.onnx", std::ios::binary);
+      ofs << "evil";
+    }
+
+    EXPECT_EQ(context.file_size("data.bin", "t"), 8U);
+    const auto raw = context.open("data.bin", "t", true);
+    ASSERT_GE(raw, 0);
+    {
+      ScopedFd fd(static_cast<int>(raw));
+      char buf[8];
+#ifdef _WIN32
+      EXPECT_EQ(_read(fd.get(), buf, 8), 8);
+#else
+      EXPECT_EQ(read(fd.get(), buf, 8), 8);
+#endif
+      EXPECT_EQ(std::string(buf, 8), "original");
+    }
+
+    const auto created_raw = context.open("created.bin", "t", false);
+    ASSERT_GE(created_raw, 0);
+    ScopedFd created_fd(static_cast<int>(created_raw));
+    EXPECT_TRUE(fs::exists(original / "created.bin"));
+    EXPECT_FALSE(fs::exists(base / "created.bin"));
+
+    const auto model_raw = context.open_model_file("model.onnx", true);
+    ASSERT_GE(model_raw, 0);
+    {
+      ScopedFd model_fd(static_cast<int>(model_raw));
+      char buf[4];
+#ifdef _WIN32
+      EXPECT_EQ(_read(model_fd.get(), buf, 4), 4);
+#else
+      EXPECT_EQ(read(model_fd.get(), buf, 4), 4);
+#endif
+      EXPECT_EQ(std::string(buf, 4), "main");
+    }
+
+    const auto saved_model_raw = context.open_model_file("saved.onnx", false);
+    ASSERT_GE(saved_model_raw, 0);
+    ScopedFd saved_model_fd(static_cast<int>(saved_model_raw));
+    EXPECT_TRUE(fs::exists(original / "saved.onnx"));
+    EXPECT_FALSE(fs::exists(base / "saved.onnx"));
+  }
+
+  fs::remove_all(base);
+  fs::remove_all(original);
+#endif
+}
+
+TEST(CHECKER, ExternalDataContextRejectsParentSymlink) {
+#if !defined(ONNX_NO_EXCEPTIONS) && !defined(_WIN32)
+  fs::path base = fs::temp_directory_path() / "onnx_external_data_parent_test";
+  fs::path outside = fs::temp_directory_path() / "onnx_external_data_parent_outside";
+  fs::remove_all(base);
+  fs::remove_all(outside);
+  fs::create_directories(base);
+  fs::create_directories(outside);
+  {
+    std::ofstream ofs(outside / "data.bin", std::ios::binary);
+    ofs << "outside";
+  }
+  fs::create_directory_symlink(outside, base / "nested");
+
+  ONNX_NAMESPACE::checker::ExternalDataContext context(path_to_utf8(base));
+  EXPECT_THROW(context.open("nested/data.bin", "t", true), ONNX_NAMESPACE::checker::ValidationError);
+  EXPECT_THROW(context.file_size("nested/data.bin", "t"), ONNX_NAMESPACE::checker::ValidationError);
+
+  fs::remove_all(base);
+  fs::remove_all(outside);
+#endif
+}
+
 } // namespace ONNX_NAMESPACE::Test
