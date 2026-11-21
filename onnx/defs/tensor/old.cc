@@ -6910,9 +6910,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Input can be of any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Type inference
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          const TypeProto& xTensorProto = ctx.getInputTypeOrFail(0);
           TypeProto* yTensorProto = ctx.getOutputType(0);
           TypeProto* indicesTensorProto = nullptr;
           TypeProto* inverseIndicesTensorProto = nullptr;
@@ -6940,8 +6937,16 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto axisAttr = ctx.getAttribute("axis");
           if (!axisAttr) {
             yTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
-          } else {
+          }
+
+          // Type inference
+          if (ctx.getInputType(0) == nullptr) {
+            return;
+          }
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (axisAttr) {
             int axis = static_cast<int>(axisAttr->i());
+            const TypeProto& xTensorProto = ctx.getInputTypeOrFail(0);
             if (!xTensorProto.tensor_type().has_shape()) {
               return;
             }

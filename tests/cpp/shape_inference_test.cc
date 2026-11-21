@@ -497,26 +497,28 @@ TEST(InferenceContextImplTest, OptionalInputsAndOutputsUseNodeProtoPresence) {
 }
 
 TEST(InferenceContextImplTest, GetInputTypeOrFail) {
+  GraphProto graph;
+  auto* known_input = graph.add_input();
+  known_input->set_name("known");
+  known_input->mutable_type()->mutable_tensor_type()->set_elem_type(TensorProto_DataType::TensorProto_DataType_FLOAT);
+
   NodeProto node;
   node.add_input("known");
   node.add_input("unknown");
 
-  TypeProto input_type;
-  input_type.mutable_tensor_type()->set_elem_type(TensorProto_DataType::TensorProto_DataType_FLOAT);
-
   std::unordered_map<std::string, TypeProto*> value_types_by_name;
-  value_types_by_name["known"] = &input_type;
+  value_types_by_name["known"] = known_input->mutable_type();
 
   ShapeInferenceOptions options;
   shape_inference::InferenceContextImpl infer_ctx(node, value_types_by_name, {}, {}, options);
-  EXPECT_EQ(&infer_ctx.getInputTypeOrFail(0), &input_type);
+  EXPECT_EQ(&infer_ctx.getInputTypeOrFail(0), known_input->mutable_type());
 #ifndef ONNX_NO_EXCEPTIONS
   EXPECT_THROW(infer_ctx.getInputTypeOrFail(1), ONNX_NAMESPACE::InferenceError);
 #endif
 
   shape_inference::DataValueMap generated_shape_data;
   shape_inference::DataPropagationContextImpl data_ctx(node, value_types_by_name, {}, generated_shape_data);
-  EXPECT_EQ(&data_ctx.getInputTypeOrFail(0), &input_type);
+  EXPECT_EQ(&data_ctx.getInputTypeOrFail(0), known_input->mutable_type());
 #ifndef ONNX_NO_EXCEPTIONS
   EXPECT_THROW(data_ctx.getInputTypeOrFail(1), ONNX_NAMESPACE::InferenceError);
 #endif
