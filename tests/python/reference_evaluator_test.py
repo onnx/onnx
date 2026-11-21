@@ -9122,6 +9122,149 @@ class TestReferenceEvaluator:
         with pytest.raises(ValueError, match="Invalid scan_input_directions"):
             ReferenceEvaluator(bad_dir_model)
 
+        # Explicitly present empty scan_input_axes must be rejected rather than
+        # silently treated as omitted when num_scan_inputs > 0.
+        empty_in_axes_node = make_node(
+            "Scan",
+            ["init", "x"],
+            ["final"],
+            num_scan_inputs=1,
+            body=make_graph(
+                [make_node("Add", ["s_in", "x_in"], ["s_out"])],
+                "scan_body",
+                [
+                    make_tensor_value_info("s_in", TensorProto.FLOAT, [2]),
+                    make_tensor_value_info("x_in", TensorProto.FLOAT, [2]),
+                ],
+                [make_tensor_value_info("s_out", TensorProto.FLOAT, [2])],
+            ),
+        )
+        empty_attr = onnx.AttributeProto()
+        empty_attr.name = "scan_input_axes"
+        empty_attr.type = onnx.AttributeProto.INTS
+        empty_in_axes_node.attribute.append(empty_attr)
+        empty_in_axes_model = make_model(
+            make_graph(
+                [empty_in_axes_node],
+                "g",
+                [
+                    make_tensor_value_info("init", TensorProto.FLOAT, [2]),
+                    make_tensor_value_info("x", TensorProto.FLOAT, [3, 2]),
+                ],
+                [make_tensor_value_info("final", TensorProto.FLOAT, [2])],
+            ),
+            opset_imports=[make_opsetid("", 21)],
+        )
+        with pytest.raises(ValueError, match="scan_input_axes"):
+            ReferenceEvaluator(empty_in_axes_model)
+
+        # Explicitly empty scan_output_axes is valid when num_scan_outputs == 0.
+        empty_out_axes_node = make_node(
+            "Scan",
+            ["init", "x"],
+            ["final"],
+            num_scan_inputs=1,
+            body=make_graph(
+                [make_node("Add", ["s_in", "x_in"], ["s_out"])],
+                "scan_body",
+                [
+                    make_tensor_value_info("s_in", TensorProto.FLOAT, [2]),
+                    make_tensor_value_info("x_in", TensorProto.FLOAT, [2]),
+                ],
+                [make_tensor_value_info("s_out", TensorProto.FLOAT, [2])],
+            ),
+        )
+        empty_out_attr = onnx.AttributeProto()
+        empty_out_attr.name = "scan_output_axes"
+        empty_out_attr.type = onnx.AttributeProto.INTS
+        empty_out_axes_node.attribute.append(empty_out_attr)
+        empty_out_axes_model = make_model(
+            make_graph(
+                [empty_out_axes_node],
+                "g",
+                [
+                    make_tensor_value_info("init", TensorProto.FLOAT, [2]),
+                    make_tensor_value_info("x", TensorProto.FLOAT, [3, 2]),
+                ],
+                [make_tensor_value_info("final", TensorProto.FLOAT, [2])],
+            ),
+            opset_imports=[make_opsetid("", 21)],
+        )
+        (got_empty_out,) = ReferenceEvaluator(empty_out_axes_model).run(
+            None,
+            {
+                "init": np.array([1.0, 2.0], dtype=np.float32),
+                "x": np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]], dtype=np.float32),
+            },
+        )
+        assert_allclose(got_empty_out, np.array([10.0, 14.0], dtype=np.float32))
+
+    def test_scan_linked_body_in_function(self):
+        scan_node = make_node(
+            "Scan", ["s0", "seq"], ["s_final", "seq_out"], num_scan_inputs=1
+        )
+        body_ref = onnx.AttributeProto()
+        body_ref.name = "body"
+        body_ref.type = onnx.AttributeProto.GRAPH
+        body_ref.ref_attr_name = "fn_body"
+        scan_node.attribute.append(body_ref)
+
+        fn = make_function(
+            "test_domain",
+            "ScanWrapper",
+            inputs=["s0", "seq"],
+            outputs=["s_final", "seq_out"],
+            nodes=[scan_node],
+            opset_imports=[make_opsetid("", 21)],
+            attributes=["fn_body"],
+        )
+        body_graph = make_graph(
+            [
+                make_node("Add", ["s_in", "x_in"], ["s_out"]),
+                make_node("Identity", ["s_out"], ["y_out"]),
+            ],
+            "scan_body",
+            [
+                make_tensor_value_info("s_in", TensorProto.FLOAT, [2]),
+                make_tensor_value_info("x_in", TensorProto.FLOAT, [2]),
+            ],
+            [
+                make_tensor_value_info("s_out", TensorProto.FLOAT, [2]),
+                make_tensor_value_info("y_out", TensorProto.FLOAT, [2]),
+            ],
+        )
+        call_node = make_node(
+            "ScanWrapper",
+            ["init", "x"],
+            ["final", "y"],
+            domain="test_domain",
+            fn_body=body_graph,
+        )
+        model = make_model(
+            make_graph(
+                [call_node],
+                "g",
+                [
+                    make_tensor_value_info("init", TensorProto.FLOAT, [2]),
+                    make_tensor_value_info("x", TensorProto.FLOAT, [3, 2]),
+                ],
+                [
+                    make_tensor_value_info("final", TensorProto.FLOAT, [2]),
+                    make_tensor_value_info("y", TensorProto.FLOAT, [3, 2]),
+                ],
+            ),
+            opset_imports=[make_opsetid("", 21), make_opsetid("test_domain", 1)],
+            functions=[fn],
+        )
+        init = np.array([1.0, 2.0], dtype=np.float32)
+        x = np.array([[10.0, 20.0], [30.0, 40.0], [50.0, 60.0]], dtype=np.float32)
+        final, y = ReferenceEvaluator(model).run(None, {"init": init, "x": x})
+        assert_allclose(final, np.array([91.0, 122.0], dtype=np.float32))
+        assert_allclose(
+            y,
+            np.array([[11.0, 22.0], [41.0, 62.0], [91.0, 122.0]], dtype=np.float32),
+        )
+
     @pytest.mark.parametrize(
         ("dilation", "kernel", "length"),
         [

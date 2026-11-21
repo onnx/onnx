@@ -37,7 +37,7 @@ class Scan(OpRun):
 
     @staticmethod
     def _resolve_int_list(values, expected_len: int, attr_name: str) -> list[int]:
-        if values is None or len(values) == 0:
+        if values is None:
             return [0] * expected_len
         if len(values) != expected_len:
             raise ValueError(
