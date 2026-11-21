@@ -46,11 +46,16 @@ jobs:
           python-version: "3.12"
 
       - name: Set preview version
-        if: inputs.build_mode != 'release'
+        if: inputs.build_mode == 'preview'
         shell: bash
         run: |
           sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' pyproject.toml
           echo "$(cat VERSION_NUMBER).dev$(date -u +%Y%m%d)" > VERSION_NUMBER
+
+      - name: Set scientific nightly version
+        if: inputs.build_mode == 'scientific'
+        shell: bash
+        run: echo "$(cat VERSION_NUMBER).dev$(date -u +%Y%m%d)+g$(git rev-parse --short=12 HEAD)" > VERSION_NUMBER
 
       - name: Download protoc
         run: |

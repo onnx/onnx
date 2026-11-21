@@ -41,11 +41,18 @@ jobs:
         python -m pip install -q build
 
     - name: Build source distribution (preview build / weekly)
-      if: ${{ inputs.build_mode != 'release' }}
+      if: ${{ inputs.build_mode == 'preview' }}
       run: |
         git clean -xdf
         sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
         echo "$(cat VERSION_NUMBER).dev$(date -u +%Y%m%d)" > VERSION_NUMBER
+        python -m build --sdist
+
+    - name: Build source distribution (scientific build)
+      if: ${{ inputs.build_mode == 'scientific' }}
+      run: |
+        git clean -xdf
+        echo "$(cat VERSION_NUMBER).dev$(date -u +%Y%m%d)+g$(git rev-parse --short=12 HEAD)" > VERSION_NUMBER
         python -m build --sdist
 
     - name: Build source distribution (for release)
