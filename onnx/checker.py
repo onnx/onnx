@@ -122,6 +122,7 @@ def check_model(
     full_check: bool = False,
     skip_opset_compatibility_check: bool = False,
     check_custom_domain: bool = False,
+    check_external_data_files: bool = True,
 ) -> None:
     """Check the consistency of a model.
 
@@ -141,6 +142,24 @@ def check_model(
             opset compatibility.
         check_custom_domain: If True, the function will check all domains. Otherwise
             only check built-in domains.
+        check_external_data_files: If False, the function does not access external
+            data files. External data references are still validated from the
+            model alone: each externally stored tensor has a location that is a
+            relative path naming a file inside the model directory, offset and
+            length are non-negative integers, an explicit length is large
+            enough for the tensor's shape and type, and the data they describe
+            fits in a file of the largest possible size. Whether the files
+            exist, are regular files and hold that data is not checked. Use this
+            with a model path to check a model whose external data is not
+            available; a model checked in memory cannot have its external data
+            locations resolved in either mode. The checker never reads external
+            data, so for sparse indices stored externally only the type, rank
+            and dimensions are checked, and that there are no more of them than
+            the dense tensor has elements; with the default True, such indices
+            are rejected. full_check is not affected: shape inference cannot
+            read external data either, so in both modes it fails for an
+            operator that needs the value of a constant input stored
+            externally, such as the repeats of Tile.
 
     Raises:
         ValidationError: If the model is invalid. Its ``code`` attribute names the
@@ -155,6 +174,7 @@ def check_model(
             full_check,
             skip_opset_compatibility_check,
             check_custom_domain,
+            check_external_data_files,
         )
     else:
         protobuf_string = (
@@ -171,6 +191,7 @@ def check_model(
             full_check,
             skip_opset_compatibility_check,
             check_custom_domain,
+            check_external_data_files,
         )
 
 
