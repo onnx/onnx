@@ -31,8 +31,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 2))
             bidirectionalBroadcastShapeInference(
-                ctx.getInputType(0)->tensor_type().shape(),
-                ctx.getInputType(1)->tensor_type().shape(),
+                ctx.getInputTypeOrFail(0).tensor_type().shape(),
+                ctx.getInputTypeOrFail(1).tensor_type().shape(),
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
@@ -161,7 +161,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
           TensorShapeProto output_shape;
-          auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           auto dim_size = input_shape.dim_size();
           // Last axis dimension is unknown if we have stop-words since we do
           // not know how many stop-words are dropped

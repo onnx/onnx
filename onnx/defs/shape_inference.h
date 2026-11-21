@@ -93,6 +93,15 @@ struct InferenceContext {
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
   virtual size_t getNumInputs() const = 0;
   virtual const TypeProto* getInputType(size_t index) const = 0;
+  // Returns the type of input index, failing inference if it is unknown. Prefer this
+  // to dereferencing getInputType(index), which is null for inputs of unknown type.
+  const TypeProto& getInputTypeOrFail(size_t index) const {
+    const auto* input_type = getInputType(index);
+    if (input_type == nullptr) {
+      fail_type_inference("Input ", index, " expected to have type but instead is null");
+    }
+    return *input_type;
+  }
   virtual bool hasInput(size_t index) const {
     // The default implementation below is used for backward-compatibility
     // for implementations of InferenceContext that don't provide an explicit
@@ -144,6 +153,15 @@ struct DataPropagationContext {
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
   virtual size_t getNumInputs() const = 0;
   virtual const TypeProto* getInputType(size_t index) const = 0;
+  // Returns the type of input index, failing inference if it is unknown. Prefer this
+  // to dereferencing getInputType(index), which is null for inputs of unknown type.
+  const TypeProto& getInputTypeOrFail(size_t index) const {
+    const auto* input_type = getInputType(index);
+    if (input_type == nullptr) {
+      fail_type_inference("Input ", index, " expected to have type but instead is null");
+    }
+    return *input_type;
+  }
   virtual size_t getNumOutputs() const = 0;
   virtual const TypeProto* getOutputType(size_t index) const = 0;
   virtual ~DataPropagationContext() = default;

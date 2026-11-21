@@ -26,7 +26,7 @@ static void globalPoolTypeShapeInference_opset2(InferenceContext& ctx) {
     return;
   }
 
-  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  auto input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
   if (input_shape.dim_size() < 2) {
     return;
   }
@@ -137,7 +137,7 @@ static void convPoolShapeInference_opset19(
     return;
   }
 
-  auto input_shape = ctx.getInputType(input1Idx)->tensor_type().shape();
+  auto input_shape = ctx.getInputTypeOrFail(input1Idx).tensor_type().shape();
   if (input_shape.dim_size() < 3) {
     fail_shape_inference("Input tensor must have at least 3 dimensions");
   }
@@ -170,7 +170,7 @@ static void convPoolShapeInference_opset19(
   } else if (require_kernel_shape) {
     fail_shape_inference("Attribute kernel_shape must be specified");
   } else {
-    auto second_input_shape = ctx.getInputType(input2Idx)->tensor_type().shape();
+    auto second_input_shape = ctx.getInputTypeOrFail(input2Idx).tensor_type().shape();
     for (int i = 2; i < second_input_shape.dim_size(); ++i) {
       if (!second_input_shape.dim(i).has_dim_value()) {
         return;
@@ -457,7 +457,7 @@ static void maxUnpoolShapeInference_opset11(InferenceContext& ctx) {
   if (!hasInputShape(ctx, 0)) {
     return; // If first input does not have shape, we cannot infer much.
   }
-  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  auto input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
   if (input_shape.dim_size() < 2) {
     fail_shape_inference("Input tensor X must have at least 2 dimensions.");
   }
@@ -512,7 +512,7 @@ static void maxUnpoolShapeInference_opset11(InferenceContext& ctx) {
   if (!hasInputShape(ctx, 1)) {
     return; // If indices input does not have shape, we cannot infer output shape.
   }
-  auto indices_shape = ctx.getInputType(1)->tensor_type().shape();
+  auto indices_shape = ctx.getInputTypeOrFail(1).tensor_type().shape();
   if (indices_shape.dim_size() < 2) {
     fail_shape_inference("Indices tensor I must have at least 2 dimensions.");
   }
@@ -548,7 +548,7 @@ static void globalPoolTypeShapeInference_opset1(InferenceContext& ctx) {
     return;
   }
 
-  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  auto input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
   if (input_shape.dim_size() < 2) {
     return;
   }
@@ -631,7 +631,7 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
     fail_shape_inference("Attribute group must be > 0 for ConvTranspose. group=", group, ".");
   }
 
-  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  auto input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
   if (input_shape.dim_size() < 3) {
     fail_shape_inference(
         "Input tensor must have at least 3 dimensions (N x C x D1...Dn). Got: ", input_shape.dim_size());
@@ -647,7 +647,7 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   }
 
   // Weight tensor (input 1) must also have at least 3 dimensions (C x M/group x k1...kn).
-  auto weight_shape = ctx.getInputType(1)->tensor_type().shape();
+  auto weight_shape = ctx.getInputTypeOrFail(1).tensor_type().shape();
   if (weight_shape.dim_size() < 3) {
     fail_shape_inference(
         "Weight tensor must have at least 3 dimensions (C x M/group x k1...kn). Got: ", weight_shape.dim_size());
@@ -1132,8 +1132,8 @@ static void roiPoolTypeShapeInference_opset1(InferenceContext& ctx) {
     return;
   }
 
-  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
-  auto rios_shape = ctx.getInputType(1)->tensor_type().shape();
+  auto input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
+  auto rios_shape = ctx.getInputTypeOrFail(1).tensor_type().shape();
 
   if (input_shape.dim_size() < 4) {
     fail_shape_inference("Input tensor must have at least 4 dimensions");
@@ -2025,7 +2025,7 @@ static void convPoolShapeInference_opset1_to_11(
     return;
   }
 
-  auto input_shape = ctx.getInputType(input1Idx)->tensor_type().shape();
+  auto input_shape = ctx.getInputTypeOrFail(input1Idx).tensor_type().shape();
   if (input_shape.dim_size() < 3) {
     fail_shape_inference("Input tensor must have at least 3 dimensions");
   }
@@ -2058,7 +2058,7 @@ static void convPoolShapeInference_opset1_to_11(
   } else if (require_kernel_shape) {
     fail_shape_inference("Attribute kernel_shape must be specified");
   } else {
-    auto second_input_shape = ctx.getInputType(input2Idx)->tensor_type().shape();
+    auto second_input_shape = ctx.getInputTypeOrFail(input2Idx).tensor_type().shape();
     for (int i = 2; i < second_input_shape.dim_size(); ++i) {
       if (!second_input_shape.dim(i).has_dim_value()) {
         return;
@@ -2642,7 +2642,7 @@ static void maxUnpoolShapeInference_opset9(InferenceContext& ctx) {
   if (!hasInputShape(ctx, 0)) {
     return; // If first input does not have shape, we cannot infer much.
   }
-  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  auto input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
   if (input_shape.dim_size() < 2) {
     fail_shape_inference("Input tensor X must have at least 2 dimensions.");
   }
@@ -2697,7 +2697,7 @@ static void maxUnpoolShapeInference_opset9(InferenceContext& ctx) {
   if (!hasInputShape(ctx, 1)) {
     return; // If indices input does not have shape, we cannot infer output shape.
   }
-  auto indices_shape = ctx.getInputType(1)->tensor_type().shape();
+  auto indices_shape = ctx.getInputTypeOrFail(1).tensor_type().shape();
   if (indices_shape.dim_size() < 2) {
     fail_shape_inference("Indices tensor I must have at least 2 dimensions.");
   }
@@ -3024,7 +3024,7 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
     fail_shape_inference("Attribute group must be > 0 for ConvTranspose. group=", group, ".");
   }
 
-  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  auto input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
   if (input_shape.dim_size() < 3) {
     fail_shape_inference(
         "Input tensor must have at least 3 dimensions (N x C x D1...Dn). Got: ", input_shape.dim_size());
@@ -3040,7 +3040,7 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
   }
 
   // Weight tensor (input 1) must also have at least 3 dimensions (C x M/group x k1...kn).
-  auto weight_shape = ctx.getInputType(1)->tensor_type().shape();
+  auto weight_shape = ctx.getInputTypeOrFail(1).tensor_type().shape();
   if (weight_shape.dim_size() < 3) {
     fail_shape_inference(
         "Weight tensor must have at least 3 dimensions (C x M/group x k1...kn). Got: ", weight_shape.dim_size());

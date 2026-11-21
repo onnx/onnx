@@ -9532,6 +9532,20 @@ class TestShapeInference(TestShapeInferenceHelper):
                 {"dtype": TensorProto.INT64},
                 TensorProto.INT64,
             ),
+            (
+                "Unique",
+                ONNX_DOMAIN,
+                11,
+                {},
+                TensorProto.UNDEFINED,
+            ),
+            (
+                "Unique",
+                ONNX_DOMAIN,
+                28,
+                {},
+                TensorProto.UNDEFINED,
+            ),
         ],
     )
     def test_input_of_unknown_type(
@@ -9572,6 +9586,94 @@ class TestShapeInference(TestShapeInferenceHelper):
             else TensorProto.UNDEFINED
         )
         assert elem_type == expected_elem_type
+
+    @pytest.mark.parametrize("version", [11, 28])
+    def test_unique_partial_inference_with_unknown_input_type(
+        self, version: int
+    ) -> None:
+        graph = make_graph(
+            [
+                make_node("Custom", ["x"], ["t"], domain="custom.domain"),
+                make_node(
+                    "Unique",
+                    ["t"],
+                    ["y", "indices", "inverse_indices", "counts"],
+                ),
+            ],
+            "unique_unknown_input",
+            [make_tensor_value_info("x", TensorProto.FLOAT, (2, 3))],
+            [],
+        )
+        model = make_model(
+            graph,
+            opset_imports=[
+                make_opsetid(ONNX_DOMAIN, version),
+                make_opsetid("custom.domain", 1),
+            ],
+        )
+
+        inferred = onnx.shape_inference.infer_shapes(model)
+
+        value_infos = {vi.name: vi for vi in inferred.graph.value_info}
+        assert len(value_infos["y"].type.tensor_type.shape.dim) == 1
+        for name in ("indices", "inverse_indices", "counts"):
+            tensor_type = value_infos[name].type.tensor_type
+            assert tensor_type.elem_type == TensorProto.INT64
+            assert len(tensor_type.shape.dim) == 1
+
+    @pytest.mark.parametrize("version", [1, 11, 13, 16, 21])
+    def test_loop_partial_inference_with_unknown_state_type(self, version: int) -> None:
+        body = make_graph(
+            [
+                make_node("Identity", ["cond_in"], ["cond_out"]),
+                make_node("Size", ["v_unknown_in"], ["v_unknown_out"]),
+                make_node("Identity", ["v_known_in"], ["v_known_out"]),
+            ],
+            "loop_body",
+            [
+                make_tensor_value_info("iter", TensorProto.INT64, ()),
+                make_tensor_value_info("cond_in", TensorProto.BOOL, ()),
+                make_empty_tensor_value_info("v_unknown_in"),
+                make_tensor_value_info("v_known_in", TensorProto.INT64, None),
+            ],
+            [
+                make_empty_tensor_value_info("cond_out"),
+                make_empty_tensor_value_info("v_unknown_out"),
+                make_empty_tensor_value_info("v_known_out"),
+            ],
+        )
+        graph = make_graph(
+            [
+                make_node("Custom", ["x"], ["u"], domain="custom.domain"),
+                make_node(
+                    "Loop",
+                    ["M", "cond", "u", "k"],
+                    ["u_out", "k_out"],
+                    body=body,
+                ),
+            ],
+            "loop_unknown_state",
+            [
+                make_tensor_value_info("x", TensorProto.FLOAT, (2,)),
+                make_tensor_value_info("M", TensorProto.INT64, ()),
+                make_tensor_value_info("cond", TensorProto.BOOL, ()),
+                make_tensor_value_info("k", TensorProto.INT64, (3,)),
+            ],
+            [],
+        )
+        model = make_model(
+            graph,
+            opset_imports=[
+                make_opsetid(ONNX_DOMAIN, version),
+                make_opsetid("custom.domain", 1),
+            ],
+        )
+
+        inferred = onnx.shape_inference.infer_shapes(model)
+
+        value_infos = {vi.name: vi for vi in inferred.graph.value_info}
+        assert value_infos["u_out"].type.tensor_type.elem_type == TensorProto.INT64
+        assert value_infos["k_out"].type.tensor_type.elem_type == TensorProto.INT64
 
     @pytest.mark.parametrize(
         (
