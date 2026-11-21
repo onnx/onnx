@@ -17,6 +17,10 @@ from onnx import (
 )
 from onnx.reference import ReferenceEvaluator
 
+# NumPy constrains the product of nonzero dimensions by np.intp even when the
+# total size is zero. Leave room for the leading dimension in shape (2, 0, n).
+_LARGE_EMPTY_ROW_DIM = min(2**61, np.iinfo(np.intp).max // 2 - 1)
+
 
 def evaluator(
     op: str, bits: int, function: bool = False, shape: tuple[int, ...] = (1,)
@@ -592,7 +596,7 @@ def test_unpack_arbitrary_bytes(bits: int, n: int, function: bool) -> None:
 
 
 @pytest.mark.parametrize("bits", range(1, 9))
-@pytest.mark.parametrize("n", [0, 9, 2**61, 2**61 + 1])
+@pytest.mark.parametrize("n", [0, 9, _LARGE_EMPTY_ROW_DIM, _LARGE_EMPTY_ROW_DIM + 1])
 @pytest.mark.parametrize("function", [False, True])
 def test_empty_rows_do_not_iterate(
     bits: int, n: int, function: bool, monkeypatch: pytest.MonkeyPatch
@@ -608,6 +612,7 @@ def test_empty_rows_do_not_iterate(
         "onnx.reference.ops.op_unpack.range", unexpected_range, raising=False
     )
     monkeypatch.setattr("onnx.reference.ops.op_range.Range._run", unexpected_range)
+    assert 2 * n <= np.iinfo(np.intp).max
     x = np.empty((2, 0, n), dtype=np.uint8)
     packed = evaluator("Pack", bits, function, x.shape).run(None, {"X": x})[0]
     assert packed.shape == (2, 0, (n * bits + 7) // 8)

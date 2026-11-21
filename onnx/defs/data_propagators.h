@@ -41,7 +41,8 @@ inline bool axisIsZero(DataPropagationContext& ctx, bool defaultZero = false) {
   }
 
   int rank = type->tensor_type().shape().dim_size();
-  if (axis < -rank || axis >= rank) {
+  // axis is negative here, so only the lower bound needs checking.
+  if (axis < -rank) {
     fail_shape_inference("axis must be in [-rank, rank-1].");
     return false;
   }

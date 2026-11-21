@@ -14,6 +14,7 @@ for crashes, hangs, and sanitizer violations.
 | `fuzz_checker.py` | `checker.check_model` | Raw bytes → protobuf parser |
 | `fuzz_compose.py` | `compose.merge_models` | Raw (length-prefixed model pair) **and** structured (toggle byte) |
 | `fuzz_external_data.py` | External-data metadata, read/write helpers, model loading, and `ModelContainer` | Structured bytes + disposable filesystem fixtures |
+| `fuzz_inliner.py` | `inliner.inline_local_functions`, `inline_selected_functions` (incl. schema functions) | Raw bytes **and** structured model with local functions (toggle byte) |
 | `fuzz_model_loader.py` | `load_model_from_string` + `checker.check_model` | Raw bytes → protobuf parser |
 | `fuzz_parser.py` | `parser.parse_model`, `parse_graph`, `parse_function`, `parse_node` | UTF-8 text (ONNX text format) |
 | `fuzz_shape_inference.py` | `shape_inference.infer_shapes` | Raw bytes **and** structured model (toggle byte) |
@@ -53,6 +54,7 @@ pip install atheris
 python onnx/fuzz/fuzz_checker.py -runs=1000
 python onnx/fuzz/fuzz_compose.py -runs=1000
 python onnx/fuzz/fuzz_external_data.py -runs=1000
+python onnx/fuzz/fuzz_inliner.py -runs=1000
 python onnx/fuzz/fuzz_parser.py -runs=1000
 python onnx/fuzz/fuzz_shape_inference.py -runs=1000
 python onnx/fuzz/fuzz_version_converter.py -runs=1000

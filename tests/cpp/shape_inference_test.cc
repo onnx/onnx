@@ -343,7 +343,6 @@ TEST(ShapeInferenceTest, MergeShapeInfoMismatches) {
 
 // Check subgraph inferencing via GraphInferencer using a Scan
 static void doInferencingTest(bool use_scan_opset8) {
-  OpSchemaRegistry::Instance();
   GraphProto subgraph;
   OnnxParser parser(R"ONNX(
   scan_body (float[2] loop_state_in, float[2] scan_in) => (float[] loop_state_out, float[] scan_out) {
