@@ -407,7 +407,7 @@ class ShapeInferenceImplBase {
   }
 
   void UpdateType(ValueInfoProto& valueInfo) {
-    if (valueInfo.has_type()) {
+    if (valueInfo.has_type() && valueInfo.type().value_case() != TypeProto::ValueCase::VALUE_NOT_SET) {
       value_types_by_name[valueInfo.name()] = valueInfo.mutable_type();
     } else {
       undefined_value_types_by_name[valueInfo.name()] = valueInfo.mutable_type();
