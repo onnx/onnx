@@ -363,6 +363,23 @@ def _decode_block(block: bytes, qtype: int) -> np.ndarray:  # noqa: PLR0911
     raise ValueError(f"Unsupported quantized ggml_type: {qtype}")
 
 
+def _decode_q4_0_q8_0(blocks: np.ndarray, out: np.ndarray, qtype: int) -> None:
+    # Bound temporary storage independently of the number of packed blocks.
+    chunk_size = 4096
+    for start in range(0, len(blocks), chunk_size):
+        chunk = blocks[start : start + chunk_size]
+        decoded = out[start : start + chunk_size]
+        # Copy only the scales so the little-endian view also accepts strided input.
+        scales = np.ascontiguousarray(chunk[:, :2]).view("<f2").astype(np.float32)
+        quants = chunk[:, 2:]
+        if qtype == _GGMLType.Q4_0:
+            # Low nibbles precede high nibbles within each 32-value block.
+            np.multiply((quants & 15).astype(np.int8) - 8, scales, out=decoded[:, :16])
+            np.multiply((quants >> 4).astype(np.int8) - 8, scales, out=decoded[:, 16:])
+        else:
+            np.multiply(quants.view(np.int8), scales, out=decoded)
+
+
 class DequantizePacked(OpRun):
     def _run(self, x, format=None, shape=None, output_dtype=None):  # noqa: A002
         if not isinstance(format, str) or format not in GGUF_FORMATS:
@@ -397,10 +414,14 @@ class DequantizePacked(OpRun):
                 f"Packed input length must be exactly {expected} bytes, got {x.size}."
             )
         out = np.empty(count, dtype=np.float32)
-        for j, block in enumerate(x.reshape(-1, block_bytes)):
-            out[j * block_size : (j + 1) * block_size] = _decode_block(
-                block.tobytes(), qtype
-            )
+        blocks = x.reshape(-1, block_bytes)
+        if qtype in (_GGMLType.Q4_0, _GGMLType.Q8_0):
+            _decode_q4_0_q8_0(blocks, out.reshape(-1, block_size), qtype)
+        else:
+            for j, block in enumerate(blocks):
+                out[j * block_size : (j + 1) * block_size] = _decode_block(
+                    block.tobytes(), qtype
+                )
         return (
             out.reshape(tuple(shape)).astype(
                 helper.tensor_dtype_to_np_dtype(output_dtype), copy=False
