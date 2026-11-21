@@ -268,6 +268,7 @@ class ModelContainer:
                 if shared_data_file is not None:
                     shared_data_file.close()
 
+            serialized = copy.SerializeToString()
             if model_file is None:
                 model_file = ext_data._open_model_file_for_write(
                     external_data_context,
@@ -277,7 +278,7 @@ class ModelContainer:
                 )
             model_file.seek(0)
             model_file.truncate()
-            model_file.write(copy.SerializeToString())
+            model_file.write(serialized)
             return copy
         finally:
             if model_file is not None:

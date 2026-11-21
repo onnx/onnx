@@ -406,7 +406,7 @@ def _open_model_file_for_write(
         fd = context.create_model_file(location)
     else:
         fd = context.open_model_file(location, False)
-    model_file = os.fdopen(fd, "r+b")
+    model_file = os.fdopen(fd, "wb")
     if truncate:
         try:
             model_file.seek(0)

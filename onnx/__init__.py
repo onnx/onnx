@@ -186,12 +186,19 @@ def _save_bytes(content: bytes, f: IO[bytes] | str | os.PathLike) -> None:
 
 
 def _get_file_path(f: IO[bytes] | str | os.PathLike | None) -> str | None:
-    if isinstance(f, (str, os.PathLike)):
-        return os.path.abspath(f)
-    if hasattr(f, "name"):
+    if not isinstance(f, (str, os.PathLike)):
+        if not hasattr(f, "name"):
+            return None
         assert f is not None
-        return os.path.abspath(f.name)
-    return None
+        f = f.name
+    path = os.fspath(f)
+    drive, _ = os.path.splitdrive(path)
+    if os.path.isabs(path) and (os.name != "nt" or drive):
+        return path
+    # Resolve only the current-directory prefix. Normalizing the caller's
+    # components would change the meaning of a symlink followed by "..".
+    # A drive-relative Windows path uses that drive's current directory.
+    return os.path.join(os.path.abspath(drive or os.curdir), path)
 
 
 def _context_for_named_file(
@@ -206,9 +213,12 @@ def _context_for_named_file(
         file_object_stat = os.fstat(file_object.fileno())
         base_dir = os.path.dirname(model_filepath)
         context = _ExternalDataContext(base_dir)
-        context_fd = context.open_model_file(
-            os.path.basename(model_filepath), read_only
-        )
+        if read_only:
+            context_fd = context.open_model_file(os.path.basename(model_filepath), True)
+        else:
+            context_fd = context.open_existing_model_file_for_write(
+                os.path.basename(model_filepath)
+            )
         try:
             context_stat = os.fstat(context_fd)
         finally:
@@ -422,7 +432,7 @@ def save_model(
     elif model_filepath is not None:
         try:
             external_data_context = _context_for_named_file(
-                f, model_filepath, read_only=True
+                f, model_filepath, read_only=False
             )
         except ValueError as error:
             context_error = error

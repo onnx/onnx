@@ -2101,7 +2101,8 @@ int64_t ExternalDataContext::open(const std::string& location, const std::string
       }
     });
     const int parent = open_posix_parent(impl_->base_fd, components, tensor_name, directories);
-    int flags = read_only ? O_RDONLY : (O_CREAT | O_RDWR);
+    // A FIFO must reach regular-file validation without waiting for a writer.
+    int flags = read_only ? (O_RDONLY | O_NONBLOCK) : (O_CREAT | O_RDWR);
 #ifdef O_CLOEXEC
     flags |= O_CLOEXEC;
 #endif
@@ -2167,14 +2168,14 @@ int64_t ExternalDataContext::open_model_file_impl(const std::string& location, M
   HANDLE handle = open_windows_leaf(
       impl_->base_handle,
       components,
-      (read_only ? GENERIC_READ : (GENERIC_READ | GENERIC_WRITE)) | SYNCHRONIZE,
+      (read_only ? GENERIC_READ : GENERIC_WRITE) | SYNCHRONIZE,
       disposition,
       "model",
       mode == ModelFileOpenMode::kCreateNew);
   ScopedHandle guard(handle);
   validate_windows_handle(handle, "model", false);
   HANDLE released = guard.release();
-  const int flags = read_only ? (_O_RDONLY | _O_BINARY) : (_O_RDWR | _O_BINARY);
+  const int flags = read_only ? (_O_RDONLY | _O_BINARY) : (_O_WRONLY | _O_BINARY);
   const int fd = _open_osfhandle(reinterpret_cast<intptr_t>(released), flags);
   if (fd < 0) {
     CloseHandle(released);
@@ -2189,7 +2190,8 @@ int64_t ExternalDataContext::open_model_file_impl(const std::string& location, M
     }
   });
   const int parent = open_posix_parent(impl_->base_fd, components, "model", directories);
-  int flags = read_only ? O_RDONLY : O_RDWR;
+  // Neither reading nor writing a FIFO should block before type validation.
+  int flags = (read_only ? O_RDONLY : O_WRONLY) | O_NONBLOCK;
   if (mode == ModelFileOpenMode::kWriteOrCreate) {
     flags |= O_CREAT;
   } else if (mode == ModelFileOpenMode::kCreateNew) {
