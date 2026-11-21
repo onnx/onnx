@@ -21156,6 +21156,19 @@ This version of the operator has been available since version 17 of the default 
 
   In the returned matrix, all the triangles (filterbanks) have a peak value of 1.0.
 
+  Let `N = num_mel_bins`, `L = mel(lower_edge_hertz)`, and
+  `U = mel(upper_edge_hertz)`. The `N + 2` boundary points are
+  `m[k] = L + k * (U - L) / (N + 2)`, for `0 <= k < N + 2`.
+  Their discretized frequency-bin indices are
+  `b[k] = floor((dft_length + 1) * 700 * (10^(m[k]/2595) - 1) / sample_rate)`.
+  Column `i` has its left edge, center, and right edge at `b[i]`, `b[i+1]`,
+  and `b[i+2]`, respectively. Its weights increase linearly from zero at the
+  left edge to one at the center, then decrease linearly toward zero at the
+  right edge; weights outside the triangle are zero. When the left edge and
+  center coincide, the center has weight one. When the center and right edge
+  coincide, there is no descending segment. Weights are converted to
+  `output_datatype` after constructing the triangles.
+
   The returned MelWeightMatrix can be used to right-multiply a spectrogram S of shape [frames, num_spectrogram_bins] of linear scale spectrum values (e.g. STFT magnitudes) to generate a "mel spectrogram" M of shape [frames, num_mel_bins].
 
 #### Version
