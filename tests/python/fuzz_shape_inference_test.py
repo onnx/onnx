@@ -151,7 +151,7 @@ def test_input_kinds(harness, monkeypatch) -> None:
         # schema path, no custom producer, then INT64 initializer, allowzero.
         bools=[True, False, True, True],
     )
-    infer = Mock()
+    infer = Mock(wraps=onnx.shape_inference.infer_shapes)
     monkeypatch.setattr(onnx.shape_inference, "infer_shapes", infer)
     harness["TestOneInput"](b"\x00\x04")
     model = infer.call_args.args[0]
