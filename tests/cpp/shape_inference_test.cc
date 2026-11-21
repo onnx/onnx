@@ -496,6 +496,32 @@ TEST(InferenceContextImplTest, OptionalInputsAndOutputsUseNodeProtoPresence) {
   EXPECT_FALSE(ctx.hasOutput(3));
 }
 
+TEST(InferenceContextImplTest, GetInputTypeOrFail) {
+  NodeProto node;
+  node.add_input("known");
+  node.add_input("unknown");
+
+  TypeProto input_type;
+  input_type.mutable_tensor_type()->set_elem_type(TensorProto_DataType::TensorProto_DataType_FLOAT);
+
+  std::unordered_map<std::string, TypeProto*> value_types_by_name;
+  value_types_by_name["known"] = &input_type;
+
+  ShapeInferenceOptions options;
+  shape_inference::InferenceContextImpl infer_ctx(node, value_types_by_name, {}, {}, options);
+  EXPECT_EQ(&infer_ctx.getInputTypeOrFail(0), &input_type);
+#ifndef ONNX_NO_EXCEPTIONS
+  EXPECT_THROW(infer_ctx.getInputTypeOrFail(1), ONNX_NAMESPACE::InferenceError);
+#endif
+
+  shape_inference::DataValueMap generated_shape_data;
+  shape_inference::DataPropagationContextImpl data_ctx(node, value_types_by_name, {}, generated_shape_data);
+  EXPECT_EQ(&data_ctx.getInputTypeOrFail(0), &input_type);
+#ifndef ONNX_NO_EXCEPTIONS
+  EXPECT_THROW(data_ctx.getInputTypeOrFail(1), ONNX_NAMESPACE::InferenceError);
+#endif
+}
+
 TEST(GraphInferencerImplTest, OuterScopeMapLifetimeTest) {
   TypeProto outer_type;
   outer_type.mutable_tensor_type()->set_elem_type(TensorProto_DataType_FLOAT);
