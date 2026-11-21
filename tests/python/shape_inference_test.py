@@ -9594,7 +9594,11 @@ class TestShapeInference(TestShapeInferenceHelper):
         graph = make_graph(
             [
                 make_node("Custom", ["x"], ["t"], domain="custom.domain"),
-                make_node("Unique", ["t"], ["y", "indices", "inverse_indices", "counts"]),
+                make_node(
+                    "Unique",
+                    ["t"],
+                    ["y", "indices", "inverse_indices", "counts"],
+                ),
             ],
             "unique_unknown_input",
             [make_tensor_value_info("x", TensorProto.FLOAT, (2, 3))],
@@ -9618,13 +9622,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             assert len(tensor_type.shape.dim) == 1
 
     @pytest.mark.parametrize("version", [1, 11, 13, 16, 21])
-    def test_loop_partial_inference_with_unknown_state_type(
-        self, version: int
-    ) -> None:
+    def test_loop_partial_inference_with_unknown_state_type(self, version: int) -> None:
         body = make_graph(
             [
                 make_node("Identity", ["cond_in"], ["cond_out"]),
-                make_node("Cast", ["v_unknown_in"], ["v_unknown_out"], to=TensorProto.FLOAT),
+                make_node("Size", ["v_unknown_in"], ["v_unknown_out"]),
                 make_node("Identity", ["v_known_in"], ["v_known_out"]),
             ],
             "loop_body",
@@ -9670,7 +9672,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         inferred = onnx.shape_inference.infer_shapes(model)
 
         value_infos = {vi.name: vi for vi in inferred.graph.value_info}
-        assert value_infos["u_out"].type.tensor_type.elem_type == TensorProto.FLOAT
+        assert value_infos["u_out"].type.tensor_type.elem_type == TensorProto.INT64
         assert value_infos["k_out"].type.tensor_type.elem_type == TensorProto.INT64
 
     @pytest.mark.parametrize(
