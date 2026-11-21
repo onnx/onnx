@@ -116,10 +116,9 @@ class BoxInfo:
         self.score_ = score
         self.idx_ = idx
 
-    def __lt__(self, rhs) -> bool:
-        return self.score_ < rhs.score_ or (
-            self.score_ == rhs.score_ and self.idx_ > rhs.idx_
-        )
+    def sort_key(self) -> tuple[float, int]:
+        """Sorts by score, then by descending index (lower index is picked first)."""
+        return (self.score_, -self.idx_)
 
     def __repr__(self) -> str:
         return f"BoxInfo({self.score_}, {self.idx_})"
@@ -242,7 +241,7 @@ class NonMaxSuppression(OpRun):
                             BoxInfo(class_scores[box_index], box_index)
                         )
 
-                sorted_boxes = sorted(candidate_boxes)
+                sorted_boxes = sorted(candidate_boxes, key=BoxInfo.sort_key)
 
                 selected_boxes_inside_class = []
                 # Get the next box with top score, filter by iou_threshold.

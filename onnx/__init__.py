@@ -62,11 +62,13 @@ __all__ = [
     "Version",
     # Utility functions
     "convert_model_to_external_data",
+    "load",
     "load_external_data_for_model",
     "load_model_from_string",
     "load_model",
     "load_tensor_from_string",
     "load_tensor",
+    "save",
     "save_model",
     "save_tensor",
     "write_external_data_tensors",
