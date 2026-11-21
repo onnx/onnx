@@ -181,6 +181,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#DepthToSpace">DepthToSpace</a>|<a href="Changelog.md#DepthToSpace-28">28</a>, <a href="Changelog.md#DepthToSpace-13">13</a>, <a href="Changelog.md#DepthToSpace-11">11</a>, <a href="Changelog.md#DepthToSpace-1">1</a>|28|
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|11|
 |<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-22">22</a>, <a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|18|
+|<a href="#GeGLU">GeGLU</a>|<a href="Changelog.md#GeGLU-29">29</a>|29|
 |<a href="#Gelu">Gelu</a>|<a href="Changelog.md#Gelu-20">20</a>|20|
 |<a href="#Gemm">Gemm</a>|<a href="Changelog.md#Gemm-29">29</a>, <a href="Changelog.md#Gemm-13">13</a>, <a href="Changelog.md#Gemm-11">11</a>, <a href="Changelog.md#Gemm-9">9</a>, <a href="Changelog.md#Gemm-7">7</a>, <a href="Changelog.md#Gemm-6">6</a>, <a href="Changelog.md#Gemm-1">1</a>|29|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|16|
@@ -193,13 +194,14 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#LayerNormalization">LayerNormalization</a>|<a href="Changelog.md#LayerNormalization-17">17</a>|17, 18|
 |<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-16">16</a>, <a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|16|
 |<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-16">16</a>, <a href="Changelog.md#LessOrEqual-12">12</a>|16|
-|<a href="#LinearAttention">LinearAttention</a>|<a href="Changelog.md#LinearAttention-27">27</a>|27|
+|<a href="#LinearAttention">LinearAttention</a>|<a href="Changelog.md#LinearAttention-29">29</a>, <a href="Changelog.md#LinearAttention-27">27</a>|29|
 |<a href="#LogCumSumExp">LogCumSumExp</a>|<a href="Changelog.md#LogCumSumExp-29">29</a>|29|
 |<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|13, 18, 29|
 |<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-29">29</a>, <a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|13, 18|
 |<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-22">22</a>, <a href="Changelog.md#Mish-18">18</a>|22|
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-22">22</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|22|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|16|
+|<a href="#Pack">Pack</a>|<a href="Changelog.md#Pack-29">29</a>|29|
 |<a href="#RMSNormalization">RMSNormalization</a>|<a href="Changelog.md#RMSNormalization-23">23</a>|23|
 |<a href="#Range">Range</a>|<a href="Changelog.md#Range-27">27</a>, <a href="Changelog.md#Range-11">11</a>|27|
 |<a href="#ReduceL1">ReduceL1</a>|<a href="Changelog.md#ReduceL1-18">18</a>, <a href="Changelog.md#ReduceL1-13">13</a>, <a href="Changelog.md#ReduceL1-11">11</a>, <a href="Changelog.md#ReduceL1-1">1</a>|18|
@@ -220,6 +222,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#SwiGLU">SwiGLU</a>|<a href="Changelog.md#SwiGLU-28">28</a>|28|
 |<a href="#Swish">Swish</a>|<a href="Changelog.md#Swish-24">24</a>|24|
 |<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-22">22</a>, <a href="Changelog.md#ThresholdedRelu-10">10</a>|18|
+|<a href="#Unpack">Unpack</a>|<a href="Changelog.md#Unpack-29">29</a>|29|
 
 ### ai.onnx.preview
 |**Operator**|**Since version**||
@@ -8478,7 +8481,7 @@ for from_type, to_type in test_cases:
                 "9",
                 "1000000",
                 "1e-7",
-                "NaN",
+                "-1000000",
                 "INF",
                 "+INF",
                 "-INF",
@@ -8921,7 +8924,7 @@ for from_type, to_type in test_cases:
                 "9",
                 "1000000",
                 "1e-7",
-                "NaN",
+                "-1000000",
                 "INF",
                 "+INF",
                 "-INF",
@@ -16928,6 +16931,344 @@ expect(
 </details>
 
 
+### <a name="GeGLU"></a><a name="geglu">**GeGLU**</a>
+
+  GeGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
+  input `B`, and produces one output `Y`. It applies the Gelu activation to the gate
+  and multiplies the result elementwise by the linear input:
+
+  ```
+  Y = Gelu(A) * B
+  ```
+
+  The gate activation is the `Gelu` operator with the same `approximate` attribute.
+  With `approximate = "none"` (the default) it is the exact form
+
+  ```
+  Gelu(a) = 0.5 * a * (1 + erf(a / sqrt(2)))
+  ```
+
+  and with `approximate = "tanh"` it is the tanh approximation
+
+  ```
+  Gelu(a) = 0.5 * a * (1 + tanh(sqrt(2 / pi) * (a + 0.044715 * a^3)))
+  ```
+
+  Any other value of `approximate` is invalid. For float16 and bfloat16 inputs the
+  function body computes `Gelu(A) * B` in float32 and casts the result back to the
+  input type, because Gelu evaluated in float16 loses nearly all precision for
+  negative gate values.
+
+  Inputs `A` and `B` must have identical shapes; broadcasting is not applied and the
+  output `Y` has the same shape as the inputs. A model whose `A` and `B` shapes
+  differ at runtime is invalid, even though the `Mul` in the function body would
+  broadcast them.
+
+  Exporters typically produce `A` and `B` in one of two ways: for the common
+  two-projection form wire the two projection outputs directly to `A` (gate) and `B`
+  (value); for a fused/packed single projection, split it upstream into `A` and `B`
+  with `Split` (contiguous layout) or `Slice`/`Gather` (interleaved layout).
+
+  GeGLU was introduced in "GLU Variants Improve Transformer" (Shazeer, 2020,
+  https://arxiv.org/abs/2002.05202) and is used as the feed-forward gate in models
+  such as T5 v1.1 and Gemma.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>approximate</tt> : string (default is none)</dt>
+<dd>Gelu approximation algorithm used for the gate: `"none"` (default) or `"tanh"`. Any other value is invalid.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (differentiable) : T</dt>
+<dd>Gate input tensor</dd>
+<dt><tt>B</tt> (differentiable) : T</dt>
+<dd>Linear (value) input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>approximate_none</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+    approximate="none",
+)
+a = np.array(
+    [
+        [[1.0, -2.0, 3.0], [4.0, -1.0, 0.5]],
+        [[-3.0, 2.0, -0.5], [-4.0, 0.0, 1.5]],
+    ],
+    dtype=np.float32,
+)
+b = np.array(
+    [
+        [[0.5, 1.0, -1.0], [2.0, 2.0, -1.0]],
+        [[0.5, 1.0, 1.5], [-2.0, 3.0, 0.25]],
+    ],
+    dtype=np.float32,
+)
+y = np.array(
+    [
+        [
+            [0.4206724, -0.045500264, -2.9959502],
+            [7.999747, -0.3173105, -0.34573123],
+        ],
+        [
+            [-0.002024847, 1.9544997, -0.23140316],
+            [0.00025336994, 0.0, 0.3499473],
+        ],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu_approximate_none",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>bfloat16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+a = np.array(
+    [[-3.0, -4.0, -1.0, 2.0], [-0.5, 1.5, -2.5, 0.75]], dtype=ml_dtypes.bfloat16
+)
+b = np.array(
+    [[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=ml_dtypes.bfloat16
+)
+y = np.array(
+    [
+        [-0.0020294189453125, -0.00012683868408203125, 0.158203125, 3.90625],
+        [-0.30859375, -1.3984375, -0.00775146484375, 0.578125],
+    ],
+    dtype=ml_dtypes.bfloat16,
+)
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu_bfloat16",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>double</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+a = np.array(
+    [[-3.0, -4.0, -1.0, 2.0], [-0.5, 1.5, -2.5, 0.75]], dtype=np.float64
+)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float64)
+y = np.array(
+    [
+        [
+            -0.002024847047445155,
+            -0.00012668496733247991,
+            0.15865525393145707,
+            3.908999472207283,
+        ],
+        [
+            -0.3085375387259869,
+            -1.399789198096713,
+            -0.007762081657220199,
+            0.5800294857173488,
+        ],
+    ],
+    dtype=np.float64,
+)
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu_double",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+a = np.array(
+    [[-3.0, -4.0, -1.0, 2.0], [-0.5, 1.5, -2.5, 0.75]], dtype=np.float16
+)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float16)
+y = np.array(
+    [
+        [
+            -0.002025604248046875,
+            -0.00012671947479248047,
+            0.15869140625,
+            3.908203125,
+        ],
+        [-0.30859375, -1.3994140625, -0.007762908935546875, 0.580078125],
+    ],
+    dtype=np.float16,
+)
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu_float16",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>geglu</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+a = np.array(
+    [
+        [[1.0, -2.0, 3.0], [4.0, -1.0, 0.5]],
+        [[-3.0, 2.0, -0.5], [-4.0, 0.0, 1.5]],
+    ],
+    dtype=np.float32,
+)
+b = np.array(
+    [
+        [[0.5, 1.0, -1.0], [2.0, 2.0, -1.0]],
+        [[0.5, 1.0, 1.5], [-2.0, 3.0, 0.25]],
+    ],
+    dtype=np.float32,
+)
+y = np.array(
+    [
+        [
+            [0.4206724, -0.045500264, -2.9959502],
+            [7.999747, -0.3173105, -0.34573123],
+        ],
+        [
+            [-0.002024847, 1.9544997, -0.23140316],
+            [0.00025336994, 0.0, 0.3499473],
+        ],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>tanh</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+    approximate="tanh",
+)
+y = np.array(
+    [
+        [
+            [0.420596, -0.045402307, -2.9963627],
+            [7.9998593, -0.31761602, -0.345714],
+        ],
+        [
+            [-0.001818696, 1.9545977, -0.23142898],
+            [0.0001404919, 0.0, 0.34989288],
+        ],
+    ],
+    dtype=np.float32,
+)
+a = np.array(
+    [
+        [[1.0, -2.0, 3.0], [4.0, -1.0, 0.5]],
+        [[-3.0, 2.0, -0.5], [-4.0, 0.0, 1.5]],
+    ],
+    dtype=np.float32,
+)
+b = np.array(
+    [
+        [[0.5, 1.0, -1.0], [2.0, 2.0, -1.0]],
+        [[0.5, 1.0, 1.5], [-2.0, 3.0, 0.25]],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu_tanh",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
 ### <a name="Gelu"></a><a name="gelu">**Gelu**</a>
 
   Gelu takes one input data (Tensor<T>) and produces one
@@ -21549,48 +21890,95 @@ expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_uint64")
 
 ### <a name="LinearAttention"></a><a name="linearattention">**LinearAttention**</a>
 
-  Unified linear attention operator for autoregressive decoding (T=1) and prefill (T>1).
+  Unified recurrent linear attention for prefill and autoregressive decoding.
 
-  The query, key, value, and (where applicable) decay/beta inputs use 3D packed format
-  [B, T, H*D], where heads are flattened into the last dimension; q_num_heads and
-  kv_num_heads are always required and are used to unpack to 4D internally for computation.
-  The optional past_state and present_state are 4D with shape (B, H_kv, d_k, d_v).
+  Let B be the batch size, T the sequence length, d_k the key head width,
+  and d_v the value head width. The required positive attributes q_num_heads
+  and kv_num_heads specify the query head count H_q and key head count H_kv.
+  Both d_k and d_v must be positive; T may be zero. All sequence inputs share
+  the same B and T.
 
-  Group-query attention (GQA) is supported: q_num_heads must be a positive multiple of
-  kv_num_heads. When q_num_heads == kv_num_heads this reduces to multi-headed linear
-  attention; when q_num_heads > kv_num_heads each KV head (and its recurrent state) is
-  shared by `q_num_heads / kv_num_heads` query heads (multi-query attention is the
-  special case kv_num_heads == 1).
+  Inputs query, key and value have shapes [B,T,H_q*d_k], [B,T,H_kv*d_k]
+  and [B,T,H_v*d_v]. Heads are packed contiguously in the last dimension:
+  element j of head h has packed index h*d+j, where d is that input's head width.
 
-  The update_rule attribute selects the recurrence type:
-  - "linear": S_t = S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
-  - "gated": S_t = exp(g_t) * S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
-  - "delta": S_t = S_{t-1} + β_t * k_t ⊗ (v_t - S_{t-1}^T k_t); o_t = scale * q_t^T S_t
-  - "gated_delta": S_t = exp(g_t) * S_{t-1} + β_t * k_t ⊗ (v_t - exp(g_t) * S_{t-1}^T k_t); o_t = scale * q_t^T S_t
+  With v_num_heads=0 (default), H_v=H_kv and H_q must be a multiple of H_kv.
+  The output head count H_o is H_q. Query head h reads state head
+  floor(h/(H_q/H_kv)), so adjacent query heads share each state head.
+  State head h uses key head h.
 
-  where g_t is the decay (in log-space), β_t is the update rate, and ⊗ denotes outer product.
+  With v_num_heads>0, H_v=v_num_heads, H_q must equal H_kv, and H_v must be
+  a multiple of H_kv. H_o is H_v. Value/state head h uses query and key head
+  floor(h/(H_v/H_kv)). For H_kv=2 and H_v=6, this mapping is [0,0,0,1,1,1].
+  Negative v_num_heads is invalid. State, decay and beta use H_v heads.
 
-  Semantics: Equivalent to running the recurrent update sequentially for each token,
-  but may be implemented using chunk-parallel algorithms for GPU efficiency.
+  The output tensor output has shape [B,T,H_o*d_v], with contiguous head packing.
+  past_state and present_state have shape [B,H_v,d_k,d_v].
+  The initial state is past_state when supplied, otherwise zeros.
+  Input values and the initial state are converted to float32 for the recurrence
+  and output computation. The output tensor output has query's element type.
+  The state outputs have past_state's element type when supplied, otherwise
+  query's element type. A float32 past_state therefore retains float32 state
+  with float16 or bfloat16 activations.
 
+  For each batch element and token, let S be a state head's preceding
+  [d_k,d_v] matrix, k its mapped key vector, and v its value vector.
+  The update_rule attribute is one of "linear", "gated", "delta", or
+  "gated_delta" (default). Process tokens in increasing order t=0,...,T-1.
+  For each token, apply these steps in order:
+  1. For "gated" and "gated_delta", D = exp(decay) * S; otherwise D = S.
+     Decay is log-space [B,T,H_v] for per-head decay or [B,T,H_v*d_k]
+     for per-key-element decay, packed by head. It broadcasts over d_v.
+  2. For "delta" and "gated_delta", u = beta * (v - D^T k); otherwise u = v.
+     Beta has shape [B,T,H_v] for per-head rates or [B,T,1] shared by all heads.
+  3. S_new = D + k outer u, where (k outer u)[i,j] = k[i] * u[j].
+  4. For each output head, o = scale * q^T S_new using its mapped query and
+     state heads. The resulting vectors form output, and S_new is the
+     preceding state for the next token.
+
+  exp and scalar/vector multiplication are elementwise; transpose and
+  matrix-vector products act on the displayed head matrix/vector dimensions.
+
+  Decay must be supplied for "gated" and "gated_delta" and omitted otherwise.
+  Beta must be supplied for "delta" and "gated_delta" and omitted otherwise.
+  Q/K normalization is not performed by this operator. A zero scale attribute
+  (default) uses 1/sqrt(d_k). chunk_size (default 64) is an implementation hint
+  and does not change results.
+
+  present_state is the final state. The optional states output has shape
+  [B,T,H_v,d_k,d_v]; states[:,t,:,:,:] is the state after token t's complete
+  decay and update, converted to present_state's element type. These conversions
+  do not round the internal float32 recurrence between tokens. For T>0, the
+  last snapshot equals present_state. For T=0, output has shape [B,0,H_o*d_v],
+  states has shape [B,0,H_v,d_k,d_v], and present_state is the initial state.
+  Omitting states does not change output or present_state and does not require
+  intermediate-state storage. When requested, states contains B*T*H_v*d_k*d_v
+  elements.
+
+  The operator does not modify inputs or retain state between invocations.
+  The caller supplies any state carried from a preceding invocation.
 
 #### Version
 
-This version of the operator has been available since version 27 of the default ONNX operator set.
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#LinearAttention-27">27</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>chunk_size</tt> : int (default is 64)</dt>
-<dd>Chunk size for the chunk-parallel WY decomposition during prefill (T>1). Tuning hint; does not affect output correctness.</dd>
+<dd>Implementation hint for processing sequence chunks. Does not change results.</dd>
 <dt><tt>kv_num_heads</tt> : int (required)</dt>
-<dd>Number of key/value heads. Always required.</dd>
+<dd>Number of compact key heads. Always required.</dd>
 <dt><tt>q_num_heads</tt> : int (required)</dt>
 <dd>Number of query heads. Always required.</dd>
 <dt><tt>scale</tt> : float (default is 0.0)</dt>
 <dd>Output scaling factor. When 0.0 (default), derives d_k = query.shape[-1] / q_num_heads and uses 1/sqrt(d_k). Set explicitly to override.</dd>
 <dt><tt>update_rule</tt> : string (default is gated_delta)</dt>
 <dd>The update rule for the linear attention recurrence. One of: 'linear', 'gated', 'delta', 'gated_delta'. Default is 'gated_delta'.</dd>
+<dt><tt>v_num_heads</tt> : int (default is 0)</dt>
+<dd>Value/state head count. Zero (default) uses kv_num_heads and preserves query GQA. A positive value requires q_num_heads == kv_num_heads and must be a multiple of kv_num_heads. Q/K head h is repeated adjacently v_num_heads / kv_num_heads times. The output has v_num_heads heads, and value, state, decay and beta use this head count.</dd>
 </dl>
 
 #### Inputs (3 - 6)
@@ -21599,24 +21987,26 @@ This version of the operator has been available since version 27 of the default 
 <dt><tt>query</tt> (differentiable) : T</dt>
 <dd>Query vectors with 3D packed shape (B, T, H_q * d_k). Heads are packed into the last dimension.</dd>
 <dt><tt>key</tt> (differentiable) : T</dt>
-<dd>Key vectors with 3D packed shape (B, T, H_kv * d_k). Should be L2-normalized for delta/gated_delta modes.</dd>
+<dd>Key vectors with 3D packed shape (B, T, H_kv * d_k). The operator does not normalize these vectors.</dd>
 <dt><tt>value</tt> (differentiable) : T</dt>
-<dd>Value vectors with 3D packed shape (B, T, H_kv * d_v).</dd>
+<dd>Value vectors with 3D packed shape (B, T, H_v * d_v), where H_v is kv_num_heads unless a positive v_num_heads is specified.</dd>
 <dt><tt>past_state</tt> (optional, non-differentiable) : S</dt>
-<dd>Recurrent state from previous step with shape (B, H_kv, d_k, d_v). Always 4D. If not provided, defaults to zeros.</dd>
+<dd>Recurrent state from previous step with shape (B, H_v, d_k, d_v). Always 4D. If not provided, defaults to zeros.</dd>
 <dt><tt>decay</tt> (optional, differentiable) : T</dt>
-<dd>Exponential decay gate in log-space. 3D packed shape: (B, T, H_kv * d_k) for per-key-dimension decay (GLA/RWKV-6), or (B, T, H_kv) for per-head scalar decay (DeltaNet/RetNet). Required for 'gated' and 'gated_delta' modes.</dd>
+<dd>Exponential decay gate in log-space, with shape (B, T, H_v * d_k) or (B, T, H_v). Required for 'gated' and 'gated_delta' modes.</dd>
 <dt><tt>beta</tt> (optional, differentiable) : T</dt>
-<dd>Update rate (sigmoid output). 3D packed shape: (B, T, H_kv) or (B, T, 1). Required for 'delta' and 'gated_delta' modes.</dd>
+<dd>Update rate with shape (B, T, H_v) or (B, T, 1). Required for 'delta' and 'gated_delta' modes.</dd>
 </dl>
 
-#### Outputs
+#### Outputs (2 - 3)
 
 <dl>
 <dt><tt>output</tt> (differentiable) : T</dt>
-<dd>Attention output with 3D packed shape (B, T, H_q * d_v).</dd>
+<dd>Attention output with 3D packed shape (B, T, H_o * d_v), where H_o is q_num_heads unless a positive v_num_heads is specified.</dd>
 <dt><tt>present_state</tt> (non-differentiable) : S</dt>
-<dd>Updated recurrent state with shape (B, H_kv, d_k, d_v). Always 4D.</dd>
+<dd>Updated recurrent state with shape (B, H_v, d_k, d_v). Always 4D.</dd>
+<dt><tt>states</tt> (optional, non-differentiable) : S</dt>
+<dd>Optional recurrent state trajectory with shape (B, T, H_v, d_k, d_v), in the same type as present_state. Entry [:, t] is the state after token t's complete decay/update, before token t+1. For T > 0 the last entry equals present_state; for T = 0 the trajectory is empty. Omitting this output does not require storing intermediate states.</dd>
 </dl>
 
 #### Type Constraints
@@ -21625,11 +22015,64 @@ This version of the operator has been available since version 27 of the default 
 <dt><tt>T</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
 <dd>Constrain activation input and output types to float16, bfloat16, or float32 tensors.</dd>
 <dt><tt>S</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
-<dd>Constrain state types to float16, bfloat16, or float32 tensors. Should be float32 or the same as T for numerical stability on long sequences.</dd>
+<dd>State tensors have type float16, bfloat16, or float32. When past_state is omitted, state outputs have the activation type T.</dd>
 </dl>
 
 
 #### Examples
+
+<details>
+<summary>compact_value_heads</summary>
+
+```python
+# Scaled-down Gated DeltaNet examples: adjacent Q/K repeats, independent
+# value/state heads and gates. Real head ratios include 2, 3 and 8.
+rng = np.random.default_rng(0)
+for factor in (2, 3, 8):
+    b, t, hk, dk, dv = 1, 3, 2, 4, 5
+    hv = hk * factor
+    query = _l2_normalize(
+        rng.normal(size=(b, t, hk * dk)).astype(np.float16), hk
+    )
+    key = _l2_normalize(rng.normal(size=(b, t, hk * dk)).astype(np.float16), hk)
+    value = rng.normal(size=(b, t, hv * dv)).astype(np.float16)
+    state = rng.normal(size=(b, hv, dk, dv)).astype(np.float32)
+    decay = -rng.uniform(0.1, 0.9, (b, t, hv)).astype(np.float16)
+    beta = rng.uniform(0.1, 0.9, (b, t, hv)).astype(np.float16)
+    expanded = [
+        np.repeat(x.reshape(b, t, hk, dk), factor, axis=2).reshape(
+            b, t, hv * dk
+        )
+        for x in (query, key)
+    ]
+    expected = _compute(
+        *expanded,
+        value,
+        state,
+        decay,
+        beta,
+        q_num_heads=hv,
+        kv_num_heads=hv,
+    )
+    node = onnx.helper.make_node(
+        "LinearAttention",
+        ["query", "key", "value", "past_state", "decay", "beta"],
+        ["output", "present_state"],
+        q_num_heads=hk,
+        kv_num_heads=hk,
+        v_num_heads=hv,
+    )
+    expect(
+        node,
+        inputs=[query, key, value, state, decay, beta],
+        outputs=list(expected),
+        name=f"test_linear_attention_compact_value_heads_factor_{factor}",
+        opset_imports=[onnx.helper.make_opsetid("", 29)],
+    )
+```
+
+</details>
+
 
 <details>
 <summary>decode_step</summary>
@@ -22184,6 +22627,83 @@ expect(
 </details>
 
 
+<details>
+<summary>state_trajectory</summary>
+
+```python
+rng = np.random.default_rng(42)
+for rule in ("linear", "gated", "delta", "gated_delta"):
+    for length in (0, 3):
+        b, hk, hv, dk, dv = 2, 2, 4, 2, 3
+        query = rng.normal(size=(b, length, hk * dk)).astype(np.float16)
+        key = _l2_normalize(
+            rng.normal(size=(b, length, hk * dk)).astype(np.float16), hk
+        )
+        value = rng.normal(size=(b, length, hv * dv)).astype(np.float16)
+        state = rng.normal(size=(b, hv, dk, dv)).astype(np.float32)
+        decay = (
+            -rng.uniform(0.1, 0.9, (b, length, hv)).astype(np.float16)
+            if rule in ("gated", "gated_delta")
+            else None
+        )
+        beta = (
+            rng.uniform(0.1, 0.9, (b, length, hv)).astype(np.float16)
+            if rule in ("delta", "gated_delta")
+            else None
+        )
+        expanded = [
+            np.repeat(x.reshape(b, length, hk, dk), hv // hk, axis=2).reshape(
+                b, length, hv * dk
+            )
+            for x in (query, key)
+        ]
+        packed = [*expanded, value, state, decay, beta]
+        expected = _compute(
+            *packed, q_num_heads=hv, kv_num_heads=hv, update_rule=rule
+        )
+        snapshots = [
+            _compute(
+                *[
+                    x if x is None or i == 3 else x[:, :end]
+                    for i, x in enumerate(packed)
+                ],
+                q_num_heads=hv,
+                kv_num_heads=hv,
+                update_rule=rule,
+            )[1]
+            for end in range(1, length + 1)
+        ]
+        states = (
+            np.stack(snapshots, axis=1)
+            if snapshots
+            else np.empty((b, 0, hv, dk, dv), dtype=np.float32)
+        )
+        values = [query, key, value, state, decay, beta]
+        names = ["query", "key", "value", "past_state", "decay", "beta"]
+        node = onnx.helper.make_node(
+            "LinearAttention",
+            [
+                name if x is not None else ""
+                for name, x in zip(names, values, strict=True)
+            ],
+            ["output", "present_state", "states"],
+            q_num_heads=hk,
+            kv_num_heads=hk,
+            v_num_heads=hv,
+            update_rule=rule,
+        )
+        expect(
+            node,
+            inputs=[x for x in values if x is not None],
+            outputs=[*expected, states],
+            name=f"test_linear_attention_state_trajectory_{rule}_length_{length}",
+            opset_imports=[onnx.helper.make_opsetid("", 29)],
+        )
+```
+
+</details>
+
+
 ### <a name="Log"></a><a name="log">**Log**</a>
 
   Calculates the natural log of the given input tensor, element-wise.
@@ -22619,7 +23139,7 @@ node = onnx.helper.make_node(
 x = np.array([[-1, 0, 1]]).astype(np.float32)
 # expected output
 # [[-2.4076061 -1.407606  -0.407606 ]]
-y = logsoftmax(x)
+y = _log_softmax(x)
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_example_1")
 ```
 
@@ -22634,7 +23154,7 @@ x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]]).astype(np.float32)
 # expected output
 # [[-3.4401896  -2.4401896  -1.4401896  -0.44018966]
 # [-3.4401896  -2.4401896  -1.4401896  -0.44018966]]
-y = logsoftmax(x)
+y = _log_softmax(x)
 
 node = onnx.helper.make_node(
     "LogSoftmax",
@@ -22650,7 +23170,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
     axis=0,
 )
-y = logsoftmax(x, axis=0)
+y = _log_softmax(x, axis=0)
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_axis_0")
 
 node = onnx.helper.make_node(
@@ -22659,7 +23179,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
     axis=1,
 )
-y = logsoftmax(x, axis=1)
+y = _log_softmax(x, axis=1)
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_axis_1")
 
 node = onnx.helper.make_node(
@@ -22668,7 +23188,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
     axis=2,
 )
-y = logsoftmax(x, axis=2)
+y = _log_softmax(x, axis=2)
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_axis_2")
 
 node = onnx.helper.make_node(
@@ -22677,7 +23197,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
     axis=-1,
 )
-y = logsoftmax(x, axis=-1)
+y = _log_softmax(x, axis=-1)
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_negative_axis")
 
 # default axis is -1
@@ -22687,6 +23207,114 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_default_axis")
+```
+
+</details>
+
+
+<details>
+<summary>logsoftmax_empty_input</summary>
+
+```python
+node = onnx.helper.make_node("LogSoftmax", ["x"], ["y"], axis=1)
+x = np.empty((0, 3), dtype=np.float32)
+expect(node, inputs=[x], outputs=[x], name="test_logsoftmax_empty_input")
+```
+
+</details>
+
+
+<details>
+<summary>logsoftmax_large_finite_gap</summary>
+
+```python
+node = onnx.helper.make_node("LogSoftmax", ["x"], ["y"], axis=1)
+x = np.array([[0, -200]], dtype=np.float32)
+expect(
+    node,
+    inputs=[x],
+    outputs=[x],
+    name="test_logsoftmax_large_finite_gap",
+    rtol=1e-3,
+    atol=0,
+)
+```
+
+</details>
+
+
+<details>
+<summary>logsoftmax_single_class</summary>
+
+```python
+node = onnx.helper.make_node("LogSoftmax", ["x"], ["y"], axis=1)
+x = np.array([[[1, -2, 3]], [[4, 5, -6]]], dtype=np.float32)
+expect(
+    node,
+    inputs=[x],
+    outputs=[np.zeros_like(x)],
+    name="test_logsoftmax_single_class",
+    atol=0,
+)
+```
+
+</details>
+
+
+<details>
+<summary>logsoftmax_small_log_probability</summary>
+
+```python
+for dtype, margin in [
+    (np.float16, 10.0),
+    (np.float32, 18.0),
+    (np.float64, 40.0),
+]:
+    x = np.full((3, 3), -margin, dtype=dtype)
+    np.fill_diagonal(x, 0)
+    x = np.stack([x, x])
+    # Zero absolute tolerance catches a collapsed result; relative
+    # tolerance still allows differences between backend implementations.
+    # Compute the expected value analytically, independently of the helper.
+    normalizer = np.log1p(2 * np.exp(-margin))
+    expected = (x.astype(np.float64) - normalizer).astype(dtype)
+    for axis in [0, 1, -1]:
+        node = onnx.helper.make_node("LogSoftmax", ["x"], ["y"], axis=axis)
+        expect(
+            node,
+            inputs=[np.moveaxis(x, -1, axis)],
+            outputs=[np.moveaxis(expected, -1, axis)],
+            name=f"test_logsoftmax_small_log_probability_{np.dtype(dtype).name}_axis_{axis}",
+            rtol=1e-3,
+            atol=0,
+        )
+```
+
+</details>
+
+
+<details>
+<summary>logsoftmax_tied_maxima</summary>
+
+```python
+node = onnx.helper.make_node("LogSoftmax", ["x"], ["y"], axis=-1)
+x = np.array([[0, 0, -200], [4, 4, 4], [0, -np.inf, -np.inf]], dtype=np.float64)
+expected = np.array(
+    [
+        [-np.log(2), -np.log(2), -200 - np.log(2)],
+        [-np.log(3), -np.log(3), -np.log(3)],
+        [0, -np.inf, -np.inf],
+    ],
+    dtype=np.float64,
+)
+expect(
+    node,
+    inputs=[x],
+    outputs=[expected],
+    name="test_logsoftmax_tied_maxima",
+    rtol=1e-3,
+    atol=0,
+)
 ```
 
 </details>
@@ -28770,6 +29398,186 @@ slope = np.random.randn(5).astype(np.float32)
 y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * slope
 
 expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
+```
+
+</details>
+
+
+### <a name="Pack"></a><a name="pack">**Pack**</a>
+
+  Packs UINT8 codes into UINT8 (default) or UINT32 words along `axis` (default -1).
+  Input and output have the same rank, at least 1; axis must be in [-rank, rank-1].
+  The `output_type` selects storage words of word_bits = 8 or 32 bits.
+  Specify either `bits` in [1, 8], or both `radix` and `group_size`;
+  the two spellings are mutually exclusive. With `bits`, each element of `X`
+  must be in [0, 2^bits - 1].
+
+  When using `bits`, an input axis dimension N becomes B = ceil(N * bits / word_bits).
+  Each fixed combination of indices in the other dimensions defines an
+  independent sequence, called a row below; a rank-1 tensor has one row.
+
+  Within each row, codes are packed in increasing axis index order, with
+  the least significant bit of each code first. Number the bits of each code
+  and storage word starting at 0 for the least significant bit. For code index
+  `0 <= i < N` and bit index `0 <= k < bits`, bit `k` of input code `i` is stored
+  at bit `(i * bits + k) % word_bits` of output word `floor((i * bits + k) / word_bits)`.
+  When a code spans a word boundary, its remaining higher-order bits occupy
+  the low bits of the next word. Each row begins at bit 0 of a new word.
+  Unused high bits in the final word of each row are zero. Bit positions
+  are defined numerically, independently of host endianness; tensor raw data
+  uses ONNX's little-endian serialization.
+
+  All non-axis dimensions are preserved, including zero dimensions, and the
+  same output shape rule applies when any non-axis dimension is zero.
+  An input with `N = 0` produces an output with `B = 0`.
+
+  With default UINT8 storage, `bits = 3` packs `[0, 1, 2, 3, 4, 5, 6, 7]` into
+  `[136, 198, 250]`. With `bits = 5`, the rows `[[1, 2, 3], [31, 0, 16]]`
+  are packed into `[[65, 12], [31, 64]]`.
+  With UINT32 storage, `bits = 5` packs `[1, 2, 3]` into `[3137]`.
+
+  Grouped packing uses radix R in [2, 256] and positive group size G, with
+  R^G <= 2^63 - 1. Each input value must be in [0, R - 1]. Divide each row
+  into consecutive groups of G values; zero-pad the last group if incomplete.
+  Group [x0, ..., x(G-1)] becomes the integer sum(xj * R^j): the first digit
+  is least significant. Each group index occupies W = ceil(log2(R^G)) bits.
+  Pack these indices contiguously, least-significant bit first, with no
+  word alignment between groups. The output axis dimension is
+  ceil(ceil(N/G) * W / word_bits). Unused final word bits are zero.
+  R^G determines the precision of the integer arithmetic needed to form and
+  decode group indices: indices range from 0 to R^G - 1 and require W value
+  bits. Implementations must also accommodate intermediate values, including
+  R^G if computed explicitly. Prefer (R, G) pairs that can be implemented
+  using standard 32-bit or 64-bit integer arithmetic rather than requiring
+  arbitrary-precision arithmetic. This specification's R^G bound permits
+  exact signed 64-bit arithmetic for the base-radix group calculations.
+  One commonly used choice is (R, G) = (3, 5), packing five ternary codes
+  into one byte because 3^5 = 243.
+  The original bits spelling is exactly (R, G) = (2^bits, 1).
+  With UINT8 storage and R=3, G=5, [0, 1, 2, 0, 1] becomes [102], and [2, 2, 2, 2, 2]
+  becomes [242]. Partial group [1, 2] becomes [7].
+  Results for invalid inputs are unspecified; function decompositions need
+  not diagnose out-of-range codes.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>Axis along which independent sequences are packed. Negative axes are supported.</dd>
+<dt><tt>bits</tt> : int</dt>
+<dd>Number of bits per unsigned code. Mutually exclusive with radix/group_size.</dd>
+<dt><tt>group_size</tt> : int</dt>
+<dd>Codes per group. Positive; radix^group_size must fit in positive INT64.</dd>
+<dt><tt>output_type</tt> : int (default is 2)</dt>
+<dd>Packed storage type: TensorProto UINT8 (2) or UINT32 (12). Logical codes remain UINT8.</dd>
+<dt><tt>radix</tt> : int</dt>
+<dd>Base of grouped codes, in [2, 256]. Requires group_size; excludes bits.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>UINT8 tensor of rank at least 1, with codes below the selected radix.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : TStorage</dt>
+<dd>Packed tensor preserving every dimension except axis, which becomes ceil(ceil(N / group_size) * group_width / word_bits); bits implies group_size=1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8)</dt>
+<dd>Unsigned byte tensors.</dd>
+<dt><tt>TStorage</tt> : tensor(uint8), tensor(uint32)</dt>
+<dd>Unsigned storage word tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>pack_3bit</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=3)
+x = np.arange(8, dtype=np.uint8)
+y = np.array([0x88, 0xC6, 0xFA], dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_3bit")
+```
+
+</details>
+
+
+<details>
+<summary>pack_empty</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=3)
+x = np.empty((2, 0), dtype=np.uint8)
+expect(node, inputs=[x], outputs=[x], name="test_pack_empty")
+```
+
+</details>
+
+
+<details>
+<summary>pack_empty_rows</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=5)
+x = np.empty((2, 0, 9), dtype=np.uint8)
+y = np.empty((2, 0, 6), dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_empty_rows")
+```
+
+</details>
+
+
+<details>
+<summary>pack_rows_5bit</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=5)
+x = np.array([[1, 2, 3], [31, 0, 16]], dtype=np.uint8)
+y = np.array([[0x41, 0x0C], [0x1F, 0x40]], dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_rows_5bit")
+```
+
+</details>
+
+
+<details>
+<summary>pack_ternary</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], radix=3, group_size=5)
+x = np.array([[0, 1, 2, 0, 1], [2, 2, 2, 2, 2]], dtype=np.uint8)
+y = np.array([[102], [242]], dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_ternary")
+```
+
+</details>
+
+
+<details>
+<summary>pack_uint32_axis</summary>
+
+```python
+node = helper.make_node(
+    "Pack", ["X"], ["Y"], bits=5, axis=0, output_type=TensorProto.UINT32
+)
+x = np.full((7, 2), 31, dtype=np.uint8)
+y = np.array([[0xFFFFFFFF, 0xFFFFFFFF], [7, 7]], dtype=np.uint32)
+expect(node, inputs=[x], outputs=[y], name="test_pack_uint32_axis")
 ```
 
 </details>
@@ -40979,6 +41787,31 @@ expect(
 
 
 <details>
+<summary>softmaxcrossentropy_large_finite_gap</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SoftmaxCrossEntropyLoss",
+    ["x", "labels"],
+    ["loss", "log_prob"],
+    reduction="none",
+)
+x = np.array([[0, -200]], dtype=np.float32)
+labels = np.array([1], dtype=np.int64)
+expect(
+    node,
+    inputs=[x, labels],
+    outputs=[np.array([200], dtype=np.float32), x],
+    name="test_sce_large_finite_gap",
+    rtol=1e-3,
+    atol=0,
+)
+```
+
+</details>
+
+
+<details>
 <summary>softmaxcrossentropy_mean</summary>
 
 ```python
@@ -41804,6 +42637,81 @@ expect(
 
 
 <details>
+<summary>softmaxcrossentropy_single_class</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SoftmaxCrossEntropyLoss",
+    ["x", "labels"],
+    ["loss", "log_prob"],
+    reduction="none",
+)
+x = np.array([[10], [-20]], dtype=np.float32)
+labels = np.zeros(2, dtype=np.int64)
+expect(
+    node,
+    inputs=[x, labels],
+    outputs=[np.zeros(2, dtype=np.float32), np.zeros_like(x)],
+    name="test_sce_single_class",
+    atol=0,
+)
+```
+
+</details>
+
+
+<details>
+<summary>softmaxcrossentropy_small_loss</summary>
+
+```python
+for dtype, margin in [
+    (np.float16, 10.0),
+    (np.float32, 18.0),
+    (np.float64, 40.0),
+]:
+    x = np.full((3, 3), -margin, dtype=dtype)
+    np.fill_diagonal(x, 0)
+    # Zero absolute tolerance catches a collapsed result; relative
+    # tolerance still allows differences between backend implementations.
+    # Independent analytical values ensure a regression cannot change
+    # both the implementation and its expected outputs together.
+    normalizer = np.log1p(2 * np.exp(-margin))
+    log_prob = (x.astype(np.float64) - normalizer).astype(dtype)
+    loss = np.array([normalizer, 2 * normalizer, 0], dtype=dtype)
+    x = np.repeat(x[..., None, None], 2, axis=-1)
+    log_prob = np.repeat(log_prob[..., None, None], 2, axis=-1)
+    loss = np.repeat(loss[..., None, None], 2, axis=-1)
+    labels = np.repeat(
+        np.array([0, 1, -1], dtype=np.int64)[..., None, None], 2, axis=-1
+    )
+    weights = np.array([1, 2, 3], dtype=dtype)
+    for reduction in ["none", "sum", "mean"]:
+        node = onnx.helper.make_node(
+            "SoftmaxCrossEntropyLoss",
+            ["x", "labels", "weights"],
+            ["loss", "log_prob"],
+            reduction=reduction,
+            ignore_index=-1,
+        )
+        expected_loss = loss
+        if reduction == "sum":
+            expected_loss = loss.sum()
+        elif reduction == "mean":
+            expected_loss = (loss.sum() / 6).astype(dtype)
+        expect(
+            node,
+            inputs=[x, labels, weights],
+            outputs=[expected_loss, log_prob],
+            name=f"test_sce_small_loss_{np.dtype(dtype).name}_{reduction}",
+            rtol=1e-3,
+            atol=0,
+        )
+```
+
+</details>
+
+
+<details>
 <summary>softmaxcrossentropy_sum</summary>
 
 ```python
@@ -41864,6 +42772,39 @@ expect(
     inputs=[x, labels],
     outputs=[loss, log_prob],
     name="test_sce_sum_log_prob",
+)
+```
+
+</details>
+
+
+<details>
+<summary>softmaxcrossentropy_tied_maxima</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SoftmaxCrossEntropyLoss",
+    ["x", "labels"],
+    ["loss", "log_prob"],
+    reduction="none",
+)
+x = np.array([[0, 0, -200], [4, 4, 4]], dtype=np.float64)
+labels = np.array([1, 2], dtype=np.int64)
+loss = np.array([np.log(2), np.log(3)], dtype=np.float64)
+log_prob = np.array(
+    [
+        [-np.log(2), -np.log(2), -200 - np.log(2)],
+        [-np.log(3), -np.log(3), -np.log(3)],
+    ],
+    dtype=np.float64,
+)
+expect(
+    node,
+    inputs=[x, labels],
+    outputs=[loss, log_prob],
+    name="test_sce_tied_maxima",
+    rtol=1e-3,
+    atol=0,
 )
 ```
 
@@ -46291,6 +47232,192 @@ expect(
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_bfloat16_sorted_without_axis",
 )
+```
+
+</details>
+
+
+### <a name="Unpack"></a><a name="unpack">**Unpack**</a>
+
+  Unpacks UINT8 or UINT32 storage words into UINT8 unsigned integer codes
+  independently along `axis` (default -1). Input and output have the same
+  rank, at least 1. Negative axes are supported; axis must be in [-rank, rank-1].
+  The input type determines word_bits: 8 for UINT8, 32 for UINT32.
+  Specify either `bits` in [1, 8], or both `radix` and `group_size`;
+  the two spellings are mutually exclusive.
+  The input `count` must be a nonnegative scalar INT64 tensor specifying the
+  number of output codes along axis, excluding padding. With `bits`, each
+  element of `Y` is in [0, 2^bits - 1].
+
+  When using `bits`, the input axis dimension B must equal ceil(count * bits / word_bits).
+  The output axis dimension is count; all other dimensions are preserved.
+  Each fixed combination of indices in the other dimensions defines an
+  independent sequence, called a row below; a rank-1 tensor has one row.
+
+  Within each row, input words are read in increasing axis index order,
+  starting with the least significant bit of each word. Consecutive groups of
+  `bits` bits form output codes in order, with the first bit of each group as
+  the code's least significant bit. Number the bits of each word and code
+  starting at 0 for the least significant bit. For code index
+  `0 <= i < count` and bit index `0 <= k < bits`, bit `k` of output code `i` is
+  read from bit `(i * bits + k) % word_bits` of input word `floor((i * bits + k) / word_bits)`.
+  When a code spans a word boundary, its higher-order bits are read from
+  the low bits of the next word. Each row begins at bit 0 of a new word.
+  Unused high bits in the final input word of each row are padding and are ignored.
+  Bit positions are defined numerically, independently of host endianness;
+  tensor raw data uses ONNX's little-endian serialization.
+
+  All non-axis dimensions are preserved, including zero dimensions, and the
+  same shape requirements apply when any non-axis dimension is zero.
+  With `count = 0`, both input and output must have an empty selected axis.
+
+  With UINT8 storage, `bits = 3` and `count = 8` unpack `[136, 198, 250]` into
+  `[0, 1, 2, 3, 4, 5, 6, 7]`. With `bits = 3` and `count = 2`, `[255]`
+  is unpacked into `[7, 7]`.
+
+  Grouped unpacking uses radix R in [2, 256] and positive group size G, with
+  R^G <= 2^63 - 1. Read consecutive W = ceil(log2(R^G)) bit group indices,
+  least-significant bit first, without word alignment between groups.
+  R^G determines the precision of the integer arithmetic required for both
+  packing and unpacking: valid group indices require W value bits, and any
+  explicitly computed R^G or other intermediate must also fit. Prefer
+  (R, G) pairs supported by standard 32-bit or 64-bit integer arithmetic.
+  The R^G bound above permits exact signed 64-bit base-radix calculations.
+  A commonly used choice is (R, G) = (3, 5): five ternary codes per byte.
+  Every group index must be less than R^G; encodings outside this range
+  are invalid. Expand each index into G base-R digits, least significant
+  digit first, then trim to count values per row. The input axis dimension
+  must equal ceil(ceil(count/G) * W / word_bits). Unused digits of the last group
+  and unused high bits of the last word are ignored. Each output code is
+  in [0, R - 1]. The original bits spelling is (R, G) = (2^bits, 1).
+  With UINT8 storage and R=3, G=5, [102] with count=5 becomes [0, 1, 2, 0, 1];
+  [7] with count=2 becomes [1, 2].
+  Results for invalid inputs are unspecified; function decompositions need
+  not diagnose invalid indices or incorrect input sizes.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>Axis along which independent sequences are unpacked. Negative axes are supported.</dd>
+<dt><tt>bits</tt> : int</dt>
+<dd>Number of bits per unsigned code. Mutually exclusive with radix/group_size.</dd>
+<dt><tt>group_size</tt> : int</dt>
+<dd>Codes per group. Positive; radix^group_size must fit in positive INT64.</dd>
+<dt><tt>radix</tt> : int</dt>
+<dd>Base of grouped codes, in [2, 256]. Requires group_size; excludes bits.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : TStorage</dt>
+<dd>UINT8 or UINT32 tensor of rank at least 1, with the exact packed word count along axis.</dd>
+<dt><tt>count</tt> : tensor(int64)</dt>
+<dd>Scalar INT64 tensor giving the logical output length along axis. Must be nonnegative.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>UINT8 tensor preserving every dimension except axis, which becomes count. Each element is below the selected radix.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8)</dt>
+<dd>Unsigned byte tensors.</dd>
+<dt><tt>TStorage</tt> : tensor(uint8), tensor(uint32)</dt>
+<dd>Unsigned storage word tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>unpack_3bit</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=3)
+x = np.array([0x88, 0xC6, 0xFA], dtype=np.uint8)
+count = np.array(8, dtype=np.int64)
+y = np.arange(8, dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_3bit")
+```
+
+</details>
+
+
+<details>
+<summary>unpack_empty</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=3)
+x = np.empty((2, 0), dtype=np.uint8)
+count = np.array(0, dtype=np.int64)
+expect(node, inputs=[x, count], outputs=[x], name="test_unpack_empty")
+```
+
+</details>
+
+
+<details>
+<summary>unpack_empty_rows</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=5)
+x = np.empty((2, 0, 6), dtype=np.uint8)
+count = np.array(9, dtype=np.int64)
+y = np.empty((2, 0, 9), dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_empty_rows")
+```
+
+</details>
+
+
+<details>
+<summary>unpack_rows_5bit</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=5)
+x = np.array([[0x41, 0x0C], [0x1F, 0x40]], dtype=np.uint8)
+count = np.array(3, dtype=np.int64)
+y = np.array([[1, 2, 3], [31, 0, 16]], dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_rows_5bit")
+```
+
+</details>
+
+
+<details>
+<summary>unpack_ternary</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], radix=3, group_size=5)
+x = np.array([[102], [242]], dtype=np.uint8)
+count = np.array(5, dtype=np.int64)
+y = np.array([[0, 1, 2, 0, 1], [2, 2, 2, 2, 2]], dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_ternary")
+```
+
+</details>
+
+
+<details>
+<summary>unpack_uint32_axis</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=5, axis=0)
+x = np.full((2, 2), 0xFFFFFFFF, dtype=np.uint32)
+count = np.array(7, dtype=np.int64)
+y = np.full((7, 2), 31, dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_uint32_axis")
 ```
 
 </details>

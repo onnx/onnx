@@ -34781,6 +34781,82 @@ This version of the operator has been available since version 29 of the default 
 <dd>Constrain indices to int32 or int64 tensors.</dd>
 </dl>
 
+### <a name="GeGLU-29"></a>**GeGLU-29**</a>
+
+  GeGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
+  input `B`, and produces one output `Y`. It applies the Gelu activation to the gate
+  and multiplies the result elementwise by the linear input:
+
+  ```
+  Y = Gelu(A) * B
+  ```
+
+  The gate activation is the `Gelu` operator with the same `approximate` attribute.
+  With `approximate = "none"` (the default) it is the exact form
+
+  ```
+  Gelu(a) = 0.5 * a * (1 + erf(a / sqrt(2)))
+  ```
+
+  and with `approximate = "tanh"` it is the tanh approximation
+
+  ```
+  Gelu(a) = 0.5 * a * (1 + tanh(sqrt(2 / pi) * (a + 0.044715 * a^3)))
+  ```
+
+  Any other value of `approximate` is invalid. For float16 and bfloat16 inputs the
+  function body computes `Gelu(A) * B` in float32 and casts the result back to the
+  input type, because Gelu evaluated in float16 loses nearly all precision for
+  negative gate values.
+
+  Inputs `A` and `B` must have identical shapes; broadcasting is not applied and the
+  output `Y` has the same shape as the inputs. A model whose `A` and `B` shapes
+  differ at runtime is invalid, even though the `Mul` in the function body would
+  broadcast them.
+
+  Exporters typically produce `A` and `B` in one of two ways: for the common
+  two-projection form wire the two projection outputs directly to `A` (gate) and `B`
+  (value); for a fused/packed single projection, split it upstream into `A` and `B`
+  with `Split` (contiguous layout) or `Slice`/`Gather` (interleaved layout).
+
+  GeGLU was introduced in "GLU Variants Improve Transformer" (Shazeer, 2020,
+  https://arxiv.org/abs/2002.05202) and is used as the feed-forward gate in models
+  such as T5 v1.1 and Gemma.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>approximate</tt> : string (default is none)</dt>
+<dd>Gelu approximation algorithm used for the gate: `"none"` (default) or `"tanh"`. Any other value is invalid.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (differentiable) : T</dt>
+<dd>Gate input tensor</dd>
+<dt><tt>B</tt> (differentiable) : T</dt>
+<dd>Linear (value) input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="Gemm-29"></a>**Gemm-29**</a>
 
   Generalized matrix multiplication: `Y = alpha * A' * B' + beta * C`.
@@ -34910,6 +34986,134 @@ This version of the operator has been available since version 29 of the default 
 <dd>Constrain input, weights, bias, and output to floating-point tensors.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain group indices to int32 or int64 tensors.</dd>
+</dl>
+
+### <a name="LinearAttention-29"></a>**LinearAttention-29**</a>
+
+  Unified recurrent linear attention for prefill and autoregressive decoding.
+
+  Let B be the batch size, T the sequence length, d_k the key head width,
+  and d_v the value head width. The required positive attributes q_num_heads
+  and kv_num_heads specify the query head count H_q and key head count H_kv.
+  Both d_k and d_v must be positive; T may be zero. All sequence inputs share
+  the same B and T.
+
+  Inputs query, key and value have shapes [B,T,H_q*d_k], [B,T,H_kv*d_k]
+  and [B,T,H_v*d_v]. Heads are packed contiguously in the last dimension:
+  element j of head h has packed index h*d+j, where d is that input's head width.
+
+  With v_num_heads=0 (default), H_v=H_kv and H_q must be a multiple of H_kv.
+  The output head count H_o is H_q. Query head h reads state head
+  floor(h/(H_q/H_kv)), so adjacent query heads share each state head.
+  State head h uses key head h.
+
+  With v_num_heads>0, H_v=v_num_heads, H_q must equal H_kv, and H_v must be
+  a multiple of H_kv. H_o is H_v. Value/state head h uses query and key head
+  floor(h/(H_v/H_kv)). For H_kv=2 and H_v=6, this mapping is [0,0,0,1,1,1].
+  Negative v_num_heads is invalid. State, decay and beta use H_v heads.
+
+  The output tensor output has shape [B,T,H_o*d_v], with contiguous head packing.
+  past_state and present_state have shape [B,H_v,d_k,d_v].
+  The initial state is past_state when supplied, otherwise zeros.
+  Input values and the initial state are converted to float32 for the recurrence
+  and output computation. The output tensor output has query's element type.
+  The state outputs have past_state's element type when supplied, otherwise
+  query's element type. A float32 past_state therefore retains float32 state
+  with float16 or bfloat16 activations.
+
+  For each batch element and token, let S be a state head's preceding
+  [d_k,d_v] matrix, k its mapped key vector, and v its value vector.
+  The update_rule attribute is one of "linear", "gated", "delta", or
+  "gated_delta" (default). Process tokens in increasing order t=0,...,T-1.
+  For each token, apply these steps in order:
+  1. For "gated" and "gated_delta", D = exp(decay) * S; otherwise D = S.
+     Decay is log-space [B,T,H_v] for per-head decay or [B,T,H_v*d_k]
+     for per-key-element decay, packed by head. It broadcasts over d_v.
+  2. For "delta" and "gated_delta", u = beta * (v - D^T k); otherwise u = v.
+     Beta has shape [B,T,H_v] for per-head rates or [B,T,1] shared by all heads.
+  3. S_new = D + k outer u, where (k outer u)[i,j] = k[i] * u[j].
+  4. For each output head, o = scale * q^T S_new using its mapped query and
+     state heads. The resulting vectors form output, and S_new is the
+     preceding state for the next token.
+
+  exp and scalar/vector multiplication are elementwise; transpose and
+  matrix-vector products act on the displayed head matrix/vector dimensions.
+
+  Decay must be supplied for "gated" and "gated_delta" and omitted otherwise.
+  Beta must be supplied for "delta" and "gated_delta" and omitted otherwise.
+  Q/K normalization is not performed by this operator. A zero scale attribute
+  (default) uses 1/sqrt(d_k). chunk_size (default 64) is an implementation hint
+  and does not change results.
+
+  present_state is the final state. The optional states output has shape
+  [B,T,H_v,d_k,d_v]; states[:,t,:,:,:] is the state after token t's complete
+  decay and update, converted to present_state's element type. These conversions
+  do not round the internal float32 recurrence between tokens. For T>0, the
+  last snapshot equals present_state. For T=0, output has shape [B,0,H_o*d_v],
+  states has shape [B,0,H_v,d_k,d_v], and present_state is the initial state.
+  Omitting states does not change output or present_state and does not require
+  intermediate-state storage. When requested, states contains B*T*H_v*d_k*d_v
+  elements.
+
+  The operator does not modify inputs or retain state between invocations.
+  The caller supplies any state carried from a preceding invocation.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>chunk_size</tt> : int (default is 64)</dt>
+<dd>Implementation hint for processing sequence chunks. Does not change results.</dd>
+<dt><tt>kv_num_heads</tt> : int (required)</dt>
+<dd>Number of compact key heads. Always required.</dd>
+<dt><tt>q_num_heads</tt> : int (required)</dt>
+<dd>Number of query heads. Always required.</dd>
+<dt><tt>scale</tt> : float (default is 0.0)</dt>
+<dd>Output scaling factor. When 0.0 (default), derives d_k = query.shape[-1] / q_num_heads and uses 1/sqrt(d_k). Set explicitly to override.</dd>
+<dt><tt>update_rule</tt> : string (default is gated_delta)</dt>
+<dd>The update rule for the linear attention recurrence. One of: 'linear', 'gated', 'delta', 'gated_delta'. Default is 'gated_delta'.</dd>
+<dt><tt>v_num_heads</tt> : int (default is 0)</dt>
+<dd>Value/state head count. Zero (default) uses kv_num_heads and preserves query GQA. A positive value requires q_num_heads == kv_num_heads and must be a multiple of kv_num_heads. Q/K head h is repeated adjacently v_num_heads / kv_num_heads times. The output has v_num_heads heads, and value, state, decay and beta use this head count.</dd>
+</dl>
+
+#### Inputs (3 - 6)
+
+<dl>
+<dt><tt>query</tt> (differentiable) : T</dt>
+<dd>Query vectors with 3D packed shape (B, T, H_q * d_k). Heads are packed into the last dimension.</dd>
+<dt><tt>key</tt> (differentiable) : T</dt>
+<dd>Key vectors with 3D packed shape (B, T, H_kv * d_k). The operator does not normalize these vectors.</dd>
+<dt><tt>value</tt> (differentiable) : T</dt>
+<dd>Value vectors with 3D packed shape (B, T, H_v * d_v), where H_v is kv_num_heads unless a positive v_num_heads is specified.</dd>
+<dt><tt>past_state</tt> (optional, non-differentiable) : S</dt>
+<dd>Recurrent state from previous step with shape (B, H_v, d_k, d_v). Always 4D. If not provided, defaults to zeros.</dd>
+<dt><tt>decay</tt> (optional, differentiable) : T</dt>
+<dd>Exponential decay gate in log-space, with shape (B, T, H_v * d_k) or (B, T, H_v). Required for 'gated' and 'gated_delta' modes.</dd>
+<dt><tt>beta</tt> (optional, differentiable) : T</dt>
+<dd>Update rate with shape (B, T, H_v) or (B, T, 1). Required for 'delta' and 'gated_delta' modes.</dd>
+</dl>
+
+#### Outputs (2 - 3)
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Attention output with 3D packed shape (B, T, H_o * d_v), where H_o is q_num_heads unless a positive v_num_heads is specified.</dd>
+<dt><tt>present_state</tt> (non-differentiable) : S</dt>
+<dd>Updated recurrent state with shape (B, H_v, d_k, d_v). Always 4D.</dd>
+<dt><tt>states</tt> (optional, non-differentiable) : S</dt>
+<dd>Optional recurrent state trajectory with shape (B, T, H_v, d_k, d_v), in the same type as present_state. Entry [:, t] is the state after token t's complete decay/update, before token t+1. For T > 0 the last entry equals present_state; for T = 0 the trajectory is empty. Omitting this output does not require storing intermediate states.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
+<dd>Constrain activation input and output types to float16, bfloat16, or float32 tensors.</dd>
+<dt><tt>S</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
+<dd>State tensors have type float16, bfloat16, or float32. When past_state is omitted, state outputs have the activation type T.</dd>
 </dl>
 
 ### <a name="Log1p-29"></a>**Log1p-29**</a>
@@ -35073,6 +35277,104 @@ This version of the operator has been available since version 29 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to floating-point tensors.</dd>
+</dl>
+
+### <a name="Pack-29"></a>**Pack-29**</a>
+
+  Packs UINT8 codes into UINT8 (default) or UINT32 words along `axis` (default -1).
+  Input and output have the same rank, at least 1; axis must be in [-rank, rank-1].
+  The `output_type` selects storage words of word_bits = 8 or 32 bits.
+  Specify either `bits` in [1, 8], or both `radix` and `group_size`;
+  the two spellings are mutually exclusive. With `bits`, each element of `X`
+  must be in [0, 2^bits - 1].
+
+  When using `bits`, an input axis dimension N becomes B = ceil(N * bits / word_bits).
+  Each fixed combination of indices in the other dimensions defines an
+  independent sequence, called a row below; a rank-1 tensor has one row.
+
+  Within each row, codes are packed in increasing axis index order, with
+  the least significant bit of each code first. Number the bits of each code
+  and storage word starting at 0 for the least significant bit. For code index
+  `0 <= i < N` and bit index `0 <= k < bits`, bit `k` of input code `i` is stored
+  at bit `(i * bits + k) % word_bits` of output word `floor((i * bits + k) / word_bits)`.
+  When a code spans a word boundary, its remaining higher-order bits occupy
+  the low bits of the next word. Each row begins at bit 0 of a new word.
+  Unused high bits in the final word of each row are zero. Bit positions
+  are defined numerically, independently of host endianness; tensor raw data
+  uses ONNX's little-endian serialization.
+
+  All non-axis dimensions are preserved, including zero dimensions, and the
+  same output shape rule applies when any non-axis dimension is zero.
+  An input with `N = 0` produces an output with `B = 0`.
+
+  With default UINT8 storage, `bits = 3` packs `[0, 1, 2, 3, 4, 5, 6, 7]` into
+  `[136, 198, 250]`. With `bits = 5`, the rows `[[1, 2, 3], [31, 0, 16]]`
+  are packed into `[[65, 12], [31, 64]]`.
+  With UINT32 storage, `bits = 5` packs `[1, 2, 3]` into `[3137]`.
+
+  Grouped packing uses radix R in [2, 256] and positive group size G, with
+  R^G <= 2^63 - 1. Each input value must be in [0, R - 1]. Divide each row
+  into consecutive groups of G values; zero-pad the last group if incomplete.
+  Group [x0, ..., x(G-1)] becomes the integer sum(xj * R^j): the first digit
+  is least significant. Each group index occupies W = ceil(log2(R^G)) bits.
+  Pack these indices contiguously, least-significant bit first, with no
+  word alignment between groups. The output axis dimension is
+  ceil(ceil(N/G) * W / word_bits). Unused final word bits are zero.
+  R^G determines the precision of the integer arithmetic needed to form and
+  decode group indices: indices range from 0 to R^G - 1 and require W value
+  bits. Implementations must also accommodate intermediate values, including
+  R^G if computed explicitly. Prefer (R, G) pairs that can be implemented
+  using standard 32-bit or 64-bit integer arithmetic rather than requiring
+  arbitrary-precision arithmetic. This specification's R^G bound permits
+  exact signed 64-bit arithmetic for the base-radix group calculations.
+  One commonly used choice is (R, G) = (3, 5), packing five ternary codes
+  into one byte because 3^5 = 243.
+  The original bits spelling is exactly (R, G) = (2^bits, 1).
+  With UINT8 storage and R=3, G=5, [0, 1, 2, 0, 1] becomes [102], and [2, 2, 2, 2, 2]
+  becomes [242]. Partial group [1, 2] becomes [7].
+  Results for invalid inputs are unspecified; function decompositions need
+  not diagnose out-of-range codes.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>Axis along which independent sequences are packed. Negative axes are supported.</dd>
+<dt><tt>bits</tt> : int</dt>
+<dd>Number of bits per unsigned code. Mutually exclusive with radix/group_size.</dd>
+<dt><tt>group_size</tt> : int</dt>
+<dd>Codes per group. Positive; radix^group_size must fit in positive INT64.</dd>
+<dt><tt>output_type</tt> : int (default is 2)</dt>
+<dd>Packed storage type: TensorProto UINT8 (2) or UINT32 (12). Logical codes remain UINT8.</dd>
+<dt><tt>radix</tt> : int</dt>
+<dd>Base of grouped codes, in [2, 256]. Requires group_size; excludes bits.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>UINT8 tensor of rank at least 1, with codes below the selected radix.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : TStorage</dt>
+<dd>Packed tensor preserving every dimension except axis, which becomes ceil(ceil(N / group_size) * group_width / word_bits); bits implies group_size=1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8)</dt>
+<dd>Unsigned byte tensors.</dd>
+<dt><tt>TStorage</tt> : tensor(uint8), tensor(uint32)</dt>
+<dd>Unsigned storage word tensors.</dd>
 </dl>
 
 ### <a name="ScatterElements-29"></a>**ScatterElements-29**</a>
@@ -35245,6 +35547,106 @@ This version of the operator has been available since version 29 of the default 
 <dd>Constrain input and output types to any tensor type.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain indices to int32 or int64 tensors.</dd>
+</dl>
+
+### <a name="Unpack-29"></a>**Unpack-29**</a>
+
+  Unpacks UINT8 or UINT32 storage words into UINT8 unsigned integer codes
+  independently along `axis` (default -1). Input and output have the same
+  rank, at least 1. Negative axes are supported; axis must be in [-rank, rank-1].
+  The input type determines word_bits: 8 for UINT8, 32 for UINT32.
+  Specify either `bits` in [1, 8], or both `radix` and `group_size`;
+  the two spellings are mutually exclusive.
+  The input `count` must be a nonnegative scalar INT64 tensor specifying the
+  number of output codes along axis, excluding padding. With `bits`, each
+  element of `Y` is in [0, 2^bits - 1].
+
+  When using `bits`, the input axis dimension B must equal ceil(count * bits / word_bits).
+  The output axis dimension is count; all other dimensions are preserved.
+  Each fixed combination of indices in the other dimensions defines an
+  independent sequence, called a row below; a rank-1 tensor has one row.
+
+  Within each row, input words are read in increasing axis index order,
+  starting with the least significant bit of each word. Consecutive groups of
+  `bits` bits form output codes in order, with the first bit of each group as
+  the code's least significant bit. Number the bits of each word and code
+  starting at 0 for the least significant bit. For code index
+  `0 <= i < count` and bit index `0 <= k < bits`, bit `k` of output code `i` is
+  read from bit `(i * bits + k) % word_bits` of input word `floor((i * bits + k) / word_bits)`.
+  When a code spans a word boundary, its higher-order bits are read from
+  the low bits of the next word. Each row begins at bit 0 of a new word.
+  Unused high bits in the final input word of each row are padding and are ignored.
+  Bit positions are defined numerically, independently of host endianness;
+  tensor raw data uses ONNX's little-endian serialization.
+
+  All non-axis dimensions are preserved, including zero dimensions, and the
+  same shape requirements apply when any non-axis dimension is zero.
+  With `count = 0`, both input and output must have an empty selected axis.
+
+  With UINT8 storage, `bits = 3` and `count = 8` unpack `[136, 198, 250]` into
+  `[0, 1, 2, 3, 4, 5, 6, 7]`. With `bits = 3` and `count = 2`, `[255]`
+  is unpacked into `[7, 7]`.
+
+  Grouped unpacking uses radix R in [2, 256] and positive group size G, with
+  R^G <= 2^63 - 1. Read consecutive W = ceil(log2(R^G)) bit group indices,
+  least-significant bit first, without word alignment between groups.
+  R^G determines the precision of the integer arithmetic required for both
+  packing and unpacking: valid group indices require W value bits, and any
+  explicitly computed R^G or other intermediate must also fit. Prefer
+  (R, G) pairs supported by standard 32-bit or 64-bit integer arithmetic.
+  The R^G bound above permits exact signed 64-bit base-radix calculations.
+  A commonly used choice is (R, G) = (3, 5): five ternary codes per byte.
+  Every group index must be less than R^G; encodings outside this range
+  are invalid. Expand each index into G base-R digits, least significant
+  digit first, then trim to count values per row. The input axis dimension
+  must equal ceil(ceil(count/G) * W / word_bits). Unused digits of the last group
+  and unused high bits of the last word are ignored. Each output code is
+  in [0, R - 1]. The original bits spelling is (R, G) = (2^bits, 1).
+  With UINT8 storage and R=3, G=5, [102] with count=5 becomes [0, 1, 2, 0, 1];
+  [7] with count=2 becomes [1, 2].
+  Results for invalid inputs are unspecified; function decompositions need
+  not diagnose invalid indices or incorrect input sizes.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>Axis along which independent sequences are unpacked. Negative axes are supported.</dd>
+<dt><tt>bits</tt> : int</dt>
+<dd>Number of bits per unsigned code. Mutually exclusive with radix/group_size.</dd>
+<dt><tt>group_size</tt> : int</dt>
+<dd>Codes per group. Positive; radix^group_size must fit in positive INT64.</dd>
+<dt><tt>radix</tt> : int</dt>
+<dd>Base of grouped codes, in [2, 256]. Requires group_size; excludes bits.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : TStorage</dt>
+<dd>UINT8 or UINT32 tensor of rank at least 1, with the exact packed word count along axis.</dd>
+<dt><tt>count</tt> : tensor(int64)</dt>
+<dd>Scalar INT64 tensor giving the logical output length along axis. Must be nonnegative.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>UINT8 tensor preserving every dimension except axis, which becomes count. Each element is below the selected radix.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8)</dt>
+<dd>Unsigned byte tensors.</dd>
+<dt><tt>TStorage</tt> : tensor(uint8), tensor(uint32)</dt>
+<dd>Unsigned storage word tensors.</dd>
 </dl>
 
 # ai.onnx.preview

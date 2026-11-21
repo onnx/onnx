@@ -511,7 +511,6 @@ class OpRun(abc.ABC):
                 operator schema)
             n_outputs: number of outputs (default is defined by the
                 operator schema)
-            verbose: verbosity
             **kwargs: node attributes
 
         Returns:

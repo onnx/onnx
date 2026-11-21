@@ -188,6 +188,12 @@ class TestSaveAndLoadFileExtensions:
 
 
 class TestBasicFunctions:
+    def test_load_and_save_aliases_are_public(self) -> None:
+        assert "load" in onnx.__all__
+        assert "save" in onnx.__all__
+        assert onnx.load is onnx.load_model
+        assert onnx.save is onnx.save_model
+
     def test_version_exists(self) -> None:
         model = onnx.ModelProto()
         # When we create it, graph should not have a version string.

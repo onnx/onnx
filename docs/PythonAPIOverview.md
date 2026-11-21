@@ -501,5 +501,5 @@ import onnx.inliner
 
 model = onnx.load("path/to/the/model.onnx")
 inlined = onnx.inliner.inline_local_functions(model)
-onnx.save("path/to/the/inlinedmodel.onnx")
+onnx.save(inlined, "path/to/the/inlinedmodel.onnx")
 ```

@@ -160,6 +160,12 @@ def check_model(
             read external data either, so in both modes it fails for an
             operator that needs the value of a constant input stored
             externally, such as the repeats of Tile.
+
+    Raises:
+        ValidationError: If the model is invalid. Its ``code`` attribute names the
+            rule that failed, such as ``"input-not-defined"``, or is None for
+            rules that have no code yet. Codes are stable across releases; messages
+            are not. See ``docs/CheckerErrorCodes.md``.
     """
     # If model is a path instead of ModelProto
     if isinstance(model, (str, os.PathLike)):

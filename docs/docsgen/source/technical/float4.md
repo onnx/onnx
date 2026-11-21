@@ -104,7 +104,7 @@ The behavior for downcasting to float 4 is summarized below
 | x<-6              | -6                                                |
 | +Inf              | 6                                                 |
 | -Inf              | -6                                                |
-| NaN               | 6                                                 |
+| NaN               | Unspecified                                       |
 
 ## Packing and Unpacking
 
