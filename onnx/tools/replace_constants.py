@@ -163,12 +163,15 @@ def _replace_constant_of_shape_value(
     for inode, node in enumerate(nodes):
         if node.op_type != "ConstantOfShape":
             continue
-        tensor = node.attribute[0].t
-        new_tensor = make_tensor(
-            tensor.name, tensor.data_type, [1], [value_constant_of_shape]
-        )
+        # A ConstantOfShape without attribute `value` fills with float zeros.
+        if node.attribute:
+            tensor = node.attribute[0].t
+            name, data_type = tensor.name, tensor.data_type
+        else:
+            name, data_type = "", TensorProto.FLOAT
+        new_tensor = make_tensor(name, data_type, [1], [value_constant_of_shape])
         new_node = make_node("ConstantOfShape", node.input, node.output)
-        att = make_attribute(node.attribute[0].name, value=new_tensor)
+        att = make_attribute("value", value=new_tensor)
         new_node.attribute.append(att)
         update[inode] = new_node
 
@@ -333,7 +336,7 @@ def replace_initializer_by_constant_of_shape(  # noqa: PLR0911
             "ConstantOfShape",
             [new_name],
             [init.name],
-            value=from_array(np.array([0.5], dtype=dtype)),
+            value=from_array(np.array([value_constant_of_shape], dtype=dtype)),
         )
         new_nodes.append(node)
         removed.add(init.name)

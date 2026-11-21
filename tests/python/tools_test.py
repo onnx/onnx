@@ -83,6 +83,30 @@ class TestToolsFunctions:
         y2 = oinf2.run(None, {"X": x})[0]
         assert_allclose(y1, y2)
 
+    def test_replace_initializer_value_constant_of_shape(self):
+        # The initializer and Constant paths must fill with the same value.
+        value = np.random.randn(2, 100).astype(np.float32)
+        A = numpy_helper.from_array(value, name="A")
+        X = helper.make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        node = helper.make_node("MatMul", ["X", "A"], ["Y"])
+        model_init = helper.make_model(helper.make_graph([node], "g", [X], [Y], [A]))
+        node_cst = helper.make_node("Constant", [], ["A"], value=A)
+        model_cst = helper.make_model(
+            helper.make_graph([node_cst, node], "g", [X], [Y])
+        )
+
+        x = np.ones((3, 2), dtype=np.float32)
+        for fill in (1, 0.25):
+            results = []
+            for model in (model_init, model_cst):
+                repl = replace_initializer_by_constant_of_shape(
+                    model, value_constant_of_shape=fill
+                )
+                results.append(ReferenceEvaluator(repl).run(None, {"X": x})[0])
+            assert_allclose(results[0], np.full((3, 100), 2 * fill, dtype=np.float32))
+            assert_allclose(results[0], results[1])
+
     def test_replace_constant(self):
         dtype = np.float32
         value = np.random.randn(2, 100).astype(dtype)
@@ -135,6 +159,19 @@ class TestToolsFunctions:
         oinf2 = ReferenceEvaluator(repl)
         y2 = oinf2.run(None, {"X": x})[0]
         assert_allclose(y1.shape, y2.shape)
+
+    def test_replace_constant_of_shape_without_value(self):
+        # ConstantOfShape without attribute `value` is valid (it fills with 0.0).
+        X = helper.make_tensor_value_info("X", TensorProto.INT64, [2])
+        Y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        node = helper.make_node("ConstantOfShape", ["X"], ["Y"])
+        model = helper.make_model(helper.make_graph([node], "g", [X], [Y]))
+
+        repl = replace_initializer_by_constant_of_shape(model)
+        y = ReferenceEvaluator(repl).run(None, {"X": np.array([2, 3], dtype=np.int64)})[
+            0
+        ]
+        assert_allclose(y, np.full((2, 3), 0.5, dtype=np.float32))
 
     def test_replace_constant_function(self):
         dtype = np.float32
