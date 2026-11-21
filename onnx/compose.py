@@ -359,9 +359,8 @@ def merge_models(
     ir_version = m1.ir_version
 
     opset_import_map: MutableMapping[str, int] = {}
-    opset_imports = list(m1.opset_import) + list(m2.opset_import)
 
-    for entry in opset_imports:
+    for entry in list(m1.opset_import) + list(m2.opset_import):
         if entry.domain in opset_import_map:
             found_version = opset_import_map[entry.domain]
             if entry.version != found_version:
@@ -371,6 +370,12 @@ def merge_models(
                 )
         else:
             opset_import_map[entry.domain] = entry.version
+
+    # A domain must be imported only once, even if both models import it.
+    opset_imports = [
+        helper.make_opsetid(domain, version)
+        for domain, version in opset_import_map.items()
+    ]
 
     # Prefixing names in the graph if requested, adjusting io_map accordingly
     if prefix1 or prefix2:

@@ -397,6 +397,19 @@ class TestComposeFunctions:
         m3 = compose.merge_models(m1, m2, io_map=io_map)
         checker.check_model(m3)
 
+    def test_merge_models_opset_import_no_duplicates(self) -> None:
+        """Tests that a domain imported by both models is imported once by the merged model."""
+        m1, m2 = _load_model(M1_DEF), _load_model(M2_DEF)
+        m2.opset_import.add(domain="custom", version=1)
+
+        io_map = [("B00", "B01"), ("B10", "B11"), ("B20", "B21")]
+        m3 = compose.merge_models(m1, m2, io_map=io_map)
+        assert [(opset.domain, opset.version) for opset in m3.opset_import] == [
+            ("", 10),
+            ("com.microsoft", 1),
+            ("custom", 1),
+        ]
+
     def test_add_prefix_to_inputs_outputs(self) -> None:
         """Tests prefixing inputs and outputs nodes."""
         input_graph = """
