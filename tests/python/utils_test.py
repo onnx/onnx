@@ -9,10 +9,12 @@ import shutil
 import tarfile
 import tempfile
 
+import numpy as np
 import pytest
 
 import onnx
 from onnx import TensorProto, helper
+from onnx.reference import ReferenceEvaluator
 
 
 class TestUtilityFunctions:
@@ -61,6 +63,160 @@ class TestUtilityFunctions:
         assert m1.graph.output[0] == C0
         assert m1.graph.output[1] == C1
         shutil.rmtree(tdir, ignore_errors=True)
+
+    def test_extract_model_keeps_values_used_only_in_subgraphs(self) -> None:
+        # The If branches read "t" (produced by a node in the main graph) and
+        # "w" (a main-graph initializer) from the outer scope. Neither is a
+        # direct input of the If node, but both are needed by the extracted model.
+        float_vec = [2]
+        then_branch = helper.make_graph(
+            [helper.make_node("Add", ["t", "w"], ["then_out"])],
+            "then_branch",
+            [],
+            [helper.make_tensor_value_info("then_out", TensorProto.FLOAT, float_vec)],
+        )
+        else_branch = helper.make_graph(
+            [helper.make_node("Identity", ["t"], ["else_out"])],
+            "else_branch",
+            [],
+            [helper.make_tensor_value_info("else_out", TensorProto.FLOAT, float_vec)],
+        )
+        graph = helper.make_graph(
+            [
+                helper.make_node("Neg", ["X"], ["t"]),
+                helper.make_node(
+                    "If",
+                    ["cond"],
+                    ["Y"],
+                    then_branch=then_branch,
+                    else_branch=else_branch,
+                ),
+                helper.make_node("Relu", ["Y"], ["Z"]),
+            ],
+            "test",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, float_vec),
+                helper.make_tensor_value_info("cond", TensorProto.BOOL, []),
+            ],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, float_vec)],
+            initializer=[
+                helper.make_tensor("w", TensorProto.FLOAT, float_vec, [10.0, 20.0])
+            ],
+        )
+        model = helper.make_model(graph, producer_name="test")
+        onnx.checker.check_model(model, full_check=True)
+
+        extracted = onnx.utils.Extractor(model).extract_model(["X", "cond"], ["Z"])
+
+        assert [node.op_type for node in extracted.graph.node] == ["Neg", "If", "Relu"]
+        assert [init.name for init in extracted.graph.initializer] == ["w"]
+        onnx.checker.check_model(extracted, full_check=True)
+        feeds = {"X": np.array([-1.0, -2.0], dtype=np.float32), "cond": np.array(True)}
+        expected = ReferenceEvaluator(model).run(None, feeds)
+        actual = ReferenceEvaluator(extracted).run(None, feeds)
+        np.testing.assert_allclose(actual[0], expected[0])
+
+    def test_extract_model_keeps_values_used_only_in_nested_subgraphs(self) -> None:
+        # The initializer "w" is only read by an If nested inside another If.
+        float_vec = [2]
+
+        def branch(name, nodes, output):
+            return helper.make_graph(
+                nodes,
+                name,
+                [],
+                [helper.make_tensor_value_info(output, TensorProto.FLOAT, float_vec)],
+            )
+
+        inner_if = helper.make_node(
+            "If",
+            ["cond"],
+            ["inner_out"],
+            then_branch=branch(
+                "inner_then", [helper.make_node("Add", ["X", "w"], ["a"])], "a"
+            ),
+            else_branch=branch(
+                "inner_else", [helper.make_node("Identity", ["X"], ["b"])], "b"
+            ),
+        )
+        outer_if = helper.make_node(
+            "If",
+            ["cond"],
+            ["Y"],
+            then_branch=branch("outer_then", [inner_if], "inner_out"),
+            else_branch=branch(
+                "outer_else", [helper.make_node("Neg", ["X"], ["c"])], "c"
+            ),
+        )
+        graph = helper.make_graph(
+            [outer_if],
+            "test",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, float_vec),
+                helper.make_tensor_value_info("cond", TensorProto.BOOL, []),
+            ],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, float_vec)],
+            initializer=[
+                helper.make_tensor("w", TensorProto.FLOAT, float_vec, [10.0, 20.0])
+            ],
+        )
+        model = helper.make_model(graph, producer_name="test")
+        onnx.checker.check_model(model, full_check=True)
+
+        extracted = onnx.utils.Extractor(model).extract_model(["X", "cond"], ["Y"])
+
+        assert [init.name for init in extracted.graph.initializer] == ["w"]
+        onnx.checker.check_model(extracted, full_check=True)
+
+    def test_extract_model_ignores_names_defined_inside_subgraphs(self) -> None:
+        # "x" is local to the then branch. A main-graph node after the If also
+        # outputs "x", which is allowed because it is not visible inside the
+        # branch, so it must not be pulled into the extracted model.
+        float_vec = [2]
+        then_branch = helper.make_graph(
+            [
+                helper.make_node("Neg", ["A"], ["x"]),
+                helper.make_node("Relu", ["x"], ["t"]),
+            ],
+            "then_branch",
+            [],
+            [helper.make_tensor_value_info("t", TensorProto.FLOAT, float_vec)],
+        )
+        else_branch = helper.make_graph(
+            [helper.make_node("Identity", ["A"], ["e"])],
+            "else_branch",
+            [],
+            [helper.make_tensor_value_info("e", TensorProto.FLOAT, float_vec)],
+        )
+        graph = helper.make_graph(
+            [
+                helper.make_node(
+                    "If",
+                    ["cond"],
+                    ["Y"],
+                    then_branch=then_branch,
+                    else_branch=else_branch,
+                ),
+                helper.make_node("Abs", ["B"], ["x"]),
+            ],
+            "test",
+            [
+                helper.make_tensor_value_info("A", TensorProto.FLOAT, float_vec),
+                helper.make_tensor_value_info("B", TensorProto.FLOAT, float_vec),
+                helper.make_tensor_value_info("cond", TensorProto.BOOL, []),
+            ],
+            [
+                helper.make_tensor_value_info("Y", TensorProto.FLOAT, float_vec),
+                helper.make_tensor_value_info("x", TensorProto.FLOAT, float_vec),
+            ],
+        )
+        model = helper.make_model(graph, producer_name="test")
+        onnx.checker.check_model(model, full_check=True)
+
+        extracted = onnx.utils.Extractor(model).extract_model(["A", "cond"], ["Y"])
+
+        assert [node.op_type for node in extracted.graph.node] == ["If"]
+        onnx.checker.check_model(extracted, full_check=True)
 
     def test_tar_members_filter_rejects_sibling_prefix_escape(self) -> None:
         with tempfile.TemporaryDirectory() as tdir:
