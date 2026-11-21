@@ -1745,6 +1745,17 @@ void check_model(
   size_t pos = model_path.find_last_of("\\/");
   if (pos != std::string::npos) {
     model_dir = model_path.substr(0, pos + 1);
+  } else {
+    // A bare model filename is resolved against the working directory. Keep
+    // that effective directory here as well, including its Windows drive, so
+    // drive-relative external locations such as "C:data.bin" are classified
+    // the same way in metadata-only and default checking.
+    std::error_code ec;
+    const auto current_dir = std::filesystem::current_path(ec);
+    if (ec) {
+      fail_check("Unable to determine the model directory for ", model_path, ": ", ec.message());
+    }
+    model_dir = path_to_utf8(current_dir);
   }
   ctx.set_model_dir(model_dir);
   ctx.set_skip_opset_compatibility_check(skip_opset_compatibility_check);

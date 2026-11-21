@@ -1214,6 +1214,21 @@ class TestCheckExternalDataWithoutFiles:
             data_file.write(self.value.tobytes())
         checker.check_model(model_filename, check_external_data_files=check_files)
 
+    @pytest.mark.skipif(os.name != "nt", reason="Windows path syntax")
+    @pytest.mark.parametrize("check_files", [False, True])
+    def test_windows_same_drive_location_with_bare_model_path_passes(
+        self, monkeypatch: pytest.MonkeyPatch, check_files: bool
+    ) -> None:
+        drive = os.path.splitdrive(self.temp_dir)[0]
+        model_filename = self.create_test_model({"location": f"{drive}data.bin"})
+        with open(os.path.join(self.temp_dir, "data.bin"), "wb") as data_file:
+            data_file.write(self.value.tobytes())
+        monkeypatch.chdir(self.temp_dir)
+        checker.check_model(
+            os.path.basename(model_filename),
+            check_external_data_files=check_files,
+        )
+
     def test_inline_data_with_external_location_fails(self) -> None:
         model_filename = self.create_test_model({"location": "data.bin"})
         model = onnx.load(model_filename, load_external_data=False)
