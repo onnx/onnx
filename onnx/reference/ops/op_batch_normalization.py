@@ -34,7 +34,7 @@ def _batchnorm_training_mode(
     var: np.ndarray,
     momentum: float = 0.9,
     epsilon: float = 1e-5,
-) -> np.ndarray:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     axis = tuple(np.delete(np.arange(len(x.shape)), 1))
     saved_mean = x.mean(axis=axis)
     saved_var = x.var(axis=axis)
@@ -74,18 +74,17 @@ class BatchNormalization_6(OpRun):
 
 class BatchNormalization_9(OpRun):
     def _run(self, x, scale, bias, mean, var, epsilon=None, momentum=None):
-        if momentum is None:
+        if len(self.onnx_node.output) == 1:
             res = _batchnorm_test_mode(x, scale, bias, mean, var, epsilon=epsilon)
             return (res,)
-        axis = tuple(np.delete(np.arange(len(x.shape)), 1))
-        saved_mean = x.mean(axis=axis)
-        saved_var = x.var(axis=axis)
-        output_mean = mean * momentum + saved_mean * (1 - momentum)
-        output_var = var * momentum + saved_var * (1 - momentum)
-        res = _batchnorm_test_mode(
-            x, scale, bias, output_mean, output_var, epsilon=epsilon
+        res, saved_mean, saved_var, output_mean, output_var = _batchnorm_training_mode(
+            x, scale, bias, mean, var, momentum=momentum, epsilon=epsilon
         )
-        return (res,)
+        # The fifth output is the saved batch variance, as the opset-9 schema
+        # names and documents it. Some runtimes return the inverse standard
+        # deviation 1 / sqrt(var + epsilon) there instead; that convention is
+        # not part of the specification.
+        return res, output_mean, output_var, saved_mean, saved_var
 
 
 class BatchNormalization_14(OpRun):
