@@ -252,14 +252,17 @@ class OpRun(abc.ABC):
             added_attributes.append(name)
             if att.type == onnx.AttributeProto.GRAPH:
                 self.has_subgraph = True
-                self.has_linked_attribute |= value.has_linked_attribute  # type: ignore[attr-defined]
-                setattr(
-                    self,
-                    f"_run_{att.name}",
-                    lambda context, value=value, attributes=None, bindings=None: (
-                        OpRun._evaluate_subgraph(context, value, attributes, bindings)
-                    ),
-                )
+                if not isinstance(value, RefAttrName):
+                    self.has_linked_attribute |= value.has_linked_attribute  # type: ignore[attr-defined]
+                    setattr(
+                        self,
+                        f"_run_{att.name}",
+                        lambda context, value=value, attributes=None, bindings=None: (
+                            OpRun._evaluate_subgraph(
+                                context, value, attributes, bindings
+                            )
+                        ),
+                    )
 
         if self._schema and self.onnx_node.op_type != "Constant":
             for k, v in self._schema.attributes.items():
