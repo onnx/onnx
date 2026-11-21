@@ -440,7 +440,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("GatherND", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Gemm", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Greater", OpSetID(12), OpSetID(13)));
-    registerAdapter(std::make_unique<CompatibleAdapter>("Hardmax", OpSetID(12), OpSetID(13)));
+    registerAdapter(std::make_unique<Softmax_12_13>("Hardmax"));
     registerAdapter(std::make_unique<CompatibleAdapter>("Identity", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("If", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("IsNaN", OpSetID(12), OpSetID(13)));
