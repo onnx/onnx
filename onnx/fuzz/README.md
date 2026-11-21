@@ -81,6 +81,16 @@ Fuzz targets must never crash on expected errors — only on *unexpected* ones
 fuzzer feeds random bytes. Swallowing them lets libFuzzer keep searching for
 inputs that cause real bugs.
 
+Swallowing exceptions alone would hide wrong results, so harnesses also check
+the outcome of every successful call:
+
+| Harness | Finding |
+|---|---|
+| `fuzz_checker.py` | A model accepted by `check_model(full_check=True)` has a string field that is not valid UTF-8 |
+| `fuzz_model_loader.py` | The printed text of a valid model does not parse, or parses to different text |
+| `fuzz_parser.py` | Printing a parsed model, graph, function, or node does not round-trip through the same parser entry point |
+| `fuzz_version_converter.py` | Converting a model that passes `check_model(full_check=True)` succeeds but produces a model that does not |
+
 The parser harness ignores only invalid UTF-8 and `parser.ParseError`; other
 exceptions are findings. Decimal literals must parse as float and double
 values unless they overflow, in which case they must be rejected. Escaped string
@@ -96,17 +106,25 @@ for atheris harnesses. Ruff's `N802` (lowercase function names) is suppressed fo
 
 ### `fuzz_shape_inference.py` toggle byte
 
-The shape inference harness exercises two code paths per iteration, selected by
-the last byte of the input:
+The harness first attempts to load the complete input as a serialized model.
+Valid models always reach shape inference, irrespective of the final byte. If
+loading fails, the final byte determines whether to build a structured model:
 
 | Bit | Meaning |
 |---|---|
 | `0x01` | `strict_mode=True` |
 | `0x02` | `check_type=True` |
-| `0x04` | Use structured model builder (If/Loop/Scan subgraphs) instead of raw bytes |
+| `0x04` | Allow the structured fallback if the serialized model cannot be loaded |
+| `0x08` | `data_prop=True` |
 
-This lets a single harness cover both the protobuf-parser path and the recursive
-subgraph visitor without needing separate fuzzers.
+The raw path consumes the complete input; only the structured fallback removes
+the final control byte. Existing `.onnx` seeds remain complete, unframed models.
+
+The structured builder samples either If/Loop/Scan subgraphs or a single node of a
+registered operator schema version, including historical and `ai.onnx.ml` schemas.
+Each input of that node is untyped, typed, a constant initializer, or omitted, or all
+inputs come from a custom-domain producer and so have unknown types. Required
+attributes are generated from the schema, and optional ones are sampled.
 
 ### `fuzz_compose.py` toggle byte
 
