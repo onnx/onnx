@@ -15,15 +15,14 @@ static void OptionalInference(InferenceContext& ctx) {
     fail_type_inference("Optional is expected to have an output.");
   }
 
-  const size_t numInputs = ctx.getNumInputs();
   const auto* attr_proto = ctx.getAttribute("type");
 
-  if ((numInputs == 0) && (attr_proto != nullptr)) {
+  if (!ctx.hasInput(0) && (attr_proto != nullptr)) {
     if (!attr_proto->has_tp()) {
       fail_type_inference("Attribute 'type' should be a TypeProto and it should specify a type.");
     }
     ctx.getOutputType(0)->mutable_optional_type()->mutable_elem_type()->CopyFrom(attr_proto->tp());
-  } else if (numInputs == 1) {
+  } else if (ctx.hasInput(0)) {
     const auto* input_type = ctx.getInputType(0);
     if (input_type == nullptr) {
       fail_type_inference("Input type is null. Type information is expected for the input.");

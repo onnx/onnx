@@ -12674,7 +12674,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("out", TensorProto.INT64, (0, None))]
         )
 
-    def test_optional_construct_empty_tensor(self) -> None:
+    @pytest.mark.parametrize("inputs", [[], [""]])
+    @pytest.mark.parametrize("version", all_versions_for("Optional"))
+    def test_optional_construct_empty_tensor(
+        self, inputs: list[str], version: int
+    ) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(
             elem_type=TensorProto.FLOAT, shape=[1, 2, 3]
         )
@@ -12683,9 +12687,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             name="output", type_proto=optional_type_proto
         )
         graph = self._make_graph(
-            [], [make_node("Optional", [], ["output"], type=tensor_type_proto)], []
+            [], [make_node("Optional", inputs, ["output"], type=tensor_type_proto)], []
         )
-        self._assert_inferred(graph, [optional_val_info])
+        self._assert_inferred(
+            graph,
+            [optional_val_info],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
 
     def test_optional_construct_empty_sequence(self) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(
@@ -15506,6 +15514,29 @@ class TestShapeInference(TestShapeInferenceHelper):
         inferred = onnx.shape_inference.infer_shapes(model, strict_mode=True)
         assert inferred.graph.output[0].type.tensor_type.elem_type == TensorProto.FLOAT
         assert len(inferred.graph.output[0].type.tensor_type.shape.dim) == 0
+
+    def test_function_optional_of_missing_input(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: ["": 18, "local": 1]>
+            g () => (bool has_element) {
+                wrapped = local.F()
+                has_element = OptionalHasElement(wrapped)
+            }
+            <opset_import: ["": 18], domain: "local">
+            F (missing) => (wrapped) {
+                wrapped = Optional <type = float[2]> (missing)
+            }
+            """
+        )
+
+        onnx.checker.check_model(model)
+        inferred = onnx.shape_inference.infer_shapes(model, strict_mode=True)
+        (wrapped,) = (x for x in inferred.graph.value_info if x.name == "wrapped")
+        assert (
+            wrapped.type.optional_type.elem_type.tensor_type.elem_type
+            == TensorProto.FLOAT
+        )
 
     @pytest.mark.parametrize("version", [10, *all_versions_for("ConvTranspose")])
     def test_conv_transpose_undersized_weight_raises(self, version: int) -> None:
