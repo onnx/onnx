@@ -773,6 +773,145 @@ def test_state_trajectory_streaming_and_prefix_selection(
         )
 
 
+def _replay_accepted_states(feeds, attrs, accepted):
+    # The forward pass records only write vectors; replay rebuilds each prefix
+    # from float32(past_state), as in
+    # docs/docsgen/source/technical/linear_attention_prefix_state.md.
+    k_heads = attrs["kv_num_heads"]
+    state_heads = attrs["v_num_heads"] or k_heads
+    batch, length, _ = feeds["key"].shape
+    dk = feeds["key"].shape[-1] // k_heads
+    dv = feeds["value"].shape[-1] // state_heads
+    key = feeds["key"].astype(np.float32).reshape(batch, length, k_heads, dk)
+    key = np.repeat(key, state_heads // k_heads, axis=2)
+    writes = feeds["value"].astype(np.float32).reshape(batch, length, state_heads, dv)
+    gamma = np.ones((batch, length, state_heads, 1), dtype=np.float32)
+    if "decay" in feeds:
+        width = feeds["decay"].shape[-1] // state_heads
+        decay = feeds["decay"].astype(np.float32)
+        gamma = np.exp(decay.reshape(batch, length, state_heads, width))
+    initial = feeds["past_state"].astype(np.float32)
+    if "beta" in feeds:
+        beta = feeds["beta"].astype(np.float32)[..., None]
+        state = initial.copy()
+        writes = writes.copy()
+        for t in range(length):
+            state *= gamma[:, t, :, :, None]
+            writes[:, t] = beta[:, t] * (
+                writes[:, t] - np.einsum("bhdm,bhd->bhm", state, key[:, t])
+            )
+            state += key[:, t, :, :, None] * writes[:, t, :, None, :]
+    result = np.empty_like(feeds["past_state"])
+    for b, count in enumerate(accepted):
+        state = initial[b].copy()
+        for t in range(count):
+            state = gamma[b, t, :, :, None] * state + (
+                key[b, t, :, :, None] * writes[b, t, :, None, :]
+            )
+        result[b] = state.astype(result.dtype)
+    return result
+
+
+@pytest.mark.parametrize("heads", [(4, 2, 0), (2, 2, 6)])
+@pytest.mark.parametrize("rule", ["linear", "gated", "delta", "gated_delta"])
+@pytest.mark.parametrize("length", [0, 3])
+@pytest.mark.parametrize(
+    ("dtype", "state_dtype"),
+    [
+        (np.float32, np.float32),
+        (np.float16, np.float32),
+        (ml_dtypes.bfloat16, np.float32),
+        (np.float16, np.float16),
+    ],
+)
+@pytest.mark.parametrize("per_batch", [False, True])
+def test_accepted_prefix_state_selection(
+    heads, rule, length, dtype, state_dtype, per_batch
+):
+    feeds, attrs = _trajectory_case(
+        heads, length, rule, dtype, True, per_batch, not per_batch
+    )
+    feeds["past_state"] = feeds["past_state"].astype(state_dtype)
+    model = _model(feeds, attrs, trajectory=True)
+    state_type = helper.np_dtype_to_tensor_dtype(np.dtype(state_dtype))
+    model.graph.input.append(
+        helper.make_tensor_value_info(
+            "accepted", onnx.TensorProto.INT64, [2] if per_batch else []
+        )
+    )
+    nodes = [
+        helper.make_node(
+            "Constant",
+            [],
+            ["axis"],
+            value=helper.make_tensor("axis", onnx.TensorProto.INT64, [1], [1]),
+        ),
+        helper.make_node("Unsqueeze", ["past_state", "axis"], ["initial"]),
+        helper.make_node("Concat", ["initial", "states"], ["trajectory"], axis=1),
+    ]
+    if per_batch:
+        nodes += [
+            helper.make_node("Unsqueeze", ["accepted", "axis"], ["index"]),
+            helper.make_node(
+                "GatherND", ["trajectory", "index"], ["selected"], batch_dims=1
+            ),
+        ]
+    else:
+        nodes.append(
+            helper.make_node("Gather", ["trajectory", "accepted"], ["selected"], axis=1)
+        )
+    model.graph.node.extend(nodes)
+    model.graph.output.append(
+        helper.make_tensor_value_info("selected", state_type, [2, None, 3, 5])
+    )
+    onnx.checker.check_model(model, full_check=True)
+    inferred = onnx.shape_inference.infer_shapes(model, strict_mode=True)
+    selected_type = next(o for o in inferred.graph.output if o.name == "selected")
+    assert selected_type.type.tensor_type.elem_type == state_type
+
+    evaluator = ReferenceEvaluator(model)
+    if per_batch:
+        choices = [np.array(c, dtype=np.int64) for c in ([0, length], [length, 0])]
+        if length > 1:
+            choices.append(np.array([1, length - 1], dtype=np.int64))
+    else:
+        choices = [np.array(a, dtype=np.int64) for a in range(length + 1)]
+    for accepted in choices:
+        _, present, states, selected = evaluator.run(
+            None, {**feeds, "accepted": accepted}
+        )
+        counts = np.broadcast_to(accepted, (2,))
+        assert selected.shape == feeds["past_state"].shape
+        assert selected.dtype == state_dtype
+        tolerance = max(3e-5, 2 * ml_dtypes.finfo(state_dtype).eps)
+        for b, count in enumerate(counts):
+            want = feeds["past_state"][b] if count == 0 else states[b, count - 1]
+            assert_array_equal(selected[b], want)
+            prefix = {
+                name: value[b : b + 1]
+                if name == "past_state"
+                else value[b : b + 1, :count]
+                for name, value in feeds.items()
+            }
+            prefix_present = ReferenceEvaluator(_model(prefix, attrs)).run(
+                None, prefix
+            )[1]
+            assert_allclose(
+                selected[b].astype(np.float32),
+                prefix_present[0].astype(np.float32),
+                rtol=tolerance,
+                atol=2e-6,
+            )
+        if length:
+            assert_array_equal(states[:, -1], present)
+        assert_allclose(
+            _replay_accepted_states(feeds, attrs, counts).astype(np.float32),
+            selected.astype(np.float32),
+            rtol=tolerance,
+            atol=2e-6,
+        )
+
+
 @pytest.mark.parametrize("empty_slots", [False, True])
 @pytest.mark.parametrize("rule", ["linear", "gated", "delta", "gated_delta"])
 def test_omitted_trajectory_has_no_snapshot_storage(empty_slots, rule):
