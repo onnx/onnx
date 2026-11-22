@@ -116,13 +116,24 @@ class BoxInfo:
         self.score_ = score
         self.idx_ = idx
 
-    def __lt__(self, rhs) -> bool:
-        return self.score_ < rhs.score_ or (
-            self.score_ == rhs.score_ and self.idx_ > rhs.idx_
-        )
+    def sort_key(self) -> tuple[float, int]:
+        """Sorts by score, then by descending index (lower index is picked first)."""
+        return (self.score_, -self.idx_)
 
     def __repr__(self) -> str:
         return f"BoxInfo({self.score_}, {self.idx_})"
+
+
+def _optional_scalar_input(tensor: np.ndarray | None) -> np.ndarray | None:
+    """Returns an optional scalar input as a 1-D array, or None if it is missing.
+
+    The spec defines max_output_boxes_per_class, iou_threshold and
+    score_threshold as scalars, but 1-D tensors holding one element are
+    accepted as well. An empty tensor is treated as a missing input.
+    """
+    if tensor is None or tensor.size == 0:
+        return None
+    return tensor.reshape(-1)
 
 
 class NonMaxSuppression(OpRun):
@@ -149,19 +160,18 @@ class NonMaxSuppression(OpRun):
         pc: PrepareContext,
         boxes_tensor: np.ndarray,  # float
         scores_tensor: np.ndarray,  # float
-        max_output_boxes_per_class_tensor: np.ndarray,  # int
-        iou_threshold_tensor: np.ndarray,  # float
-        score_threshold_tensor: np.ndarray,  # float
+        max_output_boxes_per_class_tensor: np.ndarray | None,  # int
+        iou_threshold_tensor: np.ndarray | None,  # float
+        score_threshold_tensor: np.ndarray | None,  # float
     ):
         pc.boxes_data_ = boxes_tensor
         pc.scores_data_ = scores_tensor
 
-        if max_output_boxes_per_class_tensor.size != 0:
-            pc.max_output_boxes_per_class_ = max_output_boxes_per_class_tensor
-        if iou_threshold_tensor.size != 0:
-            pc.iou_threshold_ = iou_threshold_tensor
-        if score_threshold_tensor is not None and score_threshold_tensor.size != 0:
-            pc.score_threshold_ = score_threshold_tensor
+        pc.max_output_boxes_per_class_ = _optional_scalar_input(
+            max_output_boxes_per_class_tensor
+        )
+        pc.iou_threshold_ = _optional_scalar_input(iou_threshold_tensor)
+        pc.score_threshold_ = _optional_scalar_input(score_threshold_tensor)
 
         pc.boxes_size_ = boxes_tensor.size
         pc.scores_size_ = scores_tensor.size
@@ -198,8 +208,8 @@ class NonMaxSuppression(OpRun):
             score_threshold,
         ) = self.get_thresholds_from_inputs(pc, 0, 0, 0)
 
-        if max_output_boxes_per_class.size == 0:
-            return (np.empty((0,), dtype=np.int64),)
+        if max_output_boxes_per_class == 0:
+            return (np.empty((0, 3), dtype=np.int64),)
 
         boxes_data = pc.boxes_data_
         scores_data = pc.scores_data_
@@ -231,7 +241,7 @@ class NonMaxSuppression(OpRun):
                             BoxInfo(class_scores[box_index], box_index)
                         )
 
-                sorted_boxes = sorted(candidate_boxes)
+                sorted_boxes = sorted(candidate_boxes, key=BoxInfo.sort_key)
 
                 selected_boxes_inside_class = []
                 # Get the next box with top score, filter by iou_threshold.

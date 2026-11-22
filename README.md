@@ -49,6 +49,8 @@ ONNX is a community project and the open governance model is described [here](ht
 
 Check out our [contribution guide](https://github.com/onnx/onnx/blob/main/CONTRIBUTING.md) to get started.
 
+Support community participation by contributing to the [ONNX Community Travel Fund](https://crowdfunding.linuxfoundation.org/initiatives/onnx-community-travel-fund).
+
 If you think some operator should be added to ONNX specification, please read
 [this document](https://github.com/onnx/onnx/blob/main/docs/AddNewOp.md).
 

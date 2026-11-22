@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
 import numpy as np
 
@@ -511,7 +511,6 @@ class OpRun(abc.ABC):
                 operator schema)
             n_outputs: number of outputs (default is defined by the
                 operator schema)
-            verbose: verbosity
             **kwargs: node attributes
 
         Returns:
@@ -551,7 +550,7 @@ class OpRun(abc.ABC):
         n_outputs: int | None = None,
         verbose: int = 0,
         **kwargs: Any,
-    ) -> Any:
+    ) -> Self:
         """Instantiates this class based on the given information.
 
         Args:
@@ -563,7 +562,7 @@ class OpRun(abc.ABC):
             **kwargs: node attributes
 
         Returns:
-            NodeProto
+            An instance of this operator class.
         """
 
         def log_function(pattern: str, *args: Any) -> None:
@@ -648,14 +647,15 @@ class OpFunction(OpRun):
         return self._run_impl(self.impl_, *inputs, **kwargs)
 
     def _run_impl(self, impl, *inputs, **kwargs):
-        if len(impl.input_names) != len(inputs):
+        if len(inputs) > len(impl.input_names):
             raise RuntimeError(
                 f"Mismatch lengths between the number of inputs {len(inputs)} "
-                f"and the expected number of inputs {len(impl.input_names)} "
+                f"and the maximum number of inputs {len(impl.input_names)} "
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
         bindings = kwargs.pop("bindings", None)
         feeds = dict(zip(impl.input_names, inputs, strict=False))
+        feeds.update(dict.fromkeys(impl.input_names[len(inputs) :]))
         attributes = self.attributes_.copy()
         attributes.update(kwargs)
         run_kwargs: dict[str, Any] = {}
@@ -699,8 +699,27 @@ class OpFunctionContextDependant(OpFunction):
         # created the body for this operator.
         types = []
         for t in inputs:
+            if t is None:
+                types.append(onnx.TypeProto())
+                continue
             dtype = onnx.helper.np_dtype_to_tensor_dtype(t.dtype)
             types.append(onnx.helper.make_tensor_type_proto(dtype, t.shape))  # type: ignore[arg-type]
-        cl = self.parent._load_impl(self.onnx_node, types)
-        inst = cl(self.onnx_node, self.run_params)
+        node = onnx.NodeProto()
+        node.CopyFrom(self.onnx_node)
+        for att in node.attribute:
+            if att.ref_attr_name:
+                value = kwargs[att.name]
+                if att.type == onnx.AttributeProto.TENSOR:
+                    value = onnx.numpy_helper.from_array(value)
+                elif att.type == onnx.AttributeProto.TENSORS:
+                    value = [onnx.numpy_helper.from_array(t) for t in value]
+                elif att.type == onnx.AttributeProto.GRAPH:
+                    value = value.proto_
+                elif att.type == onnx.AttributeProto.GRAPHS:
+                    value = [graph.proto_ for graph in value]
+                att.CopyFrom(
+                    onnx.helper.make_attribute(att.name, value, attr_type=att.type)
+                )
+        cl = self.parent._load_impl(node, types)
+        inst = cl(node, self.run_params)
         return self._run_impl(inst.impl_, *inputs, **kwargs)
