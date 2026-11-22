@@ -1222,15 +1222,25 @@ ONNX_OPERATOR_SET_SCHEMA(
                     ctx.getNumOutputs(),
                     ")");
               }
-              if (split_dim_value % num_outputs == 0) { // tensor is evenly splittable
-                int64_t chunk_size = split_dim_value / num_outputs;
-                split.resize(num_outputs, chunk_size);
-              } else { // tensor needs to be split unevenly
-                int64_t chunk_size = (split_dim_value / num_outputs) + 1;
-                int64_t last_chunk_size =
-                    checkedSubtract(split_dim_value, checkedMultiply(chunk_size, num_outputs - 1));
-                split.resize(num_outputs - 1, chunk_size);
-                split.push_back(last_chunk_size);
+              // All chunks have ceil(dim / num_outputs) elements, except the last,
+              // which holds the remainder.
+              const int64_t chunk_size = split_dim_value / num_outputs + (split_dim_value % num_outputs != 0 ? 1 : 0);
+              const int64_t last_chunk_size =
+                  checkedSubtract(split_dim_value, checkedMultiply(chunk_size, num_outputs - 1));
+              if (last_chunk_size < 0) {
+                fail_shape_inference(
+                    "Cannot split a dimension of size ",
+                    split_dim_value,
+                    " into 'num_outputs' (",
+                    num_outputs,
+                    ") chunks: the last chunk would have negative size.");
+              }
+              // Only the node's outputs need a size. Sizing the vector by
+              // 'num_outputs' would let a large attribute value force a huge allocation.
+              const auto num_node_outputs = static_cast<int64_t>(ctx.getNumOutputs());
+              split.assign(num_node_outputs, chunk_size);
+              if (num_node_outputs == num_outputs) {
+                split.back() = last_chunk_size;
               }
             } else {
               fail_shape_inference("Neither 'split' input nor 'num_outputs' attribute has been given");

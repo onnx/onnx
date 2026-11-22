@@ -257,6 +257,62 @@ def test_split_large_uneven_dimension(dimension: int, lengths: list[int]) -> Non
     ] == lengths
 
 
+@pytest.mark.parametrize(
+    ("dimension", "lengths"), [(7, [3, 3, 1]), (4, [2, 2, 0]), (6, [2, 2, 2])]
+)
+def test_split_num_outputs_chunks(dimension: int, lengths: list[int]) -> None:
+    model = _split_model(18, dimension, num_outputs=len(lengths))
+    inferred = shape_inference.infer_shapes(model, strict_mode=True)
+    assert [
+        output.type.tensor_type.shape.dim[1].dim_value
+        for output in inferred.graph.output
+    ] == lengths
+
+
+# ceil(3 / 5) = 1 leaves -1 for the last of 5 chunks; ceil(5 / 4) = 2 leaves -1.
+@pytest.mark.parametrize(("dimension", "num_outputs"), [(3, 5), (5, 4)])
+def test_split_num_outputs_negative_last_chunk(
+    dimension: int, num_outputs: int
+) -> None:
+    model = _split_model(18, dimension, num_outputs=num_outputs)
+    with pytest.raises(shape_inference.InferenceError, match="negative size"):
+        shape_inference.infer_shapes(model, strict_mode=True)
+
+
+def _split_model_with_num_outputs(
+    dimension: int, num_outputs: int, node_outputs: int
+) -> ModelProto:
+    model = _split_model(18, dimension, num_outputs=node_outputs)
+    attribute = next(
+        a for a in model.graph.node[0].attribute if a.name == "num_outputs"
+    )
+    attribute.i = num_outputs
+    return model
+
+
+@pytest.mark.parametrize(
+    ("dimension", "num_outputs", "lengths"),
+    [(2**40, 2**40, [1, 1]), (0, 2**40, [0, 0]), (10, 3, [4, 4])],
+)
+def test_split_num_outputs_larger_than_node_outputs(
+    dimension: int, num_outputs: int, lengths: list[int]
+) -> None:
+    # Only the node's outputs get a size, so a large 'num_outputs' must not
+    # allocate one entry per chunk.
+    model = _split_model_with_num_outputs(dimension, num_outputs, len(lengths))
+    inferred = shape_inference.infer_shapes(model, strict_mode=True)
+    assert [
+        output.type.tensor_type.shape.dim[1].dim_value
+        for output in inferred.graph.output
+    ] == lengths
+
+
+def test_split_num_outputs_larger_than_dimension() -> None:
+    model = _split_model_with_num_outputs(10, 2**40, 2)
+    with pytest.raises(shape_inference.InferenceError, match="negative size"):
+        shape_inference.infer_shapes(model, strict_mode=True)
+
+
 @pytest.mark.parametrize("version", [2, 11, 13, 18])
 def test_split_lengths_sum_overflow(version: int) -> None:
     # This sum wraps to 10 with unchecked signed 64-bit arithmetic.
