@@ -84,9 +84,20 @@ _MAX_EXTRA_INPUTS = 2
 _MAX_NODES = 3
 _MAX_RANK = 4
 
-_INT_EDGES = (-(2**63), 2**63 - 1, -(2**31) - 1, 2**31, 2**32)
-_FLOAT_EDGES = (math.nan, math.inf, -math.inf, -0.0, 1e-45, 3.4e38)
-_STRINGS: tuple[str | bytes, ...] = ("", "a", "\u00e9", b"\xff\xfe")
+_INT_EDGES = (
+    -(2**63),
+    2**63 - 1,
+    -(2**31) - 1,
+    -(2**31),
+    2**31 - 1,
+    2**31,
+    2**32,
+    0,
+    -1,
+    1,
+)
+_FLOAT_EDGES = (math.nan, math.inf, -math.inf, -0.0, 0.0, 1e-45, 3.4e38)
+_STRINGS: tuple[str | bytes, ...] = ("", "a", "\u00e9", b"\xff\xfe", "...", "i->", "ij,jk->ik")
 
 
 def _make_shape(fdp):
@@ -96,11 +107,14 @@ def _make_shape(fdp):
         return None
     shape: list[int | str | None] = []
     for i in range(rank):
-        kind = fdp.ConsumeIntInRange(0, 2)
+        kind = fdp.ConsumeIntInRange(0, 3)
         if kind == 0:
             shape.append(fdp.ConsumeIntInRange(0, 8))
         elif kind == 1:
             shape.append(f"d{i}")
+        elif kind == 2:
+            # Boundary dimensions: 0-length axis or negative dimension
+            shape.append(fdp.ConsumeIntInRange(-2, 0))
         else:
             shape.append(None)
     return shape
@@ -191,16 +205,33 @@ def _make_tensor(fdp, name):
 
 def _make_initializer(fdp, name):
     # Small constant INT64 vectors drive data-dependent inference (Reshape,
-    # Expand, Slice, ...); other constants may have any data type and shape.
+    # Expand, Slice, Range, SplitToSequence, ...); other constants may have any data type and shape.
     if fdp.ConsumeBool():
-        values = [
-            fdp.ConsumeIntInRange(-2, 6) for _ in range(fdp.ConsumeIntInRange(0, 4))
-        ]
+        choice = fdp.ConsumeIntInRange(0, 2)
+        if choice == 0:
+            values = [
+                fdp.ConsumeIntInRange(-2, 6) for _ in range(fdp.ConsumeIntInRange(0, 4))
+            ]
+        elif choice == 1:
+            # Stress integer overflow boundaries (Range, SplitToSequence, Slice)
+            values = [
+                _INT_EDGES[fdp.ConsumeIntInRange(0, len(_INT_EDGES) - 1)]
+                for _ in range(fdp.ConsumeIntInRange(1, 4))
+            ]
+        else:
+            values = []
         return helper.make_tensor(name, TensorProto.INT64, [len(values)], values)
     return _make_tensor(fdp, name)
 
 
 def _small_ints(fdp):
+    if fdp.ConsumeBool():
+        return [
+            _INT_EDGES[fdp.ConsumeIntInRange(0, len(_INT_EDGES) - 1)]
+            if fdp.ConsumeBool()
+            else fdp.ConsumeIntInRange(-2, 4)
+            for _ in range(fdp.ConsumeIntInRange(0, 3))
+        ]
     return [fdp.ConsumeIntInRange(-2, 4) for _ in range(fdp.ConsumeIntInRange(0, 3))]
 
 
