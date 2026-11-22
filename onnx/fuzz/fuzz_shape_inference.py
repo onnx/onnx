@@ -258,6 +258,14 @@ def _make_string(fdp, default):
     return _STRINGS[fdp.ConsumeIntInRange(0, len(_STRINGS) - 1)]
 
 
+def _make_graph_attribute(fdp, name, depth=0, max_depth=2):
+    # Generates a non-empty or empty subgraph to exercise recursive graph inference
+    # in control-flow and function operators.
+    if depth < max_depth and fdp.ConsumeBool():
+        return _build_branch(fdp, depth=depth, max_depth=max_depth)
+    return helper.make_graph([], name, [], [])
+
+
 def _make_attribute(fdp, name, attr_type, default=None):
     t = defs.OpSchema.AttrType
     if attr_type == t.INT:
@@ -275,7 +283,12 @@ def _make_attribute(fdp, name, attr_type, default=None):
     elif attr_type == t.TENSOR:
         value = _make_tensor(fdp, name)
     elif attr_type == t.GRAPH:
-        value = helper.make_graph([], name, [], [])
+        value = _make_graph_attribute(fdp, name)
+    elif attr_type == t.GRAPHS:
+        value = [
+            _make_graph_attribute(fdp, f"{name}_{i}")
+            for i in range(fdp.ConsumeIntInRange(0, 2))
+        ]
     else:
         return None
     return helper.make_attribute(name, value, attr_type=int(attr_type))
