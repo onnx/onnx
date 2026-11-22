@@ -186,17 +186,9 @@ class ModelContainer:
         if not os.path.exists(folder):
             raise FileNotFoundError(f"Folder {folder!r} does not exist.")
         external_data_context = ext_data._ExternalDataContext(folder)
-        model_file = None
-        try:
-            model_file = ext_data._open_model_file_for_write(
-                external_data_context,
-                os.path.basename(file_path),
-                truncate=False,
-                existing_only=True,
-            )
-        except onnx.checker.ValidationError as error:
-            if error.code != "external-data-file-missing":
-                raise
+        model_file = ext_data._ModelFileWriter(
+            external_data_context, os.path.basename(file_path)
+        )
         try:
             proto = self.model_proto.SerializeToString()
             copy = onnx.ModelProto()
@@ -269,20 +261,10 @@ class ModelContainer:
                     shared_data_file.close()
 
             serialized = copy.SerializeToString()
-            if model_file is None:
-                model_file = ext_data._open_model_file_for_write(
-                    external_data_context,
-                    os.path.basename(file_path),
-                    truncate=False,
-                    create_new=True,
-                )
-            model_file.seek(0)
-            model_file.truncate()
             model_file.write(serialized)
             return copy
         finally:
-            if model_file is not None:
-                model_file.close()
+            model_file.close()
 
     def save(
         self,

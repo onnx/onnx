@@ -2165,10 +2165,11 @@ int64_t ExternalDataContext::open_model_file_impl(const std::string& location, M
   } else if (mode == ModelFileOpenMode::kCreateNew) {
     disposition = FILE_CREATE;
   }
+  // Handle validation needs metadata access even for write-only model streams.
   HANDLE handle = open_windows_leaf(
       impl_->base_handle,
       components,
-      (read_only ? GENERIC_READ : GENERIC_WRITE) | SYNCHRONIZE,
+      (read_only ? GENERIC_READ : GENERIC_WRITE) | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
       disposition,
       "model",
       mode == ModelFileOpenMode::kCreateNew);

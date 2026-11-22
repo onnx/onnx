@@ -85,7 +85,7 @@ from onnx.onnx_cpp2py_export import ONNX_ML
 from onnx.external_data_helper import (
     _ExternalDataContext,
     _get_all_tensors,
-    _open_model_file_for_write,
+    _ModelFileWriter,
     load_external_data_for_model,
     uses_external_data,
     write_external_data_tensors,
@@ -412,23 +412,16 @@ def save_model(
     model_filepath = _get_file_path(f)
     external_data_context: _ExternalDataContext | None = None
     context_error: ValueError | None = None
-    model_file: IO[bytes] | None = None
+    model_file: _ModelFileWriter | None = None
     if isinstance(f, (str, os.PathLike)):
         assert model_filepath is not None
         basepath = os.path.dirname(model_filepath)
         if not os.path.isdir(basepath):
             raise FileNotFoundError(basepath)
         external_data_context = _ExternalDataContext(basepath)
-        try:
-            model_file = _open_model_file_for_write(
-                external_data_context,
-                os.path.basename(model_filepath),
-                truncate=False,
-                existing_only=True,
-            )
-        except checker.ValidationError as error:
-            if error.code != "external-data-file-missing":
-                raise
+        model_file = _ModelFileWriter(
+            external_data_context, os.path.basename(model_filepath)
+        )
     elif model_filepath is not None:
         try:
             external_data_context = _context_for_named_file(
@@ -464,21 +457,7 @@ def save_model(
             )
 
         serialized = _get_serializer(format, model_filepath).serialize_proto(proto)
-        if (
-            model_file is None
-            and external_data_context is not None
-            and isinstance(f, (str, os.PathLike))
-        ):
-            assert model_filepath is not None
-            model_file = _open_model_file_for_write(
-                external_data_context,
-                os.path.basename(model_filepath),
-                truncate=False,
-                create_new=True,
-            )
         if model_file is not None:
-            model_file.seek(0)
-            model_file.truncate()
             model_file.write(serialized)
         else:
             _save_bytes(serialized, f)

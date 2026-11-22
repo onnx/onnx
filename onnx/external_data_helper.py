@@ -389,32 +389,47 @@ def _open_external_data_file_for_write(
     return data_file
 
 
-def _open_model_file_for_write(
-    context: _ExternalDataContext,
-    location: str,
-    *,
-    truncate: bool = True,
-    existing_only: bool = False,
-    create_new: bool = False,
-) -> IO[bytes]:
-    """Open the main model file within a pinned directory."""
-    if existing_only and create_new:
-        raise ValueError("existing_only and create_new are mutually exclusive")
-    if existing_only:
-        fd = context.open_existing_model_file_for_write(location)
-    elif create_new:
-        fd = context.create_model_file(location)
-    else:
-        fd = context.open_model_file(location, False)
-    model_file = os.fdopen(fd, "wb")
-    if truncate:
+class _ModelFileWriter:
+    """Pin an existing output, deferring creation and truncation until write.
+
+    Both model save APIs use this lifecycle so serialization failures preserve
+    the destination. A missing output is created exclusively within the pinned
+    directory; a file that appears during serialization must not be overwritten.
+    Callers must close the writer even when serialization fails.
+    """
+
+    def __init__(self, context: _ExternalDataContext, location: str) -> None:
+        self._context = context
+        self._location = location
+        self._file: IO[bytes] | None = None
         try:
-            model_file.seek(0)
-            model_file.truncate()
+            fd = context.open_existing_model_file_for_write(location)
+        except onnx_checker.ValidationError as error:
+            if error.code != "external-data-file-missing":
+                raise
+        else:
+            self._file = self._open_stream(fd)
+
+    @staticmethod
+    def _open_stream(fd: int) -> IO[bytes]:
+        try:
+            return os.fdopen(fd, "wb")
         except BaseException:
-            model_file.close()
+            os.close(fd)
             raise
-    return model_file
+
+    def write(self, serialized: bytes) -> None:
+        if self._file is None:
+            self._file = self._open_stream(
+                self._context.create_model_file(self._location)
+            )
+        self._file.seek(0)
+        self._file.truncate()
+        self._file.write(serialized)
+
+    def close(self) -> None:
+        if self._file is not None:
+            self._file.close()
 
 
 def _write_external_data_to_file(

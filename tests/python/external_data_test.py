@@ -10,6 +10,7 @@ import subprocess
 import sys
 import uuid
 import warnings
+from functools import partial
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -23,6 +24,7 @@ from onnx import (
     checker,
     external_data_helper,
     helper,
+    model_container,
     parser,
     shape_inference,
 )
@@ -293,6 +295,29 @@ class TestLoadExternalData(TestLoadExternalDataBase):
 
 
 class TestModelFileAccess:
+    @pytest.mark.parametrize("use_container", [True, False])
+    def test_file_created_during_serialization_is_not_overwritten(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, use_container: bool
+    ) -> None:
+        destination = tmp_path / "model.onnx"
+        sentinel = b"file created by another writer"
+        model = helper.make_model(helper.make_graph([], "test", [], []))
+        serialize = ModelProto.SerializeToString
+
+        def create_destination(proto, *args, **kwargs):
+            destination.write_bytes(sentinel)
+            return serialize(proto, *args, **kwargs)
+
+        monkeypatch.setattr(ModelProto, "SerializeToString", create_destination)
+        if use_container:
+            save = model_container.make_large_model(model.graph).save
+        else:
+            save = partial(onnx.save_model, model)
+        with pytest.raises(checker.ValidationError):
+            save(str(destination))
+
+        assert destination.read_bytes() == sentinel
+
     @pytest.mark.skipif(os.name != "nt", reason="Windows drive-relative paths")
     @pytest.mark.parametrize(
         "path_kind", ["relative", "drive_relative", "rooted", "absolute"]
@@ -1187,7 +1212,8 @@ class TestCheckExternalDataBounds:
         with open(model_filename, "wb") as model_file:
             model_file.write(model.SerializeToString())
 
-        if payload_size == 16:
+        segment_size = 4 * self.value.dtype.itemsize
+        if payload_size == segment_size:
             checker.check_model(model_filename)
         else:
             with pytest.raises(checker.ValidationError, match="too small"):
@@ -1905,19 +1931,20 @@ class TestExternalDataInfoSecurity:
 
     def test_valid_external_data_accepted(self) -> None:
         """All valid external_data keys must be accepted and correctly parsed."""
+        offset, length = 16, 1024
         tensor = self._make_tensor_with_external_data(
             {
                 "location": "weights.bin",
-                "offset": "16",
-                "length": "1024",
+                "offset": str(offset),
+                "length": str(length),
                 "checksum": "sha256:abc123",
             }
         )
         info = ExternalDataInfo(tensor)
         assert info.location == "weights.bin"
-        assert info.offset == 16
+        assert info.offset == offset
         assert isinstance(info.offset, int)
-        assert info.length == 1024
+        assert info.length == length
         assert isinstance(info.length, int)
         assert info.checksum == "sha256:abc123"
 
