@@ -8,6 +8,178 @@ import pytest
 
 from onnx import ModelProto, TensorProto, defs, helper, shape_inference
 
+_AXIS_OPSETS = [
+    ("Concat", [4, 11, 13]),
+    ("Gather", [1, 11, 13]),
+    ("Compress", [11, 28]),
+    ("Unique", [11, 28]),
+    ("ConcatFromSequence", [11]),
+    ("Softmax", [11, 13]),
+    ("LogSoftmax", [11, 13]),
+    ("Hardmax", [11, 13]),
+    ("SplitToSequence", [11, 24]),
+    ("OneHot", [9, 11, 28]),
+    ("DFT", [17]),
+]
+
+
+def _axis_model(op: str, version: int, axis: int) -> ModelProto:
+    inputs = [helper.make_tensor_value_info("x", TensorProto.FLOAT, [2, 3])]
+    node_inputs = ["x"]
+    initializers = []
+    if op == "Concat":
+        node_inputs.append("x")
+    elif op == "Gather":
+        node_inputs.append("indices")
+        initializers.append(helper.make_tensor("indices", TensorProto.INT64, [1], [0]))
+    elif op == "Compress":
+        node_inputs.append("condition")
+        initializers.append(
+            helper.make_tensor("condition", TensorProto.BOOL, [1], [True])
+        )
+    elif op == "ConcatFromSequence":
+        inputs = [
+            helper.make_tensor_sequence_value_info("x", TensorProto.FLOAT, [2, 3])
+        ]
+    elif op == "OneHot":
+        inputs = [helper.make_tensor_value_info("x", TensorProto.INT64, [2, 3])]
+        node_inputs.extend(["depth", "values"])
+        initializers.extend(
+            [
+                helper.make_tensor("depth", TensorProto.INT64, [], [4]),
+                helper.make_tensor("values", TensorProto.FLOAT, [2], [0, 1]),
+            ]
+        )
+    elif op == "DFT":
+        inputs = [helper.make_tensor_value_info("x", TensorProto.FLOAT, [2, 3, 1])]
+    output = (
+        helper.make_tensor_sequence_value_info("y", TensorProto.FLOAT, None)
+        if op == "SplitToSequence"
+        else helper.make_empty_tensor_value_info("y")
+    )
+    return helper.make_model(
+        helper.make_graph(
+            [helper.make_node(op, node_inputs, ["y"], axis=axis)],
+            "int64_axis",
+            inputs,
+            [output],
+            initializer=initializers,
+        ),
+        opset_imports=[helper.make_opsetid("", version)],
+    )
+
+
+@pytest.mark.parametrize(
+    ("op", "version"),
+    [(op, version) for op, versions in _AXIS_OPSETS for version in versions],
+)
+@pytest.mark.parametrize(
+    "axis", [2**31 - 1, -(2**31), 2**32 + 1, -(2**32) + 1, 2**63 - 1, -(2**63)]
+)
+def test_operator_axis_does_not_wrap(op: str, version: int, axis: int) -> None:
+    with pytest.raises(shape_inference.InferenceError):
+        shape_inference.infer_shapes(_axis_model(op, version, axis), strict_mode=True)
+
+
+@pytest.mark.parametrize(
+    ("op", "version"),
+    [(op, version) for op, versions in _AXIS_OPSETS for version in versions],
+)
+def test_operator_valid_axis_preserved(op: str, version: int) -> None:
+    inferred = shape_inference.infer_shapes(
+        _axis_model(op, version, 1), strict_mode=True
+    )
+    output_type = inferred.graph.output[0].type
+    shape = (
+        output_type.sequence_type.elem_type.tensor_type.shape
+        if op == "SplitToSequence"
+        else output_type.tensor_type.shape
+    )
+    expected = {
+        "Concat": [2, 6],
+        "Gather": [2, 1],
+        "Compress": [2, None],
+        "Unique": [2, None],
+        "ConcatFromSequence": [2, None],
+        "Softmax": [2, 3],
+        "LogSoftmax": [2, 3],
+        "Hardmax": [2, 3],
+        "SplitToSequence": [2, 1],
+        "OneHot": [2, 4, 3],
+        "DFT": [2, 3, 2],
+    }
+    assert [
+        dim.dim_value if dim.HasField("dim_value") else None for dim in shape.dim
+    ] == expected[op]
+    if op != "Concat" or version >= 11:
+        negative_axis = -2 if op in {"OneHot", "DFT"} else -1
+        negative = shape_inference.infer_shapes(
+            _axis_model(op, version, negative_axis), strict_mode=True
+        )
+        assert negative.graph.output[0].type == output_type
+
+
+@pytest.mark.parametrize("new_axis", [2**32, 2**32 + 1, -(2**32), -(2**32) + 1])
+def test_concat_from_sequence_new_axis_does_not_wrap(new_axis: int) -> None:
+    model = _axis_model("ConcatFromSequence", 11, 1)
+    model.graph.node[0].attribute.append(helper.make_attribute("new_axis", new_axis))
+    with pytest.raises(shape_inference.InferenceError):
+        shape_inference.infer_shapes(model, strict_mode=True)
+
+
+@pytest.mark.parametrize("axis", [1, -2])
+def test_concat_from_sequence_valid_new_axis(axis: int) -> None:
+    model = _axis_model("ConcatFromSequence", 11, axis)
+    model.graph.node[0].attribute.append(helper.make_attribute("new_axis", 1))
+    inferred = shape_inference.infer_shapes(model, strict_mode=True)
+    shape = inferred.graph.output[0].type.tensor_type.shape
+    assert len(shape.dim) == 3
+    assert shape.dim[0].dim_value == 2
+    assert shape.dim[2].dim_value == 3
+    assert not shape.dim[1].HasField("dim_value")
+
+
+def _scan_model(version: int, attribute: str, axis: int) -> ModelProto:
+    body = helper.make_graph(
+        [helper.make_node("Identity", ["body_in"], ["body_out"])],
+        "body",
+        [helper.make_tensor_value_info("body_in", TensorProto.FLOAT, [None])],
+        [helper.make_tensor_value_info("body_out", TensorProto.FLOAT, [None])],
+    )
+    node = helper.make_node("Scan", ["x"], ["y"], body=body, num_scan_inputs=1)
+    node.attribute.append(helper.make_attribute(attribute, [axis]))
+    return helper.make_model(
+        helper.make_graph(
+            [node],
+            "scan_int64_axes",
+            [helper.make_tensor_value_info("x", TensorProto.FLOAT, [2, 3])],
+            [helper.make_empty_tensor_value_info("y")],
+        ),
+        opset_imports=[helper.make_opsetid("", version)],
+    )
+
+
+@pytest.mark.parametrize(
+    "version",
+    sorted(
+        schema.since_version
+        for schema in defs.get_all_schemas_with_history()
+        if schema.name == "Scan" and schema.domain == "" and schema.since_version >= 9
+    ),
+)
+@pytest.mark.parametrize("attribute", ["scan_input_axes", "scan_output_axes"])
+@pytest.mark.parametrize("axis", [2**32 + 1, -(2**32) + 1, 2**63 - 1, -(2**63), 1, -1])
+def test_scan_int64_axes(version: int, attribute: str, axis: int) -> None:
+    model = _scan_model(version, attribute, axis)
+    if axis in {1, -1}:
+        inferred = shape_inference.infer_shapes(model, strict_mode=True)
+        assert [
+            dim.dim_value for dim in inferred.graph.output[0].type.tensor_type.shape.dim
+        ] == [3, 2]
+    else:
+        with pytest.raises(shape_inference.InferenceError, match="axis"):
+            shape_inference.infer_shapes(model, strict_mode=True)
+
 
 def _split_model(
     version: int,
@@ -114,8 +286,8 @@ def test_flatten_axis_does_not_wrap(version: int, axis: int) -> None:
 @pytest.mark.parametrize("version", [1, 11, 13, 18, 28])
 @pytest.mark.parametrize("channels", [0, 4, 32768**2])
 def test_depth_to_space_large_blocksize(version: int, channels: int) -> None:
-    # 32768**2 fits in int32. The report's zero-channel result is caused
-    # by truncating division of an invalid channel count, not overflow.
+    # 32768**2 fits in int32. Invalid channel counts must be rejected
+    # instead of being rounded down to zero by integer division.
     model = helper.make_model(
         helper.make_graph(
             [helper.make_node("DepthToSpace", ["x"], ["y"], blocksize=32768)],

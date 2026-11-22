@@ -271,12 +271,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!axis_attr) {
             fail_shape_inference("Required attribute axis is missing");
           }
-          int axis = static_cast<int>(axis_attr->i());
+          int64_t axis = axis_attr->i();
 
-          int new_axis = 0;
+          int64_t new_axis = 0;
           auto new_axis_attr = ctx.getAttribute("new_axis");
           if (new_axis_attr) {
-            new_axis = static_cast<int>(new_axis_attr->i());
+            new_axis = new_axis_attr->i();
           }
 
           const auto& input_shape = ctx.getInputType(0)->sequence_type().elem_type().tensor_type().shape();

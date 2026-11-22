@@ -2069,7 +2069,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!axisAttr) {
             fail_shape_inference("Required attribute axis is missing");
           }
-          int axis = static_cast<int>(axisAttr->i());
+          int64_t axis = axisAttr->i();
           if (axis < -rank || axis >= rank) {
             fail_shape_inference("axis must be in [-rank, rank-1].");
           }
@@ -2119,7 +2119,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           if (all_lengths_known) {
-            output_shape->mutable_dim(axis)->set_dim_value(total_length);
+            output_shape->mutable_dim(static_cast<int>(axis))->set_dim_value(total_length);
           }
         }));
 
@@ -3145,7 +3145,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("data tensor must have rank >= 1");
           }
           int q = indices_shape.dim_size();
-          int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
+          int64_t axis = getAttribute(ctx, "axis", 0);
           if (axis < -r || axis >= r) {
             fail_shape_inference("axis must be in [-r, r-1]");
           }
@@ -3159,7 +3159,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           for (int i = 0; i < out_rank; ++i) {
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = (i < axis) ? data_shape.dim(i)
                                                                                                   : // i < axis < r
-                (i >= axis && i < axis + q) ? indices_shape.dim(i - axis)
+                (i >= axis && i < axis + q) ? indices_shape.dim(i - static_cast<int>(axis))
                                             : // i - axis < q
                 data_shape.dim(i - q + 1); // i < out_rank < q + r - 1
           }
@@ -5103,12 +5103,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!axisAttr) {
             fail_shape_inference("Required attribute axis is missing");
           }
-          int axis = static_cast<int>(axisAttr->i());
-          if (rank <= axis) {
-            fail_shape_inference("rank must be greater than axis");
-          }
-          if (axis < 0) {
-            return;
+          int64_t axis = axisAttr->i();
+          if (axis < 0 || axis >= rank) {
+            fail_shape_inference("axis must be in [0, rank-1].");
           }
 
           bool all_lengths_known = true;
@@ -5147,7 +5144,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           if (all_lengths_known) {
-            output_shape->mutable_dim(axis)->set_dim_value(total_length);
+            output_shape->mutable_dim(static_cast<int>(axis))->set_dim_value(total_length);
           }
         }));
 
@@ -5715,7 +5712,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("data tensor must have rank >= 1");
           }
           int q = indices_shape.dim_size();
-          int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
+          int64_t axis = getAttribute(ctx, "axis", 0);
           if (axis < -r || axis >= r) {
             fail_shape_inference("axis must be in [-r, r-1]");
           }
@@ -5730,7 +5727,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           for (int i = 0; i < out_rank; ++i) {
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = (i < axis) ? data_shape.dim(i)
                                                                                                   : // i < axis < r
-                (i >= axis && i < axis + q) ? indices_shape.dim(i - axis)
+                (i >= axis && i < axis + q) ? indices_shape.dim(i - static_cast<int>(axis))
                                             : // i - axis < q
                 data_shape.dim(i - q + 1); // i < out_rank < q + r - 1
           }
@@ -6751,7 +6748,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("Indices tensor must have rank >= 1");
             }
             if (axisAttr) {
-              int axis = static_cast<int>(axisAttr->i());
+              int64_t axis = axisAttr->i();
               if (axis < -r || axis >= r) {
                 fail_shape_inference("'axis' must be in [-rank(indices), rank(indices)-1]");
               }
@@ -6986,7 +6983,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!axisAttr) {
             yTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
           } else {
-            int axis = static_cast<int>(axisAttr->i());
+            int64_t axis = axisAttr->i();
             if (!xTensorProto->tensor_type().has_shape()) {
               return;
             }

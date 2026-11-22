@@ -740,7 +740,7 @@ void oneHotShapeInference(InferenceContext& ctx, int version) {
       fail_shape_inference("Indices tensor must have rank >= 1");
     }
     int out_rank = r + 1;
-    int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
+    int64_t axis = getAttribute(ctx, "axis", -1);
     if (axis < -out_rank || axis >= out_rank) {
       // 'axis' may address any slot in the output (rank out_rank = rank(indices) + 1),
       // including the newly inserted one, so the valid range is [-out_rank, out_rank-1].
