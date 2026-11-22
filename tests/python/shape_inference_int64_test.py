@@ -274,9 +274,19 @@ def test_split_num_outputs_chunks(dimension: int, lengths: list[int]) -> None:
 def test_split_num_outputs_negative_last_chunk(
     dimension: int, num_outputs: int
 ) -> None:
+    # No valid chunking exists, so the split dimension is left unknown rather
+    # than failing: the node may sit in an If branch that never runs.
     model = _split_model(18, dimension, num_outputs=num_outputs)
-    with pytest.raises(shape_inference.InferenceError, match="negative size"):
-        shape_inference.infer_shapes(model, strict_mode=True)
+    _assert_split_dimension_unknown(model)
+
+
+def _assert_split_dimension_unknown(model: ModelProto) -> None:
+    inferred = shape_inference.infer_shapes(model, strict_mode=True)
+    for output in inferred.graph.output:
+        dims = output.type.tensor_type.shape.dim
+        assert len(dims) == 2
+        assert dims[0].dim_value == 1
+        assert not dims[1].HasField("dim_value")
 
 
 def _split_model_with_num_outputs(
@@ -308,9 +318,7 @@ def test_split_num_outputs_larger_than_node_outputs(
 
 
 def test_split_num_outputs_larger_than_dimension() -> None:
-    model = _split_model_with_num_outputs(10, 2**40, 2)
-    with pytest.raises(shape_inference.InferenceError, match="negative size"):
-        shape_inference.infer_shapes(model, strict_mode=True)
+    _assert_split_dimension_unknown(_split_model_with_num_outputs(10, 2**40, 2))
 
 
 @pytest.mark.parametrize("version", [2, 11, 13, 18])

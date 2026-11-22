@@ -1228,12 +1228,15 @@ ONNX_OPERATOR_SET_SCHEMA(
               const int64_t last_chunk_size =
                   checkedSubtract(split_dim_value, checkedMultiply(chunk_size, num_outputs - 1));
               if (last_chunk_size < 0) {
-                fail_shape_inference(
-                    "Cannot split a dimension of size ",
-                    split_dim_value,
-                    " into 'num_outputs' (",
-                    num_outputs,
-                    ") chunks: the last chunk would have negative size.");
+                // No valid chunking exists, but the node may sit in an If branch
+                // that is not taken at runtime (AffineGrid's function body splits
+                // a 4- or 5-element shape both ways). Leave the split dimension
+                // unknown instead of failing or reporting a negative size.
+                for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
+                  *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() = shape;
+                  ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape()->mutable_dim(axis)->clear_dim_value();
+                }
+                return;
               }
               // Only the node's outputs need a size. Sizing the vector by
               // 'num_outputs' would let a large attribute value force a huge allocation.
