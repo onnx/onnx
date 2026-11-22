@@ -108,11 +108,13 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto dtype = ctx.getAttribute("dtype");
           auto dataType = TensorProto_DataType::TensorProto_DataType_INT32;
           if (dtype != nullptr) {
-            dataType = static_cast<TensorProto_DataType>(narrow<int32_t>(dtype->i()));
-            if (dataType != TensorProto_DataType::TensorProto_DataType_INT32 &&
-                dataType != TensorProto_DataType::TensorProto_DataType_INT64) {
+            // Compare the int64 value, so a large value cannot wrap to INT32 or INT64.
+            const int64_t dtype_value = dtype->i();
+            if (dtype_value != TensorProto_DataType::TensorProto_DataType_INT32 &&
+                dtype_value != TensorProto_DataType::TensorProto_DataType_INT64) {
               fail_type_inference("Output type must be int32 or int64");
             }
+            dataType = static_cast<TensorProto_DataType>(dtype_value);
           }
           updateOutputElemType(ctx, 0, dataType);
 
