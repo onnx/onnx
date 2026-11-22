@@ -343,7 +343,6 @@ TEST(ShapeInferenceTest, MergeShapeInfoMismatches) {
 
 // Check subgraph inferencing via GraphInferencer using a Scan
 static void doInferencingTest(bool use_scan_opset8) {
-  OpSchemaRegistry::Instance();
   GraphProto subgraph;
   OnnxParser parser(R"ONNX(
   scan_body (float[2] loop_state_in, float[2] scan_in) => (float[] loop_state_out, float[] scan_out) {
@@ -679,6 +678,43 @@ agraph (float[256, 768, 3] x) => (z1, z2)
   EXPECT_EQ(z2_value_info.type().tensor_type().shape().dim(0).dim_value(), 256);
   EXPECT_EQ(z2_value_info.type().tensor_type().shape().dim(1).dim_value(), 768);
   EXPECT_EQ(z2_value_info.type().tensor_type().shape().dim(2).dim_value(), 3);
+
+  // Shape inference should be idempotent even when an output has a dummy empty TypeProto.
+  shape_inference::InferShapes(model);
+}
+
+TEST(ShapeInferenceTest, UntypedInputIdempotence) {
+  // A graph with an untyped input should not crash on repeated InferShapes calls.
+  ModelProto model;
+  model.set_ir_version(IR_VERSION);
+  auto* opset = model.add_opset_import();
+  opset->set_domain("");
+  opset->set_version(13);
+
+  auto* graph = model.mutable_graph();
+  graph->set_name("untyped_input_graph");
+
+  // Untyped input: has name but no type set
+  auto* input = graph->add_input();
+  input->set_name("X");
+
+  // EyeLike specifies output dtype but propagates shape from input
+  auto* node = graph->add_node();
+  node->set_op_type("EyeLike");
+  node->add_input("X");
+  node->add_output("Y");
+  auto* attr = node->add_attribute();
+  attr->set_name("dtype");
+  attr->set_type(AttributeProto::INT);
+  attr->set_i(TensorProto_DataType_FLOAT);
+
+  // First pass: input has no type
+  shape_inference::InferShapes(model);
+
+  // Second pass: input has empty TypeProto (VALUE_NOT_SET), must still be treated as untyped
+  ShapeInferenceOptions options(/*check_type=*/false, /*strict_mode=*/1);
+  shape_inference::InferShapes(model, OpSchemaRegistry::Instance(), options);
+  EXPECT_FALSE(model.graph().input(0).type().has_tensor_type());
 }
 
 } // namespace Test

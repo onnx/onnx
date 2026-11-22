@@ -378,16 +378,17 @@ def test_complete_codebooks(name: str) -> None:
     assert digest == _CODEBOOK_DIGESTS[name]
 
 
+@pytest.mark.parametrize("qtype", [2, 8])
 @pytest.mark.parametrize(
     "dtype",
     [TensorProto.FLOAT, TensorProto.FLOAT16, TensorProto.BFLOAT16, TensorProto.DOUBLE],
 )
 def test_output_dtype_order_and_storage(
-    dtype: int, monkeypatch: pytest.MonkeyPatch
+    qtype: int, dtype: int, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    blocks = _corpus(2, 6)
+    blocks = _corpus(qtype, 6)
     expected = np.stack(
-        [_decode_block(block.tobytes(), 2) for block in blocks]
+        [_decode_block(block.tobytes(), qtype) for block in blocks]
     ).reshape(2, 3, 32)
     decoded_buffers: list[np.ndarray] = []
     original_empty = np.empty
@@ -399,7 +400,7 @@ def test_output_dtype_order_and_storage(
         return allocated
 
     monkeypatch.setattr(np, "empty", track_empty)
-    actual = _run(blocks.ravel(), shape=[2, 3, 32], output_dtype=dtype)
+    actual = _run(blocks.ravel(), qtype, shape=[2, 3, 32], output_dtype=dtype)
     np.testing.assert_array_equal(
         actual, expected.astype(helper.tensor_dtype_to_np_dtype(dtype))
     )
@@ -408,6 +409,66 @@ def test_output_dtype_order_and_storage(
     assert len(decoded_buffers) == 1
     assert np.shares_memory(actual, decoded_buffers[0]) == (dtype == TensorProto.FLOAT)
     assert not np.shares_memory(actual, blocks)
+
+
+@pytest.mark.parametrize("qtype", [2, 8])
+@pytest.mark.parametrize("count", [1, 4095, 4096, 4097, 8193])
+def test_q4_0_q8_0_batched_decoding(qtype: int, count: int) -> None:
+    blocks = _corpus(qtype, count)
+    expected = np.stack([_decode_block(block.tobytes(), qtype) for block in blocks])
+    actual = _run(blocks.ravel(), qtype, [count, 32])
+    np.testing.assert_array_equal(actual.view(np.uint32), expected.view(np.uint32))
+
+
+@pytest.mark.parametrize("qtype", [2, 8])
+@pytest.mark.parametrize("stride", [-2, -1, 1, 2])
+def test_q4_0_q8_0_readonly_strided_input(qtype: int, stride: int) -> None:
+    blocks = _corpus(qtype)
+    storage = np.empty(blocks.size * abs(stride), dtype=np.uint8)
+    x = storage[::stride]
+    x[:] = blocks.ravel()
+    x.flags.writeable = False
+    expected = np.stack([_decode_block(block.tobytes(), qtype) for block in blocks])
+    actual = _run(x, qtype, [len(blocks), 32])
+    np.testing.assert_array_equal(actual.view(np.uint32), expected.view(np.uint32))
+    np.testing.assert_array_equal(x, blocks.ravel())
+
+
+@pytest.mark.parametrize("qtype", [2, 8])
+def test_q4_0_q8_0_batched_ieee_scales(specification, qtype: int) -> None:
+    scale_bits = [
+        0,
+        0x8000,
+        1,
+        0x8001,
+        0x03FF,
+        0x0400,
+        0x3555,
+        0xBC00,
+        0x7BFF,
+        0xFBFF,
+        0x7C00,
+        0xFC00,
+        0x7E00,
+        0x7C01,
+    ]
+    blocks = _corpus(qtype, len(scale_bits))
+    for block, bits in zip(blocks, scale_bits, strict=True):
+        block[:2] = np.frombuffer(struct.pack("<H", bits), dtype=np.uint8)
+    expected = np.array(
+        [
+            specification["decode_block"](block.tobytes(), _GGMLType(qtype).name)
+            for block in blocks
+        ],
+        dtype=np.float32,
+    )
+    with np.errstate(invalid="ignore"):
+        actual = _run(blocks.ravel(), qtype, [len(blocks), 32])
+    np.testing.assert_array_equal(actual, expected)
+    non_nan = ~np.isnan(expected)
+    np.testing.assert_array_equal(
+        actual[non_nan].view(np.uint32), expected[non_nan].view(np.uint32)
+    )
 
 
 def test_default_output_dtype() -> None:
