@@ -15558,10 +15558,9 @@ class TestShapeInference(TestShapeInferenceHelper):
         onnx.checker.check_model(model)
         inferred = onnx.shape_inference.infer_shapes(model, strict_mode=True)
         (wrapped,) = (x for x in inferred.graph.value_info if x.name == "wrapped")
-        assert (
-            wrapped.type.optional_type.elem_type.tensor_type.elem_type
-            == TensorProto.FLOAT
-        )
+        tensor_type = wrapped.type.optional_type.elem_type.tensor_type
+        assert tensor_type.elem_type == TensorProto.FLOAT
+        assert [d.dim_value for d in tensor_type.shape.dim] == [2]
 
     @pytest.mark.parametrize("version", [10, *all_versions_for("ConvTranspose")])
     def test_conv_transpose_undersized_weight_raises(self, version: int) -> None:
