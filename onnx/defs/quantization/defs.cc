@@ -257,8 +257,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           // y_zero_point's type is known only if it is present as an input *and* its type could be inferred
           // (e.g. it is not simply an unresolved formal parameter of an enclosing function).
           auto const zp_type = ctx.hasInput(2) ? ctx.getInputType(2) : nullptr;
-          auto const output_dtype =
-              static_cast<TensorProto_DataType>(getAttribute(ctx, "output_dtype", TensorProto::UNDEFINED));
+          auto const output_dtype = static_cast<TensorProto_DataType>(
+              narrow<int32_t>(getAttribute(ctx, "output_dtype", TensorProto::UNDEFINED)));
           if (zp_type != nullptr) {
             auto const zp_elem_type = static_cast<TensorProto_DataType>(getTensorElementType(*zp_type));
             if (output_dtype != TensorProto::UNDEFINED && output_dtype != zp_elem_type) {
@@ -357,8 +357,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T3", {types::Float, types::Float16, types::BFloat16}, "The type of the output 'y'.")
         .SetDoc(kDoc_DequantizeLinear_ver24)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
-          auto const output_dtype =
-              static_cast<TensorProto_DataType>(getAttribute(ctx, "output_dtype", TensorProto::UNDEFINED));
+          auto const output_dtype = static_cast<TensorProto_DataType>(
+              narrow<int32_t>(getAttribute(ctx, "output_dtype", TensorProto::UNDEFINED)));
           if (output_dtype != TensorProto::UNDEFINED) {
             propagateElemTypeFromAttributeToOutput(ctx, "output_dtype", 0);
           } else {

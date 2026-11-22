@@ -304,7 +304,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto dtype = ctx.getAttribute("dtype");
           auto dataType = TensorProto_DataType::TensorProto_DataType_INT32;
           if (dtype != nullptr) {
-            dataType = static_cast<TensorProto_DataType>(dtype->i());
+            dataType = static_cast<TensorProto_DataType>(narrow<int32_t>(dtype->i()));
             if (dataType != TensorProto_DataType::TensorProto_DataType_INT32 &&
                 dataType != TensorProto_DataType::TensorProto_DataType_INT64) {
               fail_type_inference("Output type must be int32 or int64");
@@ -491,9 +491,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                 return false;
               }
               auto input_type = ctx.getInputType(0)->tensor_type().elem_type();
-              auto dtype = ctx.getAttribute("dtype") != nullptr
-                  ? static_cast<TensorProto_DataType>(ctx.getAttribute("dtype")->i())
-                  : input_type;
+              auto dtype = ctx.getAttribute("dtype") != nullptr ? ctx.getAttribute("dtype")->i()
+                                                                : static_cast<int64_t>(input_type);
               FunctionBuilder builder(functionProto);
               builder
                   .Add(
@@ -501,7 +500,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                       "dtype",
                       static_cast<int64_t>(input_type))
                   .Add("X_greater = Greater (X_random, input)")
-                  .Add("output = Cast (X_greater)", "to", static_cast<int64_t>(dtype));
+                  .Add("output = Cast (X_greater)", "to", dtype);
               schema.BuildFunction(functionProto);
               return true;
             }));

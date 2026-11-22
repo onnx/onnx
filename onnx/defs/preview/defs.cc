@@ -3,6 +3,7 @@
  */
 
 #include <algorithm>
+#include <limits>
 #include <optional>
 
 #include "onnx/defs/doc_strings.h"
@@ -45,7 +46,13 @@ static bool IsValidSoftmaxElementType(int32_t elem_type) {
 static int32_t GetSoftmaxElementType(int32_t input_elem_type, const AttributeProto* softmax_precision_attr) {
   // Honor explicit precision setting
   if (softmax_precision_attr != nullptr) {
-    return static_cast<int32_t>(softmax_precision_attr->i());
+    const int64_t precision = softmax_precision_attr->i();
+    // Report an out-of-range value as UNDEFINED instead of letting it wrap
+    // around to a different, valid element type. Callers reject UNDEFINED.
+    if (precision < std::numeric_limits<int32_t>::min() || precision > std::numeric_limits<int32_t>::max()) {
+      return TensorProto::UNDEFINED;
+    }
+    return static_cast<int32_t>(precision);
   }
   return input_elem_type == TensorProto::DOUBLE ? TensorProto::DOUBLE : TensorProto::FLOAT;
 }
