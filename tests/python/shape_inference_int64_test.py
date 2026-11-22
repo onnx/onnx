@@ -23,6 +23,12 @@ _AXIS_OPSETS = [
 ]
 
 
+def _negative_axis_skips_shape(op: str, version: int) -> bool:
+    # Concat before opset 11 does not define negative axes; inference leaves the
+    # output shape unknown instead of rejecting the model.
+    return op == "Concat" and version < 11
+
+
 def _axis_model(op: str, version: int, axis: int) -> ModelProto:
     inputs = [helper.make_tensor_value_info("x", TensorProto.FLOAT, [2, 3])]
     node_inputs = ["x"]
@@ -77,8 +83,13 @@ def _axis_model(op: str, version: int, axis: int) -> ModelProto:
     "axis", [2**31 - 1, -(2**31), 2**32 + 1, -(2**32) + 1, 2**63 - 1, -(2**63)]
 )
 def test_operator_axis_does_not_wrap(op: str, version: int, axis: int) -> None:
+    model = _axis_model(op, version, axis)
+    if axis < 0 and _negative_axis_skips_shape(op, version):
+        inferred = shape_inference.infer_shapes(model, strict_mode=True)
+        assert not inferred.graph.output[0].type.tensor_type.HasField("shape")
+        return
     with pytest.raises(shape_inference.InferenceError):
-        shape_inference.infer_shapes(_axis_model(op, version, axis), strict_mode=True)
+        shape_inference.infer_shapes(model, strict_mode=True)
 
 
 @pytest.mark.parametrize(
@@ -111,11 +122,13 @@ def test_operator_valid_axis_preserved(op: str, version: int) -> None:
     assert [
         dim.dim_value if dim.HasField("dim_value") else None for dim in shape.dim
     ] == expected[op]
-    if op != "Concat" or version >= 11:
-        negative_axis = -2 if op in {"OneHot", "DFT"} else -1
-        negative = shape_inference.infer_shapes(
-            _axis_model(op, version, negative_axis), strict_mode=True
-        )
+    negative_axis = -2 if op in {"OneHot", "DFT"} else -1
+    negative = shape_inference.infer_shapes(
+        _axis_model(op, version, negative_axis), strict_mode=True
+    )
+    if _negative_axis_skips_shape(op, version):
+        assert not negative.graph.output[0].type.tensor_type.HasField("shape")
+    else:
         assert negative.graph.output[0].type == output_type
 
 

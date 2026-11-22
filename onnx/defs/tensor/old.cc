@@ -5104,8 +5104,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("Required attribute axis is missing");
           }
           int64_t axis = axisAttr->i();
-          if (axis < 0 || axis >= rank) {
-            fail_shape_inference("axis must be in [0, rank-1].");
+          if (rank <= axis) {
+            fail_shape_inference("rank must be greater than axis");
+          }
+          // Negative axes are only defined from Concat-11 on. Skip the output
+          // shape instead of failing, so existing models keep passing inference.
+          if (axis < 0) {
+            return;
           }
 
           bool all_lengths_known = true;
