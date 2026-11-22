@@ -151,8 +151,9 @@ def test_input_kinds(harness, monkeypatch) -> None:
     typed, initializer = 1, 2
     harness["atheris"].FuzzedDataProvider.return_value = _ScriptedFDP(
         # schema, input count, data kind, data type kind (tensor), elem type,
-        # rank, dim kinds/values, shape kind, initializer length, values.
-        ints=[index, 2, typed, 0, 0, 2, 0, 3, 1, initializer, 2, 2, -1],
+        # rank, dim kinds/values, shape kind, initializer choice (0: small ints),
+        # initializer length, values.
+        ints=[index, 2, typed, 0, 0, 2, 0, 3, 1, initializer, 0, 2, 2, -1],
         # schema path, no custom producer, arbitrary data type, then INT64
         # initializer, allowzero.
         bools=[True, False, False, True, True],
