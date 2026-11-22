@@ -1162,10 +1162,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           const auto& shape = ctx.getInputType(0)->tensor_type().shape();
           int rank = shape.dim_size();
-          int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
-          if (axis < -rank || axis >= rank) {
-            fail_type_inference("Invalid value of attribute 'axis'. Rank=", rank, " Value=", axis);
+          const int64_t axis_attr = getAttribute(ctx, "axis", 0);
+          if (axis_attr < -rank || axis_attr >= rank) {
+            fail_type_inference("Invalid value of attribute 'axis'. Rank=", rank, " Value=", axis_attr);
           }
+          int axis = static_cast<int>(axis_attr);
           if (axis < 0) {
             axis += rank;
           }
@@ -1177,7 +1178,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             return;
           }
-          int split_dim_value = static_cast<int>(split_dim.dim_value());
+          const int64_t split_dim_value = split_dim.dim_value();
 
           std::vector<int64_t> split;
           const auto num_outputs_attr = ctx.getAttribute("num_outputs");
@@ -1197,7 +1198,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             int64_t total_dim = 0;
             for (int64_t d : split) {
-              total_dim += d;
+              total_dim = checkedAdd(total_dim, d);
             }
             if (total_dim != split_dim_value) {
               fail_shape_inference(
@@ -1222,11 +1223,12 @@ ONNX_OPERATOR_SET_SCHEMA(
                     ")");
               }
               if (split_dim_value % num_outputs == 0) { // tensor is evenly splittable
-                int chunk_size = split_dim_value / num_outputs;
+                int64_t chunk_size = split_dim_value / num_outputs;
                 split.resize(num_outputs, chunk_size);
               } else { // tensor needs to be split unevenly
-                int chunk_size = (split_dim_value / num_outputs) + 1;
-                int last_chunk_size = split_dim_value - (chunk_size * (num_outputs - 1));
+                int64_t chunk_size = (split_dim_value / num_outputs) + 1;
+                int64_t last_chunk_size =
+                    checkedSubtract(split_dim_value, checkedMultiply(chunk_size, num_outputs - 1));
                 split.resize(num_outputs - 1, chunk_size);
                 split.push_back(last_chunk_size);
               }

@@ -2152,10 +2152,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           const auto& shape = ctx.getInputType(0)->tensor_type().shape();
           int rank = shape.dim_size();
-          int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
-          if (axis < -rank || axis >= rank) {
-            fail_type_inference("Invalid value of attribute 'axis'. Rank=", rank, " Value=", axis);
+          const int64_t axis_attr = getAttribute(ctx, "axis", 0);
+          if (axis_attr < -rank || axis_attr >= rank) {
+            fail_type_inference("Invalid value of attribute 'axis'. Rank=", rank, " Value=", axis_attr);
           }
+          int axis = static_cast<int>(axis_attr);
           if (axis < 0) {
             axis += rank;
           }
@@ -2167,7 +2168,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             return;
           }
-          int split_dim_value = static_cast<int>(split_dim.dim_value());
+          const int64_t split_dim_value = split_dim.dim_value();
 
           std::vector<int64_t> split;
           if (getRepeatedAttribute(ctx, "split", split)) {
@@ -2177,7 +2178,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             int64_t total_dim = 0;
             for (int64_t d : split) {
-              total_dim += d;
+              total_dim = checkedAdd(total_dim, d);
             }
             if (total_dim != split_dim_value) {
               fail_shape_inference(
@@ -2192,7 +2193,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (split_dim_value % num_outputs != 0) {
               fail_shape_inference("The input is not evenly splittable");
             }
-            int chunk_size = split_dim_value / num_outputs;
+            int64_t chunk_size = split_dim_value / num_outputs;
             for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
               split.push_back(chunk_size);
             }
@@ -2249,10 +2250,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           const auto& shape = ctx.getInputType(0)->tensor_type().shape();
           int rank = shape.dim_size();
-          int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
-          if (axis < -rank || axis >= rank) {
-            fail_type_inference("Invalid value of attribute 'axis'. Rank=", rank, " Value=", axis);
+          const int64_t axis_attr = getAttribute(ctx, "axis", 0);
+          if (axis_attr < -rank || axis_attr >= rank) {
+            fail_type_inference("Invalid value of attribute 'axis'. Rank=", rank, " Value=", axis_attr);
           }
+          int axis = static_cast<int>(axis_attr);
           if (axis < 0) {
             axis += rank;
           }
@@ -2264,7 +2266,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             return;
           }
-          int split_dim_value = static_cast<int>(split_dim.dim_value());
+          const int64_t split_dim_value = split_dim.dim_value();
 
           std::vector<int64_t> split;
           size_t num_inputs = ctx.getNumInputs();
@@ -2281,7 +2283,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             int64_t total_dim = 0;
             for (int64_t d : split) {
-              total_dim += d;
+              total_dim = checkedAdd(total_dim, d);
             }
             if (total_dim != split_dim_value) {
               fail_shape_inference(
@@ -2296,7 +2298,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (split_dim_value % num_outputs != 0) {
               fail_shape_inference("The input is not evenly splittable");
             }
-            int chunk_size = split_dim_value / num_outputs;
+            int64_t chunk_size = split_dim_value / num_outputs;
             split.reserve(ctx.getNumOutputs());
             for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
               split.push_back(chunk_size);
@@ -4096,6 +4098,19 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
+              // The channels are redistributed into blocksize x blocksize blocks, so
+              // the channel dimension must divide evenly. Without this check the
+              // integer division below silently reports a truncated shape for an input
+              // the runtime rejects.
+              const auto& channel_dim = input_shape.dim(1);
+              if (channel_dim.has_dim_value() && channel_dim.dim_value() % block_area != 0) {
+                fail_shape_inference(
+                    "Input channel dimension (",
+                    channel_dim.dim_value(),
+                    ") must be a multiple of 'blocksize' * 'blocksize' (",
+                    block_area,
+                    ").");
+              }
               updateOutputShape(
                   ctx,
                   0,
@@ -4150,6 +4165,19 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
+              // The channels are redistributed into blocksize x blocksize blocks, so
+              // the channel dimension must divide evenly. Without this check the
+              // integer division below silently reports a truncated shape for an input
+              // the runtime rejects.
+              const auto& channel_dim = input_shape.dim(1);
+              if (channel_dim.has_dim_value() && channel_dim.dim_value() % block_area != 0) {
+                fail_shape_inference(
+                    "Input channel dimension (",
+                    channel_dim.dim_value(),
+                    ") must be a multiple of 'blocksize' * 'blocksize' (",
+                    block_area,
+                    ").");
+              }
               updateOutputShape(
                   ctx,
                   0,
@@ -5628,6 +5656,19 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
+              // The channels are redistributed into blocksize x blocksize blocks, so
+              // the channel dimension must divide evenly. Without this check the
+              // integer division below silently reports a truncated shape for an input
+              // the runtime rejects.
+              const auto& channel_dim = input_shape.dim(1);
+              if (channel_dim.has_dim_value() && channel_dim.dim_value() % block_area != 0) {
+                fail_shape_inference(
+                    "Input channel dimension (",
+                    channel_dim.dim_value(),
+                    ") must be a multiple of 'blocksize' * 'blocksize' (",
+                    block_area,
+                    ").");
+              }
               updateOutputShape(
                   ctx,
                   0,
@@ -5887,10 +5928,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           const auto& shape = ctx.getInputType(0)->tensor_type().shape();
           int rank = shape.dim_size();
-          int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
-          if (axis < -rank || axis >= rank) {
-            fail_type_inference("Invalid value of attribute 'axis'. Rank=", rank, " Value=", axis);
+          const int64_t axis_attr = getAttribute(ctx, "axis", 0);
+          if (axis_attr < -rank || axis_attr >= rank) {
+            fail_type_inference("Invalid value of attribute 'axis'. Rank=", rank, " Value=", axis_attr);
           }
+          int axis = static_cast<int>(axis_attr);
           // Previously Split-2 does not mention how to deal with negative axis
           // However, there is an existing test onnx/backend/test/data/pytorch-converted/test_GLU
           // using Split-2 with negative axis and it is hard to be regenerated.
@@ -5906,7 +5948,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             return;
           }
-          int split_dim_value = static_cast<int>(split_dim.dim_value());
+          const int64_t split_dim_value = split_dim.dim_value();
 
           std::vector<int64_t> split;
           if (getRepeatedAttribute(ctx, "split", split)) {
@@ -5916,7 +5958,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             int64_t total_dim = 0;
             for (int64_t d : split) {
-              total_dim += d;
+              total_dim = checkedAdd(total_dim, d);
             }
             if (total_dim != split_dim_value) {
               fail_shape_inference(
@@ -5931,7 +5973,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (split_dim_value % num_outputs != 0) {
               fail_shape_inference("The input is not evenly splittable");
             }
-            int chunk_size = split_dim_value / num_outputs;
+            int64_t chunk_size = split_dim_value / num_outputs;
             for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
               split.push_back(chunk_size);
             }
