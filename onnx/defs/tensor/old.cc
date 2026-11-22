@@ -998,7 +998,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          int allowzero = static_cast<int>(getAttribute(ctx, "allowzero", 0));
+          int64_t allowzero = getAttribute(ctx, "allowzero", 0);
 
           // Iterate through targetShape, adding dimensions in the outputShape
           // TensorProto. If the targetShape dimension is -1, we do not set the
@@ -1146,7 +1146,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          int allowzero = static_cast<int>(getAttribute(ctx, "allowzero", 0));
+          int64_t allowzero = getAttribute(ctx, "allowzero", 0);
 
           // Iterate through targetShape, adding dimensions in the outputShape
           // TensorProto. If the targetShape dimension is -1, we do not set the
@@ -1294,7 +1294,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          int allowzero = static_cast<int>(getAttribute(ctx, "allowzero", 0));
+          int64_t allowzero = getAttribute(ctx, "allowzero", 0);
 
           // Iterate through targetShape, adding dimensions in the outputShape
           // TensorProto. If the targetShape dimension is -1, we do not set the
@@ -1442,7 +1442,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          int allowzero = static_cast<int>(getAttribute(ctx, "allowzero", 0));
+          int64_t allowzero = getAttribute(ctx, "allowzero", 0);
 
           // Iterate through targetShape, adding dimensions in the outputShape
           // TensorProto. If the targetShape dimension is -1, we do not set the
@@ -6273,7 +6273,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          int allowzero = static_cast<int>(getAttribute(ctx, "allowzero", 0));
+          int64_t allowzero = getAttribute(ctx, "allowzero", 0);
 
           // Iterate through targetShape, adding dimensions in the outputShape
           // TensorProto. If the targetShape dimension is -1, we do not set the

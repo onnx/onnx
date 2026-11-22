@@ -1020,14 +1020,16 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     @pytest.mark.parametrize("version", all_versions_for("Reshape"))
-    def test_reshape_static_shape_allowzero(self, version) -> None:
+    # 2**32 is non-zero as int64 but would read as 0 if narrowed to int32.
+    @pytest.mark.parametrize("allowzero", [1, 2**32])
+    def test_reshape_static_shape_allowzero(self, version, allowzero) -> None:
         self.skipIf(version < 14, "allowzero is added from Version 14")
         graph = self._make_graph(
             [
                 ("x", TensorProto.UINT8, (1, 0, 0)),
                 ("shape", TensorProto.INT64, (3,)),
             ],
-            [make_node("Reshape", ["x", "shape"], ["y"], allowzero=1)],
+            [make_node("Reshape", ["x", "shape"], ["y"], allowzero=allowzero)],
             [],
             initializer=[make_tensor("shape", TensorProto.INT64, (3,), (0, 1, 1))],
         )
@@ -5950,14 +5952,16 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     @pytest.mark.parametrize("version", all_versions_for("Gemm"))
-    def test_gemm_transA(self, version: int) -> None:
+    # 2**32 is non-zero as int64 but would read as 0 if narrowed to int32.
+    @pytest.mark.parametrize("trans", [1, 2**32])
+    def test_gemm_transA(self, version: int, trans: int) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (5, 7)),
                 ("y", TensorProto.FLOAT, (5, 11)),
                 ("z", TensorProto.FLOAT, None),
             ],
-            [make_node("Gemm", ["x", "y", "z"], ["out"], transA=1)],
+            [make_node("Gemm", ["x", "y", "z"], ["out"], transA=trans)],
             [],
         )
         self._assert_inferred(
@@ -5967,14 +5971,15 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     @pytest.mark.parametrize("version", all_versions_for("Gemm"))
-    def test_gemm_transB(self, version: int) -> None:
+    @pytest.mark.parametrize("trans", [1, 2**32])
+    def test_gemm_transB(self, version: int, trans: int) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (7, 5)),
                 ("y", TensorProto.FLOAT, (11, 5)),
                 ("z", TensorProto.FLOAT, None),
             ],
-            [make_node("Gemm", ["x", "y", "z"], ["out"], transB=1)],
+            [make_node("Gemm", ["x", "y", "z"], ["out"], transB=trans)],
             [],
         )
         self._assert_inferred(
@@ -5998,6 +6003,29 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [make_tensor_value_info("out", TensorProto.FLOAT, (7, 11))],
             opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    # Gemm-6 uses C's shape as the output shape only when A or B has no shape
+    # and C is not broadcast.
+    @pytest.mark.parametrize(
+        ("broadcast", "expected"), [(0, (7, 11)), (1, None), (2**32, None)]
+    )
+    def test_gemm_6_broadcast_output_from_c(
+        self, broadcast: int, expected: tuple[int, ...] | None
+    ) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, None),
+                ("y", TensorProto.FLOAT, (5, 11)),
+                ("z", TensorProto.FLOAT, (7, 11)),
+            ],
+            [make_node("Gemm", ["x", "y", "z"], ["out"], broadcast=broadcast)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("out", TensorProto.FLOAT, expected)],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, 6)],
         )
 
     # Gemm makes the bias input optional starting with version 11.
@@ -12489,7 +12517,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.INT32, (3, 1, 5))]
         )
 
-    def test_batch_norm_train(self) -> None:
+    @pytest.mark.parametrize(
+        "version",
+        [v for v in all_versions_for("BatchNormalization") if v >= 14],
+    )
+    # 2**32 is non-zero as int64 but would read as 0 if narrowed to int32.
+    @pytest.mark.parametrize("training_mode", [1, 2**32])
+    def test_batch_norm_train(self, version: int, training_mode: int) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (3, 4, 5, 6, 7)),
@@ -12503,7 +12537,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "BatchNormalization",
                     ["x", "scale", "b", "input_mean", "input_var"],
                     ["out", "output_mean", "output_var"],
-                    training_mode=1,
+                    training_mode=training_mode,
                 )
             ],
             [],
@@ -12515,6 +12549,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("output_mean", TensorProto.FLOAT, (4,)),
                 make_tensor_value_info("output_var", TensorProto.FLOAT, (4,)),
             ],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_batch_norm_train_dim_param(self) -> None:
