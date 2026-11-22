@@ -1224,7 +1224,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
               // All chunks have ceil(dim / num_outputs) elements, except the last,
               // which holds the remainder.
-              const int64_t chunk_size = split_dim_value / num_outputs + (split_dim_value % num_outputs != 0 ? 1 : 0);
+              const int64_t chunk_size = (split_dim_value / num_outputs) + (split_dim_value % num_outputs != 0 ? 1 : 0);
               const int64_t last_chunk_size =
                   checkedSubtract(split_dim_value, checkedMultiply(chunk_size, num_outputs - 1));
               if (last_chunk_size < 0) {
