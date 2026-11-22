@@ -12709,6 +12709,17 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    @pytest.mark.parametrize("inputs", [[], [""]])
+    def test_optional_construct_without_input_or_type_raises(
+        self, inputs: list[str]
+    ) -> None:
+        graph = self._make_graph([], [make_node("Optional", inputs, ["output"])], [])
+        with pytest.raises(
+            onnx.shape_inference.InferenceError,
+            match="either an input or the type attribute",
+        ):
+            self._inferred(graph)
+
     def test_optional_construct_empty_sequence(self) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(
             elem_type=TensorProto.INT32, shape=[1, 2, 3]
