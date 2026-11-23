@@ -9,7 +9,11 @@
 #include <cmath>
 #include <cstdint>
 #include <iomanip>
+#include <limits>
+#include <locale>
+#include <sstream>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <vector>
 
@@ -27,6 +31,18 @@ std::vector<Widened> ParseRawIntData(const TensorProto& tensor) {
   return std::vector<Widened>(elements.begin(), elements.end());
 }
 
+// Apple's libc++ only provides floating-point to_chars from macOS 13.3 and
+// iOS 16.3.
+#if defined(__APPLE__) &&                                        \
+    ((defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__) &&  \
+      __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 130300) || \
+     (defined(__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__) && \
+      __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__ < 160300))
+constexpr bool kHasFloatingPointToChars = false;
+#else
+constexpr bool kHasFloatingPointToChars = true;
+#endif
+
 // Format numbers with std::to_chars: locale-independent and, for floating
 // point, the shortest form that round-trips through the parser.
 template <typename T>
@@ -39,23 +55,31 @@ void PrintNumber(std::ostream& os, T value) {
       return;
     }
   }
-  std::array<char, 32> buf{};
-  const auto res = std::to_chars(buf.data(), buf.data() + buf.size(), value);
-  os.write(buf.data(), res.ptr - buf.data());
+  if constexpr (std::is_floating_point_v<T> && !kHasFloatingPointToChars) {
+    // Fall back to a classic-locale stream with enough digits to round-trip.
+    std::ostringstream stream;
+    stream.imbue(std::locale::classic());
+    stream << std::setprecision(std::numeric_limits<T>::max_digits10) << value;
+    os << stream.str();
+  } else {
+    std::array<char, 32> buf{};
+    const auto res = std::to_chars(buf.data(), buf.data() + buf.size(), value);
+    os.write(buf.data(), res.ptr - buf.data());
+  }
 }
 
-bool IsValidIdentifier(const std::string& str) {
+bool IsValidIdentifier(std::string_view str) {
   // Check if str is a valid identifier
-  const char* next_ = str.c_str();
-  const char* end_ = next_ + str.size();
-  if (next_ == end_)
+  if (str.empty())
     return false; // empty string is not a valid identifier
-  if (!IsAlpha(*next_) && (*next_ != '_'))
+  if (!IsAlpha(str.front()) && str.front() != '_')
     return false; // first character must be a letter or '_'
-  ++next_;
-  while ((next_ < end_) && (IsAlnum(*next_) || (*next_ == '_')))
-    ++next_;
-  return next_ == end_;
+  str.remove_prefix(1);
+  for (char ch : str) {
+    if (!IsAlnum(ch) && ch != '_')
+      return false;
+  }
+  return true;
 }
 
 class ProtoPrinter {
@@ -115,7 +139,7 @@ class ProtoPrinter {
   }
 
  private:
-  void printId(const std::string& str) {
+  void printId(std::string_view str) {
     if (IsValidIdentifier(str))
       output_ << str;
     else
@@ -131,14 +155,13 @@ class ProtoPrinter {
     }
   }
 
-  void printQuoted(const std::string& str) {
-    output_ << "\"";
-    for (char ch : str) {
-      if ((ch == '\\') || (ch == '"'))
-        output_ << '\\';
-      output_ << ch;
+  void printQuoted(std::string_view str) {
+    output_ << '"';
+    for (auto pos = str.find_first_of("\\\""); pos != std::string_view::npos; pos = str.find_first_of("\\\"")) {
+      output_ << str.substr(0, pos) << '\\' << str[pos];
+      str.remove_prefix(pos + 1);
     }
-    output_ << "\"";
+    output_ << str << '"';
   }
 
   template <typename T>

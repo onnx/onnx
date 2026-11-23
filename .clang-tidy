@@ -64,6 +64,7 @@ Checks: >-
   -portability-avoid-pragma-once,
   -portability-template-virtual-member-function,
   readability-*,
+  -readability-trailing-comma,
   -readability-braces-around-statements,
   -readability-container-contains,
   -readability-convert-member-functions-to-static,

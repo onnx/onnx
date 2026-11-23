@@ -211,14 +211,23 @@ pytest
 
 Some functionalities are tested with googletest. Those tests are listed in `tests/cpp`, and include tests for shape inference, data propagation, parser, and others.
 
-To run them, first build ONNX with `-DONNX_BUILD_TESTS=1` or `ONNX_BUILD_TESTS=1 pip install -e . -v`.
+To run them, first build ONNX with `ONNX_BUILD_TESTS=1 pip install -e . -v`.
+On Windows PowerShell, set `$env:ONNX_BUILD_TESTS = "1"` before running
+`pip install -e . -v`.
 
-##### Linux and MacOS
+##### Linux
 
 The cpp tests require dynamically linking to built libraries.
 
 ```sh
-export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="./.setuptools-cmake-build${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+.setuptools-cmake-build/onnx_gtests
+```
+
+##### macOS
+
+```sh
+export DYLD_LIBRARY_PATH="./.setuptools-cmake-build${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
 .setuptools-cmake-build/onnx_gtests
 ```
 
