@@ -97,7 +97,15 @@ _INT_EDGES = (
     1,
 )
 _FLOAT_EDGES = (math.nan, math.inf, -math.inf, -0.0, 0.0, 1e-45, 3.4e38)
-_STRINGS: tuple[str | bytes, ...] = ("", "a", "\u00e9", b"\xff\xfe", "...", "i->", "ij,jk->ik")
+_STRINGS: tuple[str | bytes, ...] = (
+    "",
+    "a",
+    "\u00e9",
+    b"\xff\xfe",
+    "...",
+    "i->",
+    "ij,jk->ik",
+)
 
 
 def _make_shape(fdp):
