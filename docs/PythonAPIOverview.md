@@ -207,6 +207,24 @@ onnx.checker.check_model("path/to/the/model.onnx")
 # onnx.checker.check_model(loaded_onnx_model) will fail if given >2GB model
 ```
 
+### Listing the Operators a Model Depends On
+
+By default, the checker accepts operators of any domain the model imports, even when no schema for them is known. Such a model is valid, but it runs only on runtimes that implement those operators. `onnx.checker.summarize_operators` lists the operators a model uses, including those in subgraphs and in the model-local functions it calls, and says how each is defined:
+
+```python
+import onnx
+
+summary = onnx.checker.summarize_operators(onnx.load("path/to/the/model.onnx"))
+if not summary.uses_only_standard_operators:
+    for op in summary.operators:
+        if op.kind is not onnx.checker.OperatorKind.STANDARD:
+            print(f"{op.domain}::{op.op_type} ({op.kind.value}): {op.count} nodes")
+```
+
+`OperatorKind` distinguishes standard operators (`ai.onnx`, `ai.onnx.ml`), preview operators, model-local functions, operators of other domains whose schema is registered in the current process (for example with `onnx.defs.register_schema`), and unknown operators. A model-local function counts as standard if its body does.
+
+Classification reflects the schema registry of the current process. An operator whose schema is unavailable in the current build is reported as unknown; for example, this applies to `ai.onnx.ml` operators when ONNX is built with `ONNX_ML=0`.
+
 ## Running Shape Inference on an ONNX Model
 
 ```{eval-rst}
