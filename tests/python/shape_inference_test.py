@@ -6273,10 +6273,20 @@ class TestShapeInference(TestShapeInferenceHelper):
         with pytest.raises(onnx.shape_inference.InferenceError):
             self._inferred(graph)
 
-    def test_split_negative_axis(self) -> None:
+    # Opset 10 exercises Split-2 with the helper's two-input Reshape.
+    @pytest.mark.parametrize("version", [10, *all_versions_for("Split")])
+    def test_split_negative_axis(self, version: int) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 4))],
-            [make_node("Split", ["x"], ["y", "z"], axis=-1, num_outputs=2)],
+            [
+                make_node(
+                    "Split",
+                    ["x"],
+                    ["y", "z"],
+                    axis=-1,
+                    **({"num_outputs": 2} if version >= 18 else {}),
+                )
+            ],
             [],
         )
         self._assert_inferred(
@@ -6285,14 +6295,26 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("y", TensorProto.FLOAT, (2, 2)),
                 make_tensor_value_info("z", TensorProto.FLOAT, (2, 2)),
             ],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_split_with_split_attribute(self) -> None:
+    # Opset 10 exercises Split-2 with the helper's two-input Reshape.
+    @pytest.mark.parametrize("version", [10, *all_versions_for("Split")])
+    def test_split_with_explicit_split(self, version: int) -> None:
         graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (2, 4)), ("split", TensorProto.INT64, (2,))],
-            [make_node("Split", ["x", "split"], ["y", "z"], axis=1)],
+            [("x", TensorProto.FLOAT, (2, 4))]
+            + ([("split", TensorProto.INT64, (2,))] if version >= 13 else []),
+            [
+                make_node("Split", ["x", "split"], ["y", "z"], axis=1)
+                if version >= 13
+                else make_node("Split", ["x"], ["y", "z"], axis=1, split=[3, 1])
+            ],
             [],
-            initializer=[make_tensor("split", TensorProto.INT64, (2,), (3, 1))],
+            initializer=(
+                [make_tensor("split", TensorProto.INT64, (2,), (3, 1))]
+                if version >= 13
+                else []
+            ),
         )
         self._assert_inferred(
             graph,
@@ -6300,17 +6322,26 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("y", TensorProto.FLOAT, (2, 3)),
                 make_tensor_value_info("z", TensorProto.FLOAT, (2, 1)),
             ],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_split_with_split_attribute_unknown_split_dim(self) -> None:
+    # Opset 10 exercises Split-2 with the helper's two-input Reshape.
+    @pytest.mark.parametrize("version", [10, *all_versions_for("Split")])
+    def test_split_with_explicit_split_unknown_split_dim(self, version: int) -> None:
         graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, "a", "b"))]
+            + ([("split", TensorProto.INT64, (2,))] if version >= 13 else []),
             [
-                ("x", TensorProto.FLOAT, (2, "a", "b")),
-                ("split", TensorProto.INT64, (2,)),
+                make_node("Split", ["x", "split"], ["y", "z"], axis=1)
+                if version >= 13
+                else make_node("Split", ["x"], ["y", "z"], axis=1, split=[3, 1])
             ],
-            [make_node("Split", ["x", "split"], ["y", "z"], axis=1)],
             [],
-            initializer=[make_tensor("split", TensorProto.INT64, (2,), (3, 1))],
+            initializer=(
+                [make_tensor("split", TensorProto.INT64, (2,), (3, 1))]
+                if version >= 13
+                else []
+            ),
         )
         self._assert_inferred(
             graph,
@@ -6318,12 +6349,23 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("y", TensorProto.FLOAT, (2, None, "b")),
                 make_tensor_value_info("z", TensorProto.FLOAT, (2, None, "b")),
             ],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_split_from_GLU(self) -> None:
+    # Opset 10 exercises Split-2 with the helper's two-input Reshape.
+    @pytest.mark.parametrize("version", [10, *all_versions_for("Split")])
+    def test_split_from_GLU(self, version: int) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (5, 6, 7))],
-            [make_node("Split", ["x"], ["y", "z"], axis=1, num_outputs=2)],
+            [
+                make_node(
+                    "Split",
+                    ["x"],
+                    ["y", "z"],
+                    axis=1,
+                    **({"num_outputs": 2} if version >= 18 else {}),
+                )
+            ],
             [],
         )
         self._assert_inferred(
@@ -6332,9 +6374,13 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("y", TensorProto.FLOAT, (5, 3, 7)),
                 make_tensor_value_info("z", TensorProto.FLOAT, (5, 3, 7)),
             ],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_split_uneven_split_2d(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [version for version in all_versions_for("Split") if version >= 18]
+    )
+    def test_split_uneven_split_2d(self, version: int) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (8, 2))],
             [make_node("Split", ["x"], ["y", "z", "a"], axis=0, num_outputs=3)],
@@ -6347,9 +6393,13 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("z", TensorProto.FLOAT, (3, 2)),
                 make_tensor_value_info("a", TensorProto.FLOAT, (2, 2)),
             ],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_split_uneven_split_3d(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [version for version in all_versions_for("Split") if version >= 18]
+    )
+    def test_split_uneven_split_3d(self, version: int) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 7, 3))],
             [make_node("Split", ["x"], ["y", "z", "a"], axis=1, num_outputs=3)],
@@ -6362,6 +6412,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("z", TensorProto.FLOAT, (2, 3, 3)),
                 make_tensor_value_info("a", TensorProto.FLOAT, (2, 1, 3)),
             ],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_split_num_outputs_lt_number_of_named_outputs(self) -> None:
