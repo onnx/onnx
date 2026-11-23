@@ -28754,7 +28754,7 @@ expect(
 
 
 ### ScatterND
-There are 10 test cases, listed as following:
+There are 11 test cases, listed as following:
 <details>
 <summary>batched_token_add_int32_indices</summary>
 
@@ -28815,6 +28815,30 @@ expect(
     inputs=[data, indices, updates],
     outputs=[output],
     name="test_scatternd",
+)
+```
+
+</details>
+<details>
+<summary>scatternd_3d_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+)
+data = np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], dtype=np.float32)
+indices = np.array([[[0, 0]], [[1, 1]]], dtype=np.int64)
+updates = np.array([[[100, 101]], [[200, 201]]], dtype=np.float32)
+output = np.array(
+    [[[100, 101], [2, 3]], [[4, 5], [200, 201]]], dtype=np.float32
+)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_3d_indices",
 )
 ```
 
