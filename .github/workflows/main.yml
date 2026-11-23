@@ -146,10 +146,34 @@ jobs:
         with:
           msbuild-architecture: x64
 
-      - name: Install external protobuf - Windows
+      # Cache only the installed external Protobuf artifacts (not the build/source tree).
+      # Version bumps in sbom.cdx.json invalidate the cache key automatically.
+      - name: Restore cached external protobuf - Windows
         if: matrix.protobuf_type == 'External' && startsWith(matrix.os, 'windows')
+        id: protobuf-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/protobuf-build/install
+          key: external-protobuf-${{ matrix.os }}-${{ runner.arch }}-${{ hashFiles('sbom.cdx.json', 'CMakeLists.txt', 'cmake/Utils.cmake', 'workflow_scripts/protobuf/build.py') }}
+
+      - name: Install external protobuf - Windows
+        if: matrix.protobuf_type == 'External' && startsWith(matrix.os, 'windows') && steps.protobuf-cache.outputs.cache-hit != 'true'
         run: |
           python workflow_scripts/protobuf/build.py --build-dir "${{ runner.temp }}/protobuf-build"
+        shell: pwsh
+
+      # On a cache miss, build.py exports these paths; on a cache hit, export them here.
+      - name: Export external protobuf paths - Windows
+        if: matrix.protobuf_type == 'External' && startsWith(matrix.os, 'windows') && steps.protobuf-cache.outputs.cache-hit == 'true'
+        run: |
+          $prefix = "${{ runner.temp }}\protobuf-build\install"
+          if ($env:CMAKE_PREFIX_PATH) {
+            "CMAKE_PREFIX_PATH=$prefix;$($env:CMAKE_PREFIX_PATH)" >> $env:GITHUB_ENV
+          }
+          else {
+            "CMAKE_PREFIX_PATH=$prefix" >> $env:GITHUB_ENV
+          }
+          "$prefix\bin" >> $env:GITHUB_PATH
         shell: pwsh
 
       - name: Build and install ONNX - Linux
@@ -193,10 +217,21 @@ jobs:
         run: |
           pip install -e . -v
           if ("${{ matrix.protobuf_type }}" -eq "External") {
-            $expectedProtoc = "$env:CMAKE_PREFIX_PATH/bin/protoc.exe".Replace('\', '/')
             $cache = Get-Content .setuptools-cmake-build/CMakeCache.txt
-            if ($cache -notcontains "Protobuf_PROTOC_EXECUTABLE:FILEPATH=$expectedProtoc") {
-              throw "ONNX did not use the installed external Protobuf"
+            $protocEntry = $cache | Where-Object { $_ -like 'Protobuf_PROTOC_EXECUTABLE:FILEPATH=*' } | Select-Object -First 1
+            if ($null -eq $protocEntry) {
+              throw "Protobuf_PROTOC_EXECUTABLE not found in .setuptools-cmake-build/CMakeCache.txt"
+            }
+            # Normalize both paths before comparing.
+            $protoc = [IO.Path]::GetFullPath($protocEntry.Substring('Protobuf_PROTOC_EXECUTABLE:FILEPATH='.Length))
+            # Resolve from the install dir directly in case CMAKE_PREFIX_PATH has multiple entries.
+            $expectedProtoc = [IO.Path]::GetFullPath("${{ runner.temp }}/protobuf-build/install/bin/protoc.exe")
+            if ($protoc -ne $expectedProtoc) {
+              throw "ONNX used Protobuf at '$protoc' instead of the installed external one at '$expectedProtoc'"
+            }
+            # Fail if CMake fell back to FetchContent instead of using the external install.
+            if (Test-Path .setuptools-cmake-build/_deps/protobuf-src) {
+              throw "ONNX fell back to building Protobuf from source instead of using the installed external one"
             }
           }
         env:
