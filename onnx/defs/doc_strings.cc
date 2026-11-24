@@ -843,14 +843,14 @@ Calculates the arcsine (inverse of sine) of the given input tensor, element-wise
 )DOC";
 
 const char kDoc_Expand_ver8[] = R"DOC(
-Broadcast the input tensor following the given shape and the broadcast rule.
-The broadcast rule is similar to numpy.array(input) * numpy.ones(shape):
-Dimensions are right alignment;
-Two corresponding dimensions must have the same value, or one of them is equal to 1.
-Also, this operator is similar to numpy.broadcast_to(input, shape),
-but the major difference is numpy.broadcast_to() does not allow shape to be smaller than input.size().
-It is possible that the output.shape is not equal to shape, when some dimensions in shape is equal to 1,
-or the shape.ndim < input.shape.ndim.
+Broadcast the input tensor against the dimensions specified by `shape`.
+Align the two shapes from the right, treating missing leading dimensions as 1.
+Two corresponding dimensions are compatible if they are equal or either is 1.
+
+The output has the resulting broadcast shape, which can differ from `shape`.
+
+- If the input has shape `[2, 3]` and `shape` is `[3]`, the output has shape `[2, 3]`.
+- If the input has shape `[2, 1]` and `shape` is `[1, 3]`, the output has shape `[2, 3]`.
 )DOC";
 
 const char kDoc_scan_24[] = R"DOC(
