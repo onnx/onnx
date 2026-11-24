@@ -31110,7 +31110,7 @@ expect(
         must happen in different floating-point precision.
         For example, if `stash_type` is 1, this operator casts
         all input variables to 32-bit float, perform the computation, and
-        finally cast `Normalized` back to the original type of `X`.
+        finally cast `Normalized` to the type of `scale`.
         The second stage then scales the outcome of the first stage using:
         ```
         Y= Mul(Normalized, Scale)
