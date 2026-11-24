@@ -36261,6 +36261,28 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
   absolute positions. `attn_mask`, when present, is additionally applied over
   the logical key order after the cache and current valid records are combined.
 
+  Packed mode uses rank-2 token-major Q, K, and V with independent cumulative
+  `q_sequence_offsets` and `kv_sequence_offsets`. Each offset tensor has shape
+  `(B + 1)`, starts at zero, is nondecreasing, and ends at its packed token count;
+  repeated offsets represent empty sequences. Packed Y preserves Q token order.
+  Packed positions are rank-1. `attn_mask`, `nonpad_kv_seqlen`, and
+  `qk_matmul_output` are available only in padded mode.
+
+  Compact packed visibility is block CSR over logical keys, never cache pages.
+  Rows enumerate batch, then visibility head, then local query block.
+  `visibility_num_heads=1` broadcasts one head-shared pattern; setting it to
+  `q_num_heads` represents exact head-specific visibility. Active key-block
+  indices are local to each batch element's logical sequence (prior cache,
+  followed by current K/V). Active blocks are fully visible unless listed in
+  `visibility_partial_block_indices`; the corresponding uint64 mask row stores
+  exact visibility bits. Out-of-range bits in terminal blocks are ignored.
+  Blocks not listed by a CSR row are invisible. Thus arbitrary visibility,
+  partial blocks, and fully masked query rows are lossless without a dense mask.
+  Fully masked rows produce zero Y. Optional `attn_bias` is additive and aligned
+  to active logical blocks separately from visibility. Compact visibility is
+  intersected with causal and window rules and may be shared by compatible
+  layers.
+
 #### Version
 
 No versioning maintained for experimental ops.
@@ -36285,27 +36307,47 @@ No versioning maintained for experimental ops.
 <dd>Optional positive soft cap for logits; zero disables it.</dd>
 <dt><tt>softmax_precision</tt> : int</dt>
 <dd>Optional softmax computation element type.</dd>
+<dt><tt>visibility_k_block_size</tt> : int (default is 64)</dt>
+<dd>Packed visibility logical key block size.</dd>
+<dt><tt>visibility_num_heads</tt> : int (default is 1)</dt>
+<dd>Packed visibility head count: 1 or q_num_heads.</dd>
+<dt><tt>visibility_q_block_size</tt> : int (default is 1)</dt>
+<dd>Packed visibility query block size.</dd>
 </dl>
 
-#### Inputs (3 - 8)
+#### Inputs (3 - 15)
 
 <dl>
 <dt><tt>Q</tt> : T1</dt>
-<dd>Rank-3 packed or rank-4 query tensor.</dd>
+<dd>Rank-2 packed token-major, rank-3 padded packed-hidden, or rank-4 query tensor.</dd>
 <dt><tt>K</tt> : T1</dt>
-<dd>Rank-3 packed or rank-4 key tensor for new records.</dd>
+<dd>Rank-2 packed token-major, rank-3 padded packed-hidden, or rank-4 key tensor for new records.</dd>
 <dt><tt>V</tt> : T2</dt>
-<dd>Rank-3 packed or rank-4 value tensor for new records.</dd>
+<dd>Rank-2 packed token-major, rank-3 padded packed-hidden, or rank-4 value tensor for new records.</dd>
 <dt><tt>attn_mask</tt> (optional) : U</dt>
-<dd>Optional boolean or additive attention mask.</dd>
+<dd>Optional padded-mode boolean or additive attention mask.</dd>
 <dt><tt>cache</tt> (optional) : S</dt>
 <dd>Optional prior logical cache snapshot. Omission initializes an empty cache.</dd>
-<dt><tt>q_positions</tt> (optional) : tensor(int64)</dt>
-<dd>Optional absolute query positions with shape (B, Sq).</dd>
-<dt><tt>kv_positions</tt> (optional) : tensor(int64)</dt>
-<dd>Optional absolute positions for current K/V with shape (B, Skv).</dd>
+<dt><tt>q_positions</tt> (optional) : P</dt>
+<dd>Optional absolute query positions with padded shape (B, Sq) or packed shape (total_q).</dd>
+<dt><tt>kv_positions</tt> (optional) : P</dt>
+<dd>Optional absolute positions for current K/V with padded shape (B, Skv) or packed shape (total_new_kv).</dd>
 <dt><tt>nonpad_kv_seqlen</tt> (optional) : tensor(int64)</dt>
 <dd>Optional valid current K/V prefix lengths with shape (B).</dd>
+<dt><tt>q_sequence_offsets</tt> (optional) : I</dt>
+<dd>Packed-mode cumulative query offsets with shape (B + 1).</dd>
+<dt><tt>kv_sequence_offsets</tt> (optional) : I</dt>
+<dd>Packed-mode cumulative new-K/V offsets with shape (B + 1).</dd>
+<dt><tt>visibility_row_offsets</tt> (optional) : I</dt>
+<dd>Optional packed block-CSR row offsets.</dd>
+<dt><tt>visibility_key_blocks</tt> (optional) : I</dt>
+<dd>Optional active logical key-block indices.</dd>
+<dt><tt>visibility_partial_block_indices</tt> (optional) : I</dt>
+<dd>Optional increasing active-block indices that have partial visibility.</dd>
+<dt><tt>visibility_partial_block_mask</tt> (optional) : tensor(uint64)</dt>
+<dd>Optional exact uint64 masks with shape (partial_blocks, query_block_size, ceil(key_block_size / 64)).</dd>
+<dt><tt>attn_bias</tt> (optional) : T1</dt>
+<dd>Optional additive packed bias with shape (active_blocks, query_block_size, key_block_size).</dd>
 </dl>
 
 #### Outputs (2 - 3)
@@ -36328,6 +36370,10 @@ No versioning maintained for experimental ops.
 <dd>Constrain V types.</dd>
 <dt><tt>U</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(bool)</dt>
 <dd>Constrain mask types.</dd>
+<dt><tt>I</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain cumulative offsets and compact indices.</dd>
+<dt><tt>P</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain absolute position types.</dd>
 <dt><tt>S</tt> : opaque(org.onnx.experimental.state,KVCache)</dt>
 <dd>Nominal opaque KV cache type.</dd>
 </dl>

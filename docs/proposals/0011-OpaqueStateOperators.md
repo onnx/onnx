@@ -69,13 +69,18 @@ proposal but are not runtime-validated by that subset.
 ```text
 AttentionWithCache(
     Q, K, V, attn_mask?, cache?, q_positions?, kv_positions?,
-    nonpad_kv_seqlen?
+    nonpad_kv_seqlen?, q_sequence_offsets?, kv_sequence_offsets?,
+    visibility_row_offsets?, visibility_key_blocks?,
+    visibility_partial_block_indices?, visibility_partial_block_mask?,
+    attn_bias?
 ) -> (Y, present_cache, qk_matmul_output?)
 ```
 
 Attributes follow `ai.onnx.Attention`: `is_causal`, `scale`, `q_num_heads`,
 `kv_num_heads`, `softmax_precision`, `softcap`, `left_window_size`, and
 `right_window_size`, plus `allow_lossy_state`.
+Packed visibility also uses `visibility_q_block_size`,
+`visibility_k_block_size`, and `visibility_num_heads`.
 
 The logical `KVCache` is an ordered per-batch sequence of key/value records
 and their absolute positions. Current valid K/V records append to the prior
@@ -87,6 +92,36 @@ When omitted, positions are the contiguous append after the prior cache.
 `nonpad_kv_seqlen` has shape `(B)` and selects the valid prefix of the current
 K/V chunk. Invalid tail records are not appended. Causal and window masks use
 absolute positions. `attn_mask` is additionally applied over logical key order.
+
+Packed mode uses flat token-major tensors:
+
+- `Q`: `(total_q, Hq * Dk)`
+- `K`: `(total_new_kv, Hkv * Dk)`
+- `V`: `(total_new_kv, Hkv * Dv)`
+- `Y`: `(total_q, Hq * Dv)`, preserving packed Q order
+
+Independent int32 or int64 `q_sequence_offsets` and `kv_sequence_offsets`
+have shape `(B + 1)`. They start at zero, are nondecreasing, end at their
+respective token totals, and allow repeated values for empty sequences.
+Packed positions are rank-1 and may also use int32 or int64.
+`attn_mask`, `nonpad_kv_seqlen`, and `qk_matmul_output` are padded-only.
+
+Compact visibility is a block-CSR encoding over logical keys, not physical
+cache pages. Rows enumerate batch, then visibility head, then local query
+block. `visibility_num_heads=1` broadcasts a head-shared pattern;
+`visibility_num_heads=q_num_heads` supports exact head-specific visibility.
+Each `visibility_key_blocks` entry is a batch-local logical key-block index.
+
+Active blocks are fully visible by default. Only active blocks named by the
+increasing `visibility_partial_block_indices` array carry exact uint64 masks
+in `visibility_partial_block_mask`, with shape
+`(partial_blocks, q_block_size, ceil(k_block_size / 64))`. This avoids mask
+payload for full blocks while representing arbitrary visibility exactly.
+Terminal out-of-range bits are ignored, absent blocks are invisible, and a
+row with no visible keys produces zero output. Optional `attn_bias` is
+separate from visibility and has compact shape
+`(active_blocks, q_block_size, k_block_size)`. Visibility intersects causal
+and window rules and can be shared across compatible layers.
 
 ## LinearAttentionWithState
 
