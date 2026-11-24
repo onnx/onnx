@@ -45,6 +45,7 @@ from onnx.defs import (
     AI_ONNX_PREVIEW_DOMAIN,
     AI_ONNX_PREVIEW_TRAINING_DOMAIN,
     ONNX_DOMAIN,
+    ONNX_EXPERIMENTAL_STATE_DOMAIN,
     ONNX_ML_DOMAIN,
     get_all_schemas_with_history,
 )
@@ -83,6 +84,11 @@ _MACRO_INFO = {
         AI_ONNX_PREVIEW_TRAINING_DOMAIN,
         DEFS_DIR / "operator_sets_preview.h",
     ),
+    "ONNX_EXPERIMENTAL_STATE_OPERATOR_SET_SCHEMA": (
+        "OnnxExperimentalState",
+        ONNX_EXPERIMENTAL_STATE_DOMAIN,
+        DEFS_DIR / "operator_sets_state.h",
+    ),
 }
 # Macros that currently have no schemas at all (ai.onnx.training defines no operators).
 # Every other macro must yield at least one definition and one registration, so a regex
@@ -111,9 +117,13 @@ _PREVIEW_CLASS_NAME_ARGS_RE = re.compile(r"(\d+)\s*,\s*([A-Za-z0-9_]+)")
 _CLASS_NAME_MACROS = {
     "ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME": _FULL_CLASS_NAME_ARGS_RE,
     "ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME": _PREVIEW_CLASS_NAME_ARGS_RE,
+    "ONNX_EXPERIMENTAL_STATE_OPERATOR_SET_SCHEMA_CLASS_NAME": _PREVIEW_CLASS_NAME_ARGS_RE,
 }
 # The class-name domain baked into ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME.
-_PREVIEW_CLASS_DOMAIN = "OnnxPreview"
+_FIXED_CLASS_DOMAINS = {
+    "ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME": "OnnxPreview",
+    "ONNX_EXPERIMENTAL_STATE_OPERATOR_SET_SCHEMA_CLASS_NAME": ("OnnxExperimentalState"),
+}
 
 # Matches C++ // line comments and /* */ block comments, so a commented-out
 # definition or fn(...) call doesn't get mistaken for a live one. String and
@@ -215,7 +225,7 @@ def _registered_schemas(header: Path, class_domain: str) -> set[tuple[str, int]]
             )
         else:
             domain, version, name = (
-                _PREVIEW_CLASS_DOMAIN,
+                _FIXED_CLASS_DOMAINS[macro],
                 int(parsed.group(1)),
                 parsed.group(2),
             )

@@ -14,6 +14,7 @@ target_sources(onnx PRIVATE
     operator_sets.h
     operator_sets_ml.h
     operator_sets_preview.h
+    operator_sets_state.h
     operator_sets_training.h
     parser.cc
     parser.h
@@ -42,6 +43,7 @@ add_subdirectory(quantization)
 add_subdirectory(reduction)
 add_subdirectory(rnn)
 add_subdirectory(sequence)
+add_subdirectory(state)
 add_subdirectory(tensor)
 add_subdirectory(text)
 add_subdirectory(traditionalml)

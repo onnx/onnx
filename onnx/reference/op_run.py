@@ -44,22 +44,18 @@ class RefAttrName:
         return f"{self.__class__.__name__}({self.name!r})"
 
 
-def _build_schemas() -> dict[str, onnx.defs.OpSchema]:
-    res: dict[str, onnx.defs.OpSchema] = {}
+def _build_schemas() -> dict[tuple[str, str], onnx.defs.OpSchema]:
+    res: dict[tuple[str, str], onnx.defs.OpSchema] = {}
     for schema in onnx.defs.onnx.defs.get_all_schemas_with_history():
         # Multiple version can coexist. The last one is kept.
-        if schema.name in res:
-            if schema.domain != res[schema.name].domain:
-                raise NotImplementedError(
-                    f"This function assumes every operator has a unique name {schema.name!r} "
-                    f"even across multiple domains {schema.domain!r} and {res[schema.name].domain!r}."
-                )
-            if schema.since_version > res[schema.name].since_version:
+        latest_key = (schema.domain, schema.name)
+        if latest_key in res:
+            if schema.since_version > res[latest_key].since_version:
                 # We keep the most recent one.
-                res[schema.name] = schema
+                res[latest_key] = schema
         else:
-            res[schema.name] = schema
-        res[schema.name + "_" + str(schema.since_version)] = schema
+            res[latest_key] = schema
+        res[(schema.domain, schema.name + "_" + str(schema.since_version))] = schema
     return res
 
 
@@ -172,10 +168,10 @@ class OpRun(abc.ABC):
         if schema is None:
             if hasattr(self.__class__, "op_schema"):
                 self._schema = self.__class__.op_schema
-            elif self.__class__.__name__ in _schemas:
-                self._schema = _schemas[self.__class__.__name__]
-            elif onnx_node.op_type in _schemas:
-                self._schema = _schemas[onnx_node.op_type]
+            elif (self.op_domain, self.__class__.__name__) in _schemas:
+                self._schema = _schemas[(self.op_domain, self.__class__.__name__)]
+            elif (onnx_node.domain, onnx_node.op_type) in _schemas:
+                self._schema = _schemas[(onnx_node.domain, onnx_node.op_type)]
             else:
                 self._schema = None
         else:

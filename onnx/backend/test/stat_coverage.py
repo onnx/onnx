@@ -52,34 +52,43 @@ def gen_node_test_coverage(
         }
     )
     node_tests = collect_snippets()
+    selected_schemas = [s for s in schemas if (s.domain == "ai.onnx.ml") == ml]
+    schema_name_counts: dict[str, int] = {}
+    for schema in selected_schemas:
+        schema_name_counts[schema.name] = schema_name_counts.get(schema.name, 0) + 1
+
+    def display_name(schema: defs.OpSchema) -> str:
+        if schema.domain and schema_name_counts[schema.name] > 1:
+            return f"{schema.domain}.{schema.name}"
+        return schema.name
+
+    def has_node_tests(schema: defs.OpSchema) -> bool:
+        if schema.name not in node_tests:
+            return False
+        return not schema.domain or schema_name_counts[schema.name] == 1
+
     common_covered = sorted(
-        s.name
-        for s in schemas
-        if s.name in node_tests
-        and s.support_level == defs.OpSchema.SupportType.COMMON
-        and (s.domain == "ai.onnx.ml") == ml
+        display_name(s)
+        for s in selected_schemas
+        if has_node_tests(s) and s.support_level == defs.OpSchema.SupportType.COMMON
     )
     common_no_cover = sorted(
-        s.name
-        for s in schemas
-        if s.name not in node_tests
-        and s.support_level == defs.OpSchema.SupportType.COMMON
-        and (s.domain == "ai.onnx.ml") == ml
+        display_name(s)
+        for s in selected_schemas
+        if not has_node_tests(s) and s.support_level == defs.OpSchema.SupportType.COMMON
     )
     common_generator = sorted(name for name in common_no_cover if name in generators)
     experimental_covered = sorted(
-        s.name
-        for s in schemas
-        if s.name in node_tests
+        display_name(s)
+        for s in selected_schemas
+        if has_node_tests(s)
         and s.support_level == defs.OpSchema.SupportType.EXPERIMENTAL
-        and (s.domain == "ai.onnx.ml") == ml
     )
     experimental_no_cover = sorted(
-        s.name
-        for s in schemas
-        if s.name not in node_tests
+        display_name(s)
+        for s in selected_schemas
+        if not has_node_tests(s)
         and s.support_level == defs.OpSchema.SupportType.EXPERIMENTAL
-        and (s.domain == "ai.onnx.ml") == ml
     )
     experimental_generator = sorted(
         name for name in experimental_no_cover if name in generators
@@ -129,19 +138,21 @@ def gen_node_test_coverage(
     f.write("\n")
     for t, l in zip(titles, all_lists, strict=False):  # noqa: E741
         f.write(f"## {t}\n")
+        covered = l is common_covered or l is experimental_covered
         for s in l:
             f.write(f"### {s}")
-            if s in node_tests:
+            node_test_name = s.rsplit(".", 1)[-1]
+            if covered:
                 f.write(
-                    f"\nThere are {len(node_tests[s])} test cases, listed as following:\n"
+                    f"\nThere are {len(node_tests[node_test_name])} test cases, listed as following:\n"
                 )
-                for summary, code in sorted(node_tests[s]):
+                for summary, code in sorted(node_tests[node_test_name]):
                     f.write("<details>\n")
                     f.write(f"<summary>{summary}</summary>\n\n")
                     f.write(f"```python\n{code}\n```\n\n")
                     f.write("</details>\n")
             else:  # noqa: PLR5501
-                if s in generators:
+                if node_test_name in generators:
                     f.write(" (random generator operator)\n")
                 else:
                     f.write(" (call for test cases)\n")

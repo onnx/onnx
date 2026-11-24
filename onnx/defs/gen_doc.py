@@ -325,7 +325,7 @@ def main(args: Args) -> None:
         operator_schemas: list[
             tuple[str, list[tuple[int, list[tuple[str, OpSchema, list[OpSchema]]]]]]
         ] = []
-        existing_ops: set[str] = set()
+        existing_ops: set[tuple[str, str]] = set()
         for domain, _supportmap in sorted(index.items()):
             if not should_render_domain(domain, args.output):
                 continue
@@ -336,9 +336,10 @@ def main(args: Args) -> None:
                 for n, unsorted_versions in sorted(_namemap.items()):
                     versions = sorted(unsorted_versions, key=lambda s: s.since_version)
                     schema = versions[-1]
-                    if schema.name in existing_ops:
+                    schema_key = (schema.domain, schema.name)
+                    if schema_key in existing_ops:
                         continue
-                    existing_ops.add(schema.name)
+                    existing_ops.add(schema_key)
                     processed_namemap.append((n, schema, versions))
                 processed_supportmap.append((_support, processed_namemap))
             operator_schemas.append((domain, processed_supportmap))
