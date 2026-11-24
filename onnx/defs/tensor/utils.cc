@@ -23,9 +23,9 @@ static void GatherNDShapeInference(InferenceContext& ctx) {
   if (!hasNInputShapes(ctx, 2)) {
     return;
   }
-  const auto& data_shape = ctx.getInputType(0)->tensor_type().shape();
+  const auto& data_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
   const auto data_rank = data_shape.dim_size();
-  const auto& indices_shape = ctx.getInputType(1)->tensor_type().shape();
+  const auto& indices_shape = ctx.getInputTypeOrFail(1).tensor_type().shape();
   const auto indices_rank = indices_shape.dim_size();
   const int64_t batch_dims_data = getAttribute(ctx, "batch_dims", 0);
   if (data_rank < 1 || indices_rank < 1) {
@@ -572,7 +572,7 @@ std::function<void(OpSchema&)> PadDocGenerator(
       if (!hasNInputShapes(ctx, 1)) {
         return;
       }
-      const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
       const auto input_rank = input_shape.dim_size();
 
       std::vector<int64_t> axes;
@@ -734,7 +734,7 @@ void oneHotShapeInference(InferenceContext& ctx, int version) {
   propagateElemTypeFromInputToOutput(ctx, 2, 0);
   // Set the output shape, if input 0 (indices) shape is available.
   if (hasInputShape(ctx, 0)) {
-    const TensorShapeProto& indices_shape = ctx.getInputType(0)->tensor_type().shape();
+    const TensorShapeProto& indices_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
     int r = indices_shape.dim_size();
     if (r < 1) {
       fail_shape_inference("Indices tensor must have rank >= 1");

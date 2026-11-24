@@ -1272,11 +1272,15 @@ static void LoopInferenceFunction_opset8(InferenceContext& ctx) {
   // across iterations so don't propagate it to the outputs and don't pass it
   // into the subgraph inferencing
   for (size_t i = 2; i < num_inputs; ++i) {
+    if (ctx.getInputType(i) == nullptr) {
+      subgraph_input_types.emplace_back(nullptr);
+      continue;
+    }
     propagateElemTypeFromInputToOutput(ctx, i, i - 2);
 
     // copy so we can remove the shape before passing to the subgraph
     // inferencing
-    temporary_type_protos.emplace_back(*ctx.getInputType(i));
+    temporary_type_protos.emplace_back(ctx.getInputTypeOrFail(i));
     auto& input_type = temporary_type_protos.back();
     input_type.mutable_tensor_type()->clear_shape();
 
@@ -1427,11 +1431,15 @@ static void LoopInferenceFunction_opset11(InferenceContext& ctx) {
   // across iterations so don't propagate it to the outputs and don't pass it
   // into the subgraph inferencing
   for (size_t i = 2; i < num_inputs; ++i) {
+    if (ctx.getInputType(i) == nullptr) {
+      subgraph_input_types.emplace_back(nullptr);
+      continue;
+    }
     propagateElemTypeFromInputToOutput(ctx, i, i - 2);
 
     // copy so we can remove the shape before passing to the subgraph
     // inferencing
-    temporary_type_protos.emplace_back(*ctx.getInputType(i));
+    temporary_type_protos.emplace_back(ctx.getInputTypeOrFail(i));
     auto& input_type = temporary_type_protos.back();
     input_type.mutable_tensor_type()->clear_shape();
 
@@ -1953,11 +1961,15 @@ static void LoopInferenceFunction_opset13(InferenceContext& ctx) {
   // across iterations so don't propagate it to the outputs and don't pass it
   // into the subgraph inferencing
   for (size_t i = 2; i < num_inputs; ++i) {
+    if (ctx.getInputType(i) == nullptr) {
+      subgraph_input_types.emplace_back(nullptr);
+      continue;
+    }
     propagateElemTypeFromInputToOutput(ctx, i, i - 2);
 
     // copy so we can remove the shape before passing to the subgraph
     // inferencing
-    temporary_type_protos.emplace_back(*ctx.getInputType(i));
+    temporary_type_protos.emplace_back(ctx.getInputTypeOrFail(i));
     auto& input_type = temporary_type_protos.back();
 
     if (input_type.has_tensor_type()) {

@@ -68,7 +68,7 @@ False instead of True.)DOC";
       if (attr_proto) {
         keep_dims = attr_proto->i();
       }
-      const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
       int64_t input_ndim = input_shape.dim_size();
       auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
       std::vector<int64_t> axes;
@@ -161,7 +161,7 @@ The type of the output tensor is integer.)DOC";
         return;
       }
 
-      const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
       auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
       int64_t input_ndim = input_shape.dim_size();
       int64_t axis = 0; // default to 0
@@ -246,7 +246,7 @@ False instead of True.)DOC";
       if (attr_proto) {
         keep_dims = attr_proto->i();
       }
-      const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
       int64_t input_ndim = input_shape.dim_size();
       auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
       std::vector<int64_t> axes;
@@ -331,7 +331,7 @@ The type of the output tensor is integer.)DOC";
         return;
       }
 
-      const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
       auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
       int64_t input_ndim = input_shape.dim_size();
       int64_t axis = 0; // default to 0
@@ -399,7 +399,7 @@ The type of the output tensor is integer.)DOC";
         return;
       }
 
-      const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
       auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
       int64_t input_ndim = input_shape.dim_size();
       int64_t axis = 0; // default to 0

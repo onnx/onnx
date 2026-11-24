@@ -25,8 +25,8 @@ static void binaryLogicalOpInference(InferenceContext& ctx) {
   // Shape inference
   if (hasNInputShapes(ctx, 2))
     bidirectionalBroadcastShapeInference(
-        ctx.getInputType(0)->tensor_type().shape(),
-        ctx.getInputType(1)->tensor_type().shape(),
+        ctx.getInputTypeOrFail(0).tensor_type().shape(),
+        ctx.getInputTypeOrFail(1).tensor_type().shape(),
         *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
 }
 
@@ -179,8 +179,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Shape inference
           if (hasNInputShapes(ctx, 2))
             bidirectionalBroadcastShapeInference(
-                ctx.getInputType(0)->tensor_type().shape(),
-                ctx.getInputType(1)->tensor_type().shape(),
+                ctx.getInputTypeOrFail(0).tensor_type().shape(),
+                ctx.getInputTypeOrFail(1).tensor_type().shape(),
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
@@ -274,8 +274,8 @@ elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting supp
       // Shape inference
       if (hasNInputShapes(ctx, 2))
         bidirectionalBroadcastShapeInference(
-            ctx.getInputType(0)->tensor_type().shape(),
-            ctx.getInputType(1)->tensor_type().shape(),
+            ctx.getInputTypeOrFail(0).tensor_type().shape(),
+            ctx.getInputTypeOrFail(1).tensor_type().shape(),
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
     });
   };

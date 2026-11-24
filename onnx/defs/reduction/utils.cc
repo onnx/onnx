@@ -144,7 +144,7 @@ to `False` instead of `True`.)DOC";
         if (axes_proto)
           axes.assign(axes_proto->ints().begin(), axes_proto->ints().end());
       }
-      const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
       if (noop_with_empty_axes && axes.empty()) {
         propagateShapeFromInputToOutput(ctx, 0, 0);
         return;
