@@ -1,5 +1,3 @@
-abi3audit
-check-wheel-contents
 pytest
 pytest-cov
 pytest-xdist

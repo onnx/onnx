@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import math
+from fractions import Fraction
 
 import numpy as np
 
@@ -41,16 +42,22 @@ def _mean(data, axes, keepdims):
     for index in np.flatnonzero(~np.isfinite(result)):
         row = rows[index]
         if not np.all(np.isfinite(row)):
-            # A non-finite input is not an intermediate-overflow failure.
+            positive_infinity = np.any(np.isposinf(row))
+            negative_infinity = np.any(np.isneginf(row))
+            if np.any(np.isnan(row)) or (positive_infinity and negative_infinity):
+                result[index] = np.nan
+            else:
+                result[index] = np.inf if positive_infinity else -np.inf
             continue
 
         try:
             total = math.fsum(float(value) for value in row)
             value = total / reduction_size
         except OverflowError:
-            # Dividing each finite term first bounds the positive and negative
-            # partial totals by the largest representable input magnitude.
-            value = math.fsum(float(item) / reduction_size for item in row)
+            # Exact accumulation avoids overflow and cancellation loss, even
+            # when divide-first summation rounds past the finite dtype limit.
+            total_exact = sum(Fraction(float(item)) for item in row)
+            value = float(total_exact / reduction_size)
         result[index] = value
 
     reduced = result.reshape(remaining_shape)
@@ -65,7 +72,7 @@ def _mean(data, axes, keepdims):
 
 class ReduceMean_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):
-        axes = tuple(axes) if axes is not None else None
+        axes = (tuple(axes) or None) if axes is not None else None
         res = _mean(data, axes=axes, keepdims=keepdims)
         if keepdims == 0 and not isinstance(res, np.ndarray):
             # The runtime must return a numpy array of a single float.

@@ -435,7 +435,11 @@ class ReferenceEvaluator:
             except op_run.RuntimeContextError as e:
                 # A node has a context dependent implementation.
                 # Shape inference must be run to get the input types.
-                if self.all_types_:
+                if any(att.ref_attr_name for att in node.attribute):
+
+                    def cl(*args, parent=self):
+                        return op_run.OpFunctionContextDependant(*args, parent=parent)
+                elif self.all_types_:
                     it = [self.get_result_types(i, exc=False) for i in node.input]
                     if None in it:
                         # One input does not exist. It must be done while executing the graph.
@@ -663,6 +667,10 @@ class ReferenceEvaluator:
             else:
                 outputs = node.run(*inputs, **linked_attributes)
             for name, value in zip(node.output, outputs, strict=False):
+                if name == "":
+                    # An omitted output: keep results[""] as None, which is what
+                    # nodes with an omitted optional input read.
+                    continue
                 self._log(2, " + %s: %s", name, value)  # type: ignore[arg-type]
                 results[name] = value
                 if bindings is not None and self.all_types_:

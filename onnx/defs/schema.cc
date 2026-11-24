@@ -183,7 +183,12 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
 
 void OpSchema::Verify(const NodeProto& node) const {
   if (deprecated_) {
-    fail_check("Operator '", name_, "' has been deprecated since version ", since_version_);
+    fail_check_with_code(
+        checker::error_code::kOperatorDeprecated,
+        "Operator '",
+        name_,
+        "' has been deprecated since version ",
+        since_version_);
   }
 
   VerifyInputNum(node.input_size(), node.name());
@@ -196,7 +201,8 @@ void OpSchema::Verify(const NodeProto& node) const {
         // The last input formal parameter should be variadic.
         break;
       } else {
-        fail_check(
+        fail_check_with_code(
+            checker::error_code::kNodeSchemaMismatch,
             "Node (",
             node.name(),
             ") has more inputs (",
@@ -207,7 +213,13 @@ void OpSchema::Verify(const NodeProto& node) const {
       }
     }
     if (node.input(in_idx).empty() && (Single == inputs_[in_idx].GetOption())) {
-      fail_check("Node (", node.name(), ")'s input ", in_idx, " is marked single but has an empty string in the graph");
+      fail_check_with_code(
+          checker::error_code::kNodeSchemaMismatch,
+          "Node (",
+          node.name(),
+          ")'s input ",
+          in_idx,
+          " is marked single but has an empty string in the graph");
     }
   }
 
@@ -217,7 +229,8 @@ void OpSchema::Verify(const NodeProto& node) const {
         // The last output formal parameter should be variadic.
         break;
       } else {
-        fail_check(
+        fail_check_with_code(
+            checker::error_code::kNodeSchemaMismatch,
             "Node (",
             node.name(),
             ") has more outputs (",
@@ -229,17 +242,15 @@ void OpSchema::Verify(const NodeProto& node) const {
     }
 
     if (node.output(out_idx).empty() && (Single == outputs_[out_idx].GetOption())) {
-      fail_check(
-          "Node (", node.name(), ")'s output ", out_idx, " is marked single but has an empty string in the graph");
+      fail_check_with_code(
+          checker::error_code::kNodeSchemaMismatch,
+          "Node (",
+          node.name(),
+          ")'s output ",
+          out_idx,
+          " is marked single but has an empty string in the graph");
     }
   }
-
-  // An internal symbol is defined as starting with two underscores. Attributes
-  // with names meeting this condition are considered implementation details
-  // and should be ignored for the purpose of schema checking.
-  auto isInternalSymbol = [](const std::string& sym) -> bool {
-    return sym.length() >= 2 && sym[0] == '_' && sym[1] == '_';
-  };
 
   // Check attributes
   std::unordered_set<std::string> seen_attr_names{};
@@ -247,22 +258,26 @@ void OpSchema::Verify(const NodeProto& node) const {
     const auto& name = attr_proto.name();
 
     if (!seen_attr_names.insert(name).second) {
-      fail_check("Attribute '", name, "' appeared multiple times.");
+      fail_check_with_code(checker::error_code::kNodeSchemaMismatch, "Attribute '", name, "' appeared multiple times.");
     }
 
     const auto search = attributes_.find(name);
     AttributeProto::AttributeType expected_type{};
     if (search != attributes_.end()) {
       expected_type = search->second.type;
-    } else if (allows_unchecked_attributes_ || isInternalSymbol(name)) {
+    } else if (allows_unchecked_attributes_ || name.rfind("__", 0) == 0) {
+      // Attributes starting with two underscores are internal implementation
+      // details and are ignored for the purpose of schema checking.
       continue;
     } else {
-      fail_check("Unrecognized attribute: ", name, " for operator ", node.op_type());
+      fail_check_with_code(
+          checker::error_code::kNodeSchemaMismatch, "Unrecognized attribute: ", name, " for operator ", node.op_type());
     }
 
     // Type would be UNDEFINED if not set
     if (attr_proto.type() != expected_type) {
-      fail_check(
+      fail_check_with_code(
+          checker::error_code::kNodeSchemaMismatch,
           "Mismatched attribute type in '",
           node.name() + " : " + name,
           "'. Expected: '",
@@ -289,22 +304,32 @@ void OpSchema::Verify(const NodeProto& node) const {
         break;
       case AttributeProto::TENSOR:
         if (!attr_proto.has_t()) {
-          fail_check("Attribute '", name, "' is expected to have field 't'");
+          fail_check_with_code(
+              checker::error_code::kNodeSchemaMismatch, "Attribute '", name, "' is expected to have field 't'");
         }
         break;
       case AttributeProto::SPARSE_TENSOR:
         if (!attr_proto.has_sparse_tensor()) {
-          fail_check("Attribute '", name, "' is expected to have field 'sparse_tensor'");
+          fail_check_with_code(
+              checker::error_code::kNodeSchemaMismatch,
+              "Attribute '",
+              name,
+              "' is expected to have field 'sparse_tensor'");
         }
         break;
       case AttributeProto::GRAPH:
         if (!attr_proto.has_g()) {
-          fail_check("Attribute '", name, "' is expected to have field 'g'");
+          fail_check_with_code(
+              checker::error_code::kNodeSchemaMismatch, "Attribute '", name, "' is expected to have field 'g'");
         }
         break;
       case AttributeProto::TYPE_PROTO:
         if (!attr_proto.has_tp()) {
-          fail_check("Attribute '", name, "' is expected to have field 'type_proto'");
+          fail_check_with_code(
+              checker::error_code::kNodeSchemaMismatch,
+              "Attribute '",
+              name,
+              "' is expected to have field 'type_proto'");
         }
         break;
       case AttributeProto::INTS:
@@ -318,7 +343,8 @@ void OpSchema::Verify(const NodeProto& node) const {
         // is op specific.
         break;
       default:
-        fail_check("Attribute '", name, " has unknown expected type");
+        fail_check_with_code(
+            checker::error_code::kNodeSchemaMismatch, "Attribute '", name, " has unknown expected type");
     }
   }
   for (const auto& [_, attr] : attributes_) {
@@ -326,7 +352,8 @@ void OpSchema::Verify(const NodeProto& node) const {
       continue;
     }
     if (!seen_attr_names.count(attr.name)) {
-      fail_check("Required attribute '", attr.name, "' is missing.");
+      fail_check_with_code(
+          checker::error_code::kNodeSchemaMismatch, "Required attribute '", attr.name, "' is missing.");
     }
   }
 
@@ -344,7 +371,8 @@ std::string OpSchema::VerifyFailPrefix(std::string_view node_name) const {
 
 void OpSchema::VerifyInputNum(int input_num, std::string_view node_name) const {
   if (input_num < min_input_ || input_num > max_input_) {
-    fail_check(
+    fail_check_with_code(
+        checker::error_code::kNodeSchemaMismatch,
         VerifyFailPrefix(node_name),
         " has input size ",
         input_num,
@@ -356,13 +384,19 @@ void OpSchema::VerifyInputNum(int input_num, std::string_view node_name) const {
   }
 
   if (!num_inputs_allowed_(input_num)) {
-    fail_check(VerifyFailPrefix(node_name), " has input size ", input_num, " not in allowed input sizes.");
+    fail_check_with_code(
+        checker::error_code::kNodeSchemaMismatch,
+        VerifyFailPrefix(node_name),
+        " has input size ",
+        input_num,
+        " not in allowed input sizes.");
   }
 }
 
 void OpSchema::VerifyOutputNum(int output_num, std::string_view node_name) const {
   if (output_num < min_output_ || output_num > max_output_) {
-    fail_check(
+    fail_check_with_code(
+        checker::error_code::kNodeSchemaMismatch,
         VerifyFailPrefix(node_name),
         " has output size ",
         output_num,
@@ -374,7 +408,12 @@ void OpSchema::VerifyOutputNum(int output_num, std::string_view node_name) const
   }
 
   if (!num_outputs_allowed_(output_num)) {
-    fail_check(VerifyFailPrefix(node_name), " has output size ", output_num, " not in allowed output sizes.");
+    fail_check_with_code(
+        checker::error_code::kNodeSchemaMismatch,
+        VerifyFailPrefix(node_name),
+        " has output size ",
+        output_num,
+        " not in allowed output sizes.");
   }
 }
 
@@ -734,8 +773,7 @@ void OpSchema::ParseAndSetTypes(
     const auto& type = formal_parameter.GetTypeStr();
     DataTypeSet allowed_types;
     if (auto it = type_constraints_.find(type); it != type_constraints_.end()) {
-      auto& [types, description] = it->second;
-      allowed_types = types;
+      allowed_types = it->second.first;
     } else {
       allowed_types.emplace(Utils::DataTypeUtils::ToType(type));
     }

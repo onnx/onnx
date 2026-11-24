@@ -18,7 +18,7 @@ from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    import numpy
+    import numpy as np
 
 # The following just executes the fake backend through the backend test
 # infrastructure. Since we don't have full reference implementation of all ops
@@ -71,7 +71,7 @@ class DummyBackend(onnx.backend.base.Backend):
         node: NodeProto,
         inputs: Any,
         device: str = "CPU",
-        outputs_info: Sequence[tuple[numpy.dtype, tuple[int, ...]]] | None = None,
+        outputs_info: Sequence[tuple[np.dtype, tuple[int, ...]]] | None = None,
         **kwargs: Any,  # noqa: ARG003
     ) -> tuple[Any, ...] | None:
         super().run_node(node, inputs, device=device, outputs_info=outputs_info)
