@@ -6,11 +6,104 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from onnx import checker, defs, inliner, parser
+from onnx import checker, defs, helper, inliner, numpy_helper, parser
 from onnx.reference import ReferenceEvaluator
 
 
 class TestInliner:
+    def test_nested_sparse_initializer_collision(self):
+        model = parser.parse_model(
+            """
+            <ir_version: 13, opset_import: ["" : 29, "local" : 1]>
+            graph (float[2,1] X) => (float[2,1] Y) { Y = local.scan(X) }
+            <opset_import: ["" : 29], domain: "local">
+            scan (x) => (y) {
+                y = Scan (x) <
+                    num_scan_inputs = 1,
+                    body = step (float[1] item) => (float[1] result) {
+                        temp = Identity(item)
+                        result = Add(temp, temp__1)
+                    }
+                >
+            }
+            """
+        )
+        body = next(
+            attr.g
+            for attr in model.functions[0].node[0].attribute
+            if attr.name == "body"
+        )
+        body.sparse_initializer.append(
+            helper.make_sparse_tensor(
+                numpy_helper.from_array(np.array([7.0], dtype=np.float32), "temp__1"),
+                numpy_helper.from_array(np.array([0], dtype=np.int64)),
+                [1],
+            )
+        )
+        checker.check_model(model)
+        expanded = inliner.inline_local_functions(model)
+        checker.check_model(expanded)
+        expanded_body = next(
+            attr.g for attr in expanded.graph.node[0].attribute if attr.name == "body"
+        )
+        initializer = expanded_body.sparse_initializer[0]
+        assert initializer.values.name != expanded_body.node[0].output[0]
+        assert initializer.values.name == expanded_body.node[1].input[1]
+        assert initializer.values.raw_data == body.sparse_initializer[0].values.raw_data
+        assert initializer.indices == body.sparse_initializer[0].indices
+
+    def test_scan_initializer_preserves_input_override(self):
+        model = parser.parse_model(
+            """
+            <ir_version: 13, opset_import: ["" : 29, "local" : 1]>
+            graph (float[2,1] X) => (float[2,1] Y) { Y = local.scan(X) }
+            <opset_import: ["" : 29], domain: "local">
+            scan (x) => (y) {
+                y = Scan (x) <
+                    num_scan_inputs = 1,
+                    body = step (float[1] item) => (float[1] result) {
+                        result = Identity(item)
+                    }
+                >
+            }
+            """
+        )
+        body = next(
+            attr.g
+            for attr in model.functions[0].node[0].attribute
+            if attr.name == "body"
+        )
+        body.initializer.append(
+            numpy_helper.from_array(np.array([99.0], dtype=np.float32), name="item")
+        )
+        checker.check_model(model)
+        feeds = {"X": np.array([[2.0], [3.0]], dtype=np.float32)}
+        np.testing.assert_array_equal(
+            ReferenceEvaluator(model).run(None, feeds)[0], feeds["X"]
+        )
+        expanded = inliner.inline_local_functions(model)
+        checker.check_model(expanded)
+        np.testing.assert_array_equal(
+            ReferenceEvaluator(expanded).run(None, feeds)[0], feeds["X"]
+        )
+
+    @pytest.mark.parametrize("extra_output", ["", "Unexpected"])
+    def test_trailing_optional_output_binding(self, extra_output):
+        model = parser.parse_model(
+            """
+            <ir_version: 13, opset_import: ["" : 29, "local" : 1]>
+            graph (float[1] X) => (float[1] Y) { Y = local.identity(X) }
+            <opset_import: ["" : 29], domain: "local">
+            identity (x) => (y) { y = Identity(x) }
+            """
+        )
+        model.graph.node[0].output.append(extra_output)
+        if extra_output:
+            with pytest.raises(RuntimeError, match="actual parameters"):
+                inliner.inline_local_functions(model)
+        else:
+            checker.check_model(inliner.inline_local_functions(model), full_check=True)
+
     def test_groupedmatmul_linked_transb(self):
         model = parser.parse_model(
             """

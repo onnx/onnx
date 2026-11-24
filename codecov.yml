@@ -6,3 +6,6 @@ coverage:
     patch:
       default:
         informational: true
+# Fuzz harnesses run under the fuzz workflow, which does not collect coverage.
+ignore:
+  - "onnx/fuzz"

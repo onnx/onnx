@@ -222,12 +222,6 @@ def display_schema(
             s += f"<dd>{type_constraint.description}</dd>\n"
         s += "</dl>\n"
 
-    # Function Body
-    # TODO: this should be refactored to show the function body graph's picture (DAG).
-    # if schema.has_function or schema.has_context_dependent_function:  # type: ignore[attr-defined]
-    #    s += '\n#### Function\n'
-    #    s += '\nThe Function can be represented as a function.\n'
-
     return s
 
 
