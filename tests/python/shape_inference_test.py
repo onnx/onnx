@@ -83,6 +83,15 @@ def all_versions_for(op_name: str) -> list[int]:
     ]
 
 
+# ArgMax and ArgMin share their schema versions. Opset 10 exercises the
+# version-1 schemas, which all_versions_for skips (see #5289).
+ARG_REDUCE_CASES = [
+    (op, version)
+    for op in ("ArgMax", "ArgMin")
+    for version in [10, *all_versions_for(op)]
+]
+
+
 class TestPackingShapeInference(TestShapeInferenceHelper):
     @pytest.mark.parametrize("op", ["Pack", "Unpack"])
     @pytest.mark.parametrize("bits", range(1, 9))
@@ -6157,42 +6166,74 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (24, 1, 1))]
         )
 
-    def test_argmax_shape(self) -> None:
+    @pytest.mark.parametrize(("op", "version"), ARG_REDUCE_CASES)
+    def test_arg_reduce_shape(self, op: str, version: int) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (24, 4, 11))],
-            [make_node("ArgMax", "x", "y", axis=1, keepdims=1)],
+            [make_node(op, "x", "y", axis=1, keepdims=1)],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT64, (24, 1, 11))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT64, (24, 1, 11))],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_argmax_shape_keepdims(self) -> None:
+    @pytest.mark.parametrize(("op", "version"), ARG_REDUCE_CASES)
+    def test_arg_reduce_shape_no_keepdims(self, op: str, version: int) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (24, 4, 11))],
-            [make_node("ArgMax", "x", "y", axis=0, keepdims=0)],
+            [make_node(op, "x", "y", axis=0, keepdims=0)],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT64, (4, 11))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT64, (4, 11))],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_argmax_shape_default_value(self) -> None:
+    @pytest.mark.parametrize(("op", "version"), ARG_REDUCE_CASES)
+    def test_arg_reduce_shape_default_value(self, op: str, version: int) -> None:
         graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (24, 4, 11))], [make_node("ArgMax", "x", "y")], []
+            [("x", TensorProto.FLOAT, (24, 4, 11))], [make_node(op, "x", "y")], []
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT64, (1, 4, 11))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT64, (1, 4, 11))],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_argmax_shape_negative_axis(self) -> None:
+    @pytest.mark.parametrize(("op", "version"), ARG_REDUCE_CASES)
+    def test_arg_reduce_shape_negative_axis(self, op: str, version: int) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (24, 4, 11))],
-            [make_node("ArgMax", "x", "y", axis=-2)],
+            [make_node(op, "x", "y", axis=-2)],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT64, (24, 1, 11))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT64, (24, 1, 11))],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @pytest.mark.parametrize(
+        ("op", "version"),
+        [
+            (op, v)
+            for op, v in ARG_REDUCE_CASES
+            if "select_last_index" in defs.get_schema(op, v).attributes
+        ],
+    )
+    def test_arg_reduce_shape_select_last_index(self, op: str, version: int) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (24, 4, 11))],
+            [make_node(op, "x", "y", axis=2, keepdims=0, select_last_index=1)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT64, (24, 4))],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_dropout(self) -> None:
