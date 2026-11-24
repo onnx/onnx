@@ -108,13 +108,9 @@ class ConvTranspose(OpRun):
             for group_id in range(group):
                 start_ch = group_id * channels_per_group
                 end_ch = start_ch + channels_per_group
-                group_X = X[:, group_id * C // group : (group_id + 1) * C // group, ...]
-                group_W = W[
-                    group_id * num_output_channels // group : (group_id + 1)
-                    * num_output_channels
-                    // group,
-                    ...,
-                ]
+                input_slice = slice(group_id * k, (group_id + 1) * k)
+                group_X = X[:, input_slice, ...]
+                group_W = W[input_slice, ...]
 
                 group_output = self._run(
                     group_X,

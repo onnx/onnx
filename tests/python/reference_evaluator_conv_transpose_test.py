@@ -18,35 +18,44 @@ from onnx.helper import (
 from onnx.reference import ReferenceEvaluator
 
 
-@pytest.mark.parametrize("group,channels_per_group", [(1, 1), (2, 1), (2, 2), (3, 2)])
+@pytest.mark.parametrize(
+    "group,inputs_per_group,outputs_per_group",
+    [(1, 1, 1), (2, 1, 1), (2, 2, 2), (3, 2, 2), (2, 2, 3), (2, 3, 2)],
+)
 @pytest.mark.parametrize("with_bias", [False, True])
-def test_conv_transpose_grouped_bias(group, channels_per_group, with_bias):
-    channels = group * channels_per_group
-    shape = [2, channels, 1, 1]
+def test_conv_transpose_grouped_bias(
+    group, inputs_per_group, outputs_per_group, with_bias
+):
+    input_channels = group * inputs_per_group
+    output_channels = group * outputs_per_group
+    input_shape = [2, input_channels, 1, 1]
+    weight_shape = [input_channels, outputs_per_group, 1, 1]
+    output_shape = [2, output_channels, 1, 1]
     inputs = [
-        make_tensor_value_info("X", TensorProto.FLOAT, shape),
-        make_tensor_value_info(
-            "W", TensorProto.FLOAT, [channels, channels_per_group, 1, 1]
-        ),
+        make_tensor_value_info("X", TensorProto.FLOAT, input_shape),
+        make_tensor_value_info("W", TensorProto.FLOAT, weight_shape),
     ]
     feeds = {
-        "X": np.arange(2 * channels, dtype=np.float32).reshape(shape),
-        "W": np.ones((channels, channels_per_group, 1, 1), dtype=np.float32),
+        "X": np.arange(2 * input_channels, dtype=np.float32).reshape(input_shape),
+        "W": np.ones(weight_shape, dtype=np.float32),
     }
     if with_bias:
-        inputs.append(make_tensor_value_info("B", TensorProto.FLOAT, [channels]))
-        feeds["B"] = np.arange(1, channels + 1, dtype=np.float32)
+        inputs.append(make_tensor_value_info("B", TensorProto.FLOAT, [output_channels]))
+        feeds["B"] = np.arange(1, output_channels + 1, dtype=np.float32)
     node = make_node("ConvTranspose", list(feeds), ["Y"], group=group)
     graph = make_graph(
-        [node], "g", inputs, [make_tensor_value_info("Y", TensorProto.FLOAT, shape)]
+        [node],
+        "g",
+        inputs,
+        [make_tensor_value_info("Y", TensorProto.FLOAT, output_shape)],
     )
     model = make_model(graph, opset_imports=[make_opsetid("", 11)])
     check_model(model)
 
-    group_sums = feeds["X"].reshape(2, group, channels_per_group).sum(axis=2)
-    expected = np.repeat(group_sums, channels_per_group, axis=1)
+    group_sums = feeds["X"].reshape(2, group, inputs_per_group).sum(axis=2)
+    expected = np.repeat(group_sums, outputs_per_group, axis=1)
     if with_bias:
         expected += feeds["B"]
     got = ReferenceEvaluator(model).run(None, feeds)[0]
-    assert_array_equal(got, expected.reshape(shape))
+    assert_array_equal(got, expected.reshape(output_shape))
     assert got.dtype == np.float32
