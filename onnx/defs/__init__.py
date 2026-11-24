@@ -9,6 +9,7 @@ __all__ = [
     "ONNX_ML_DOMAIN",
     "AI_ONNX_PREVIEW_DOMAIN",
     "AI_ONNX_PREVIEW_TRAINING_DOMAIN",
+    "ONNX_EXPERIMENTAL_STATE_DOMAIN",
     "has",
     "register_schema",
     "deregister_schema",
@@ -28,6 +29,7 @@ ONNX_DOMAIN = ""
 ONNX_ML_DOMAIN = "ai.onnx.ml"
 AI_ONNX_PREVIEW_DOMAIN = "ai.onnx.preview"
 AI_ONNX_PREVIEW_TRAINING_DOMAIN = "ai.onnx.preview.training"
+ONNX_EXPERIMENTAL_STATE_DOMAIN = "org.onnx.experimental.state"
 
 
 has = C.has_schema

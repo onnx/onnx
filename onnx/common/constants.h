@@ -15,6 +15,7 @@ constexpr const char* AI_ONNX_ML_DOMAIN = "ai.onnx.ml";
 constexpr const char* AI_ONNX_TRAINING_DOMAIN = "ai.onnx.training";
 constexpr const char* AI_ONNX_PREVIEW_DOMAIN = "ai.onnx.preview";
 constexpr const char* AI_ONNX_PREVIEW_TRAINING_DOMAIN = "ai.onnx.preview.training";
+constexpr const char* ONNX_EXPERIMENTAL_STATE_DOMAIN = "org.onnx.experimental.state";
 // The following two are equivalent in an onnx proto representation.
 constexpr const char* ONNX_DOMAIN = "";
 constexpr const char* AI_ONNX_DOMAIN = "ai.onnx";

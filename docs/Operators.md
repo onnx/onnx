@@ -238,6 +238,13 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ai.onnx.preview.training.Gradient">ai.onnx.preview.training.Gradient</a>|<a href="Changelog.md#ai.onnx.preview.training.Gradient-1">1</a>|
 |<a href="#ai.onnx.preview.training.Momentum">ai.onnx.preview.training.Momentum</a>|<a href="Changelog.md#ai.onnx.preview.training.Momentum-1">1</a>|
 
+### org.onnx.experimental.state
+|**Operator**|**Since version**||
+|-|-|-|
+|<sub>experimental</sub> <a href="#org.onnx.experimental.state.AttentionWithCache">org.onnx.experimental.state.AttentionWithCache</a>|<a href="Changelog.md#org.onnx.experimental.state.AttentionWithCache-1">1</a>|
+|<sub>experimental</sub> <a href="#org.onnx.experimental.state.CausalConvWithState">org.onnx.experimental.state.CausalConvWithState</a>|<a href="Changelog.md#org.onnx.experimental.state.CausalConvWithState-1">1</a>|
+|<sub>experimental</sub> <a href="#org.onnx.experimental.state.LinearAttentionWithState">org.onnx.experimental.state.LinearAttentionWithState</a>|<a href="Changelog.md#org.onnx.experimental.state.LinearAttentionWithState-1">1</a>|
+
 
 ## ai.onnx (default)
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
@@ -49348,5 +49355,761 @@ expect(
 ```
 
 </details>
+
+
+## org.onnx.experimental.state
+### <sub>experimental</sub> <a name="org.onnx.experimental.state.AttentionWithCache"></a><a name="org.onnx.experimental.state.attentionwithcache">**org.onnx.experimental.state.AttentionWithCache**</a>
+
+  This operator is an experimental proposal in the custom
+  `org.onnx.experimental.state` domain. Its presence does not indicate acceptance
+  into the ONNX standard.
+
+  The state input and output have a nominal Opaque type specific to this
+  operator family. The input is a logical snapshot and is not mutated. The output
+  is a new logical snapshot, even when an implementation physically aliases
+  storage or uses copy-on-write. Implementations may choose dense, segmented,
+  paged, compressed, device-specific, or other physical representations outside
+  the graph, provided the logical behavior is preserved. Consequently, one model
+  graph can run under different state-storage policies.
+
+  When `allow_lossy_state` is zero, the physical representation must preserve the
+  logical state values according to the operator's tensor element types. When it
+  is one, the model explicitly permits implementation-selected lossy state
+  storage. This permission does not select or expose a physical representation.
+
+
+  Computes the same scaled dot-product attention math as `ai.onnx.Attention`,
+  while carrying the key/value history in an Opaque `KVCache`.
+
+  The logical cache is, for each batch element, an ordered sequence of key/value
+  records and their absolute positions. An omitted `cache` is an empty sequence.
+  `K` and `V` append records to that sequence; `present_cache` is the resulting
+  snapshot. A dense contiguous cache and a paged cache are equivalent physical
+  representations of this same logical value.
+
+  `q_positions` and `kv_positions`, when present, have shapes `(B, Sq)` and
+  `(B, Skv)` and identify absolute positions. When absent, positions are inferred
+  as a contiguous append after the cache. For ragged batches, `nonpad_kv_seqlen`
+  has shape `(B)` and gives the valid prefix length of the current K/V chunk;
+  records outside that prefix are not appended. Causal and window masks compare
+  absolute positions. `attn_mask`, when present, is additionally applied over
+  the logical key order after the cache and current valid records are combined.
+
+  Packed mode uses rank-2 token-major Q, K, and V with independent cumulative
+  `q_sequence_offsets` and `kv_sequence_offsets`. Each offset tensor has shape
+  `(B + 1)`, starts at zero, is nondecreasing, and ends at its packed token count;
+  repeated offsets represent empty sequences. Packed Y preserves Q token order.
+  Packed positions are rank-1. `attn_mask`, `nonpad_kv_seqlen`, and
+  `qk_matmul_output` are available only in padded mode.
+
+  Compact packed visibility is block CSR over logical keys, never cache pages.
+  Rows enumerate batch, then visibility head, then local query block.
+  `visibility_num_heads=1` broadcasts one head-shared pattern; setting it to
+  `q_num_heads` represents exact head-specific visibility. Active key-block
+  indices are local to each batch element's logical sequence (prior cache,
+  followed by current K/V). Active blocks are fully visible unless listed in
+  `visibility_partial_block_indices`; the corresponding uint64 mask row stores
+  exact visibility bits. Out-of-range bits in terminal blocks are ignored.
+  Blocks not listed by a CSR row are invisible. Thus arbitrary visibility,
+  partial blocks, and fully masked query rows are lossless without a dense mask.
+  Fully masked rows produce zero Y. Optional `attn_bias` is additive and aligned
+  to active logical blocks separately from visibility. Compact visibility is
+  intersected with causal and window rules and may be shared by compatible
+  layers.
+
+#### Version
+
+No versioning maintained for experimental ops.
+#### Attributes
+
+<dl>
+<dt><tt>allow_lossy_state</tt> : int (default is 0)</dt>
+<dd>Whether implementation-selected lossy cache storage is permitted.</dd>
+<dt><tt>is_causal</tt> : int (default is 0)</dt>
+<dd>Apply causal masking using absolute positions.</dd>
+<dt><tt>kv_num_heads</tt> : int</dt>
+<dd>Number of key/value heads for rank-3 inputs.</dd>
+<dt><tt>left_window_size</tt> : int (default is -1)</dt>
+<dd>Maximum relative distance to the left; -1 is unbounded.</dd>
+<dt><tt>q_num_heads</tt> : int</dt>
+<dd>Number of query heads for rank-3 inputs.</dd>
+<dt><tt>right_window_size</tt> : int (default is -1)</dt>
+<dd>Maximum relative distance to the right; -1 is unbounded.</dd>
+<dt><tt>scale</tt> : float</dt>
+<dd>Scaling factor applied to Q*K^T. The default is 1/sqrt(head_size).</dd>
+<dt><tt>softcap</tt> : float (default is 0.0)</dt>
+<dd>Optional positive soft cap for logits; zero disables it.</dd>
+<dt><tt>softmax_precision</tt> : int</dt>
+<dd>Optional softmax computation element type.</dd>
+<dt><tt>visibility_k_block_size</tt> : int (default is 64)</dt>
+<dd>Packed visibility logical key block size.</dd>
+<dt><tt>visibility_num_heads</tt> : int (default is 1)</dt>
+<dd>Packed visibility head count: 1 or q_num_heads.</dd>
+<dt><tt>visibility_q_block_size</tt> : int (default is 1)</dt>
+<dd>Packed visibility query block size.</dd>
+</dl>
+
+#### Inputs (3 - 15)
+
+<dl>
+<dt><tt>Q</tt> : T1</dt>
+<dd>Rank-2 packed token-major, rank-3 padded packed-hidden, or rank-4 query tensor.</dd>
+<dt><tt>K</tt> : T1</dt>
+<dd>Rank-2 packed token-major, rank-3 padded packed-hidden, or rank-4 key tensor for new records.</dd>
+<dt><tt>V</tt> : T2</dt>
+<dd>Rank-2 packed token-major, rank-3 padded packed-hidden, or rank-4 value tensor for new records.</dd>
+<dt><tt>attn_mask</tt> (optional) : U</dt>
+<dd>Optional padded-mode boolean or additive attention mask.</dd>
+<dt><tt>cache</tt> (optional) : S</dt>
+<dd>Optional prior logical cache snapshot. Omission initializes an empty cache.</dd>
+<dt><tt>q_positions</tt> (optional) : P</dt>
+<dd>Optional absolute query positions with padded shape (B, Sq) or packed shape (total_q).</dd>
+<dt><tt>kv_positions</tt> (optional) : P</dt>
+<dd>Optional absolute positions for current K/V with padded shape (B, Skv) or packed shape (total_new_kv).</dd>
+<dt><tt>nonpad_kv_seqlen</tt> (optional) : tensor(int64)</dt>
+<dd>Optional valid current K/V prefix lengths with shape (B).</dd>
+<dt><tt>q_sequence_offsets</tt> (optional) : I</dt>
+<dd>Packed-mode cumulative query offsets with shape (B + 1).</dd>
+<dt><tt>kv_sequence_offsets</tt> (optional) : I</dt>
+<dd>Packed-mode cumulative new-K/V offsets with shape (B + 1).</dd>
+<dt><tt>visibility_row_offsets</tt> (optional) : I</dt>
+<dd>Optional packed block-CSR row offsets.</dd>
+<dt><tt>visibility_key_blocks</tt> (optional) : I</dt>
+<dd>Optional active logical key-block indices.</dd>
+<dt><tt>visibility_partial_block_indices</tt> (optional) : I</dt>
+<dd>Optional increasing active-block indices that have partial visibility.</dd>
+<dt><tt>visibility_partial_block_mask</tt> (optional) : tensor(uint64)</dt>
+<dd>Optional exact uint64 masks with shape (partial_blocks, query_block_size, ceil(key_block_size / 64)).</dd>
+<dt><tt>attn_bias</tt> (optional) : T1</dt>
+<dd>Optional additive packed bias with shape (active_blocks, query_block_size, key_block_size).</dd>
+</dl>
+
+#### Outputs (2 - 3)
+
+<dl>
+<dt><tt>Y</tt> : T1</dt>
+<dd>Attention output, following ai.onnx.Attention layout rules.</dd>
+<dt><tt>present_cache</tt> (non-differentiable) : S</dt>
+<dd>Updated logical cache snapshot.</dd>
+<dt><tt>qk_matmul_output</tt> (optional) : T1</dt>
+<dd>Optional logical QK score tensor before masking and softmax.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain Q, K, Y, and score types.</dd>
+<dt><tt>T2</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain V types.</dd>
+<dt><tt>U</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(bool)</dt>
+<dd>Constrain mask types.</dd>
+<dt><tt>I</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain cumulative offsets and compact indices.</dd>
+<dt><tt>P</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain absolute position types.</dd>
+<dt><tt>S</tt> : opaque(org.onnx.experimental.state,KVCache)</dt>
+<dd>Nominal opaque KV cache type.</dd>
+</dl>
+
+
+### <sub>experimental</sub> <a name="org.onnx.experimental.state.CausalConvWithState"></a><a name="org.onnx.experimental.state.causalconvwithstate">**org.onnx.experimental.state.CausalConvWithState**</a>
+
+  This operator is an experimental proposal in the custom
+  `org.onnx.experimental.state` domain. Its presence does not indicate acceptance
+  into the ONNX standard.
+
+  The state input and output have a nominal Opaque type specific to this
+  operator family. The input is a logical snapshot and is not mutated. The output
+  is a new logical snapshot, even when an implementation physically aliases
+  storage or uses copy-on-write. Implementations may choose dense, segmented,
+  paged, compressed, device-specific, or other physical representations outside
+  the graph, provided the logical behavior is preserved. Consequently, one model
+  graph can run under different state-storage policies.
+
+  When `allow_lossy_state` is zero, the physical representation must preserve the
+  logical state values according to the operator's tensor element types. When it
+  is one, the model explicitly permits implementation-selected lossy state
+  storage. This permission does not select or expose a physical representation.
+
+
+  Computes the same depthwise causal one-dimensional convolution as
+  `ai.onnx.CausalConvWithState`, while carrying bounded history in an Opaque
+  `CausalConvState`. The logical state is the last `(K - 1) * dilation` raw input
+  samples per batch and channel in chronological order. It is bounded history,
+  not a KV sequence, and implementations may use ring buffers or other suitable
+  representations.
+
+  An omitted `state` initializes that history to zero. `sequence_lens`, when
+  present, has shape `(B)` and selects a valid prefix per batch element.
+  Positions outside the prefix produce zero output and do not advance history.
+
+#### Version
+
+No versioning maintained for experimental ops.
+#### Attributes
+
+<dl>
+<dt><tt>activation</tt> : string (default is none)</dt>
+<dd>One of none, silu, or swish.</dd>
+<dt><tt>allow_lossy_state</tt> : int (default is 0)</dt>
+<dd>Whether implementation-selected lossy history storage is permitted.</dd>
+<dt><tt>dilation</tt> : int (default is 1)</dt>
+<dd>Spacing between kernel samples; must be at least 1.</dd>
+</dl>
+
+#### Inputs (2 - 5)
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor with shape (B, C, L).</dd>
+<dt><tt>weight</tt> : T</dt>
+<dd>Depthwise kernel with shape (C, 1, K).</dd>
+<dt><tt>bias</tt> (optional) : T</dt>
+<dd>Optional per-channel bias with shape (C).</dd>
+<dt><tt>state</tt> (optional, non-differentiable) : S</dt>
+<dd>Optional prior logical history. Omission initializes zeros.</dd>
+<dt><tt>sequence_lens</tt> (optional) : tensor(int64)</dt>
+<dd>Optional valid prefix lengths with shape (B).</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Convolution output with shape (B, C, L).</dd>
+<dt><tt>present_state</tt> (non-differentiable) : S</dt>
+<dd>Updated bounded-history snapshot.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
+<dd>Constrain tensor types.</dd>
+<dt><tt>S</tt> : opaque(org.onnx.experimental.state,CausalConvState)</dt>
+<dd>Nominal opaque causal-convolution state type.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>b1_c1_degenerate</summary>
+
+```python
+# Mamba/GDN inner-head edge case: B=1, C=1.
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 1, 1, 6, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight)
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_b1_c1_degenerate",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>basic</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight)
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_basic",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>decode_step</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight", "bias", "past_state"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 1, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+bias = np.random.randn(channels).astype(np.float32)
+past_state = np.random.randn(batch_size, channels, k - 1).astype(np.float32)
+
+output, present_state = _compute(
+    input_, weight, bias=bias, past_state=past_state
+)
+
+expect(
+    node,
+    inputs=[input_, weight, bias, past_state],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_decode_step",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>dilated</summary>
+
+```python
+for dilation, length, k, with_state, activation in (
+    (2, 7, 3, False, "none"),
+    (3, 1, 4, True, "silu"),
+    (2, 0, 3, True, "none"),
+    (3, 2, 1, False, "swish"),
+):
+    input_ = np.arange(2 * length, dtype=np.float32).reshape(1, 2, length)
+    weight = np.arange(2 * k, dtype=np.float32).reshape(2, 1, k) / 10
+    bias = np.array([0.25, -0.5], dtype=np.float32)
+    history = (k - 1) * dilation
+    past = np.arange(2 * history, dtype=np.float32).reshape(1, 2, history)
+    node = onnx.helper.make_node(
+        "CausalConvWithState",
+        ["input", "weight", "bias", "past_state"]
+        if with_state
+        else ["input", "weight", "bias"],
+        ["output", "present_state"],
+        dilation=dilation,
+        activation=activation,
+    )
+    expected = _compute(
+        input_, weight, bias, past if with_state else None, activation, dilation
+    )
+    expect(
+        node,
+        inputs=[input_, weight, bias, past]
+        if with_state
+        else [input_, weight, bias],
+        outputs=list(expected),
+        name=f"test_causal_conv_with_state_dilated_d{dilation}_l{length}_k{k}",
+        opset_imports=[onnx.helper.make_opsetid("", 29)],
+    )
+```
+
+</details>
+
+
+<details>
+<summary>fp16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.rand(batch_size, channels, length).astype(np.float16)
+weight = np.random.rand(channels, 1, k).astype(np.float16)
+
+output, present_state = _compute(input_, weight)
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_fp16",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>kernel_size_one</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 1
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight)
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_kernel_size_one",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>short_input_no_past_state</summary>
+
+```python
+# L < k-1 with no past_state: zero-pad is wider than the input.
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 2, 5
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight)
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_short_input_no_past_state",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>silu</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+    activation="silu",
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight, activation="silu")
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_silu",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>silu_fp16</summary>
+
+```python
+# fp16 + SiLU: the reference upcasts Sigmoid/Mul to float32, so the
+# function-body expansion must do the same to stay numerically faithful.
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+    activation="silu",
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.rand(batch_size, channels, length).astype(np.float16)
+weight = np.random.rand(channels, 1, k).astype(np.float16)
+
+output, present_state = _compute(input_, weight, activation="silu")
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_silu_fp16",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>silu_with_past_state</summary>
+
+```python
+# Fused activation combined with concat-from-past variant of PaddedInput.
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight", "", "past_state"],
+    outputs=["output", "present_state"],
+    activation="silu",
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+past_state = np.random.randn(batch_size, channels, k - 1).astype(np.float32)
+
+output, present_state = _compute(
+    input_, weight, past_state=past_state, activation="silu"
+)
+
+expect(
+    node,
+    inputs=[input_, weight, past_state],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_silu_with_past_state",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>swish_alias</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+    activation="swish",
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight, activation="swish")
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_swish_alias",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>with_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight", "bias"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+bias = np.random.randn(channels).astype(np.float32)
+
+output, present_state = _compute(input_, weight, bias=bias)
+
+expect(
+    node,
+    inputs=[input_, weight, bias],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_with_bias",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>with_bias_and_past_state</summary>
+
+```python
+# Multi-token (T>1) path through Concat(past, input) -> Conv(+bias).
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight", "bias", "past_state"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+bias = np.random.randn(channels).astype(np.float32)
+past_state = np.random.randn(batch_size, channels, k - 1).astype(np.float32)
+
+output, present_state = _compute(
+    input_, weight, bias=bias, past_state=past_state
+)
+
+expect(
+    node,
+    inputs=[input_, weight, bias, past_state],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_with_bias_and_past_state",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>with_past_state</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight", "", "past_state"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+past_state = np.random.randn(batch_size, channels, k - 1).astype(np.float32)
+
+output, present_state = _compute(input_, weight, past_state=past_state)
+
+expect(
+    node,
+    inputs=[input_, weight, past_state],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_with_past_state",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+### <sub>experimental</sub> <a name="org.onnx.experimental.state.LinearAttentionWithState"></a><a name="org.onnx.experimental.state.linearattentionwithstate">**org.onnx.experimental.state.LinearAttentionWithState**</a>
+
+  This operator is an experimental proposal in the custom
+  `org.onnx.experimental.state` domain. Its presence does not indicate acceptance
+  into the ONNX standard.
+
+  The state input and output have a nominal Opaque type specific to this
+  operator family. The input is a logical snapshot and is not mutated. The output
+  is a new logical snapshot, even when an implementation physically aliases
+  storage or uses copy-on-write. Implementations may choose dense, segmented,
+  paged, compressed, device-specific, or other physical representations outside
+  the graph, provided the logical behavior is preserved. Consequently, one model
+  graph can run under different state-storage policies.
+
+  When `allow_lossy_state` is zero, the physical representation must preserve the
+  logical state values according to the operator's tensor element types. When it
+  is one, the model explicitly permits implementation-selected lossy state
+  storage. This permission does not select or expose a physical representation.
+
+
+  Computes the recurrent math of `ai.onnx.LinearAttention`, while carrying the
+  recurrent accumulator in an Opaque `LinearAttentionState`. The logical state is
+  the accumulator matrix required by the selected `update_rule`; it is not a KV
+  sequence and need not use a paged-KV representation.
+
+  An omitted `state` is the all-zero accumulator. Tokens are processed in
+  sequence order using the `linear`, `gated`, `delta`, or `gated_delta`
+  recurrence defined by `ai.onnx.LinearAttention`. `sequence_lens`, when present,
+  has shape `(B)` and selects a valid prefix per batch element. Positions outside
+  that prefix produce zero output and do not update the state.
+
+#### Version
+
+No versioning maintained for experimental ops.
+#### Attributes
+
+<dl>
+<dt><tt>allow_lossy_state</tt> : int (default is 0)</dt>
+<dd>Whether implementation-selected lossy accumulator storage is permitted.</dd>
+<dt><tt>chunk_size</tt> : int (default is 64)</dt>
+<dd>Implementation hint that does not change results.</dd>
+<dt><tt>kv_num_heads</tt> : int (required)</dt>
+<dd>Number of compact key heads.</dd>
+<dt><tt>q_num_heads</tt> : int (required)</dt>
+<dd>Number of query heads.</dd>
+<dt><tt>scale</tt> : float (default is 0.0)</dt>
+<dd>Output scale; zero derives 1/sqrt(d_k).</dd>
+<dt><tt>update_rule</tt> : string (default is gated_delta)</dt>
+<dd>One of linear, gated, delta, or gated_delta.</dd>
+<dt><tt>v_num_heads</tt> : int (default is 0)</dt>
+<dd>Value/state head count; zero uses kv_num_heads.</dd>
+</dl>
+
+#### Inputs (3 - 7)
+
+<dl>
+<dt><tt>query</tt> : T</dt>
+<dd>Packed query tensor with shape (B, T, Hq*d_k).</dd>
+<dt><tt>key</tt> : T</dt>
+<dd>Packed key tensor with shape (B, T, Hkv*d_k).</dd>
+<dt><tt>value</tt> : T</dt>
+<dd>Packed value tensor with shape (B, T, Hv*d_v).</dd>
+<dt><tt>state</tt> (optional, non-differentiable) : S</dt>
+<dd>Optional prior logical accumulator. Omission initializes zeros.</dd>
+<dt><tt>decay</tt> (optional) : T</dt>
+<dd>Optional decay gate required by gated update rules.</dd>
+<dt><tt>beta</tt> (optional) : T</dt>
+<dd>Optional update rate required by delta update rules.</dd>
+<dt><tt>sequence_lens</tt> (optional) : tensor(int64)</dt>
+<dd>Optional valid prefix lengths with shape (B).</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Packed recurrent attention output with shape (B, T, Ho*d_v).</dd>
+<dt><tt>present_state</tt> (non-differentiable) : S</dt>
+<dd>Updated logical recurrent accumulator snapshot.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
+<dd>Constrain activation types.</dd>
+<dt><tt>S</tt> : opaque(org.onnx.experimental.state,LinearAttentionState)</dt>
+<dd>Nominal opaque linear-attention state type.</dd>
+</dl>
 
 
