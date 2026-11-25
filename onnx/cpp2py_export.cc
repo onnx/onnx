@@ -691,6 +691,11 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def(nb::init<const std::string&>())
       .def("open_model_file", &checker::ExternalDataContext::open_model_file, nb::arg("location"))
       .def(
+          "open_existing_model_file_for_write",
+          &checker::ExternalDataContext::open_existing_model_file_for_write,
+          nb::arg("location"))
+      .def("create_model_file", &checker::ExternalDataContext::create_model_file, nb::arg("location"))
+      .def(
           "open",
           &checker::ExternalDataContext::open,
           nb::arg("location"),

@@ -7,8 +7,11 @@ import io
 import os
 import pathlib
 import shutil
+import subprocess
+import sys
 import uuid
 import warnings
+from functools import partial
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -22,6 +25,7 @@ from onnx import (
     checker,
     external_data_helper,
     helper,
+    model_container,
     parser,
     shape_inference,
 )
@@ -252,6 +256,44 @@ class TestLoadExternalData(TestLoadExternalDataBase):
 
         attribute_tensor = new_model.graph.node[0].attribute[0].t
         np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
+
+    def test_named_model_file_object_rejects_replaced_parent(self) -> None:
+        """A named file handle must not load sidecars from a replacement directory."""
+        replacement_path = pathlib.Path(self.temp_dir) / "replacement"
+        replacement_path.mkdir()
+        replacement_model = replacement_path / "model.onnx"
+        shutil.copyfile(self.model_filename, replacement_model)
+        (replacement_path / "input_value.bin").write_bytes(
+            bytes(self.initializer_value.nbytes)
+        )
+        (replacement_path / "attribute_value.bin").write_bytes(
+            bytes(self.attribute_value.nbytes)
+        )
+
+        class StaleNamedFile:
+            def __init__(self, model_file) -> None:
+                self._model_file = model_file
+                self.name = str(replacement_model)
+
+            def read(self):
+                return self._model_file.read()
+
+            def fileno(self) -> int:
+                return self._model_file.fileno()
+
+        with (
+            open(self.model_filename, "rb") as model_file,
+            pytest.raises(ValueError, match="does not belong"),
+        ):
+            onnx.load_model(StaleNamedFile(model_file), self.serialization_format)
+
+    def test_named_model_file_object_loads_external_data(self) -> None:
+        """A named file handle and its verified parent still support sidecars."""
+        with open(self.model_filename, "rb") as model_file:
+            model = onnx.load_model(model_file, self.serialization_format)
+        np.testing.assert_allclose(
+            to_array(model.graph.initializer[0]), self.initializer_value
+        )
 
 
 class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
@@ -2322,3 +2364,231 @@ class TestModelFileAccess:
         assert (base / "model.onnx").read_bytes() == sentinel
         assert not (base / "weights.bin").exists()
         assert (other / "weights.bin").read_bytes() == values.tobytes()
+
+    @pytest.mark.parametrize("use_container", [True, False])
+    def test_file_created_during_serialization_is_not_overwritten(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, use_container: bool
+    ) -> None:
+        destination = tmp_path / "model.onnx"
+        sentinel = b"file created by another writer"
+        model = helper.make_model(helper.make_graph([], "test", [], []))
+        serialize = ModelProto.SerializeToString
+
+        def create_destination(proto, *args, **kwargs):
+            destination.write_bytes(sentinel)
+            return serialize(proto, *args, **kwargs)
+
+        monkeypatch.setattr(ModelProto, "SerializeToString", create_destination)
+        if use_container:
+            save = model_container.make_large_model(model.graph).save
+        else:
+            save = partial(onnx.save_model, model)
+        with pytest.raises(checker.ValidationError):
+            save(str(destination))
+
+        assert destination.read_bytes() == sentinel
+
+    @pytest.mark.parametrize("existing", [True, False])
+    def test_serialization_failure_preserves_model_destination(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, existing: bool
+    ) -> None:
+        destination = tmp_path / "model.onnx"
+        sentinel = b"existing model must survive"
+        if existing:
+            destination.write_bytes(sentinel)
+        model = helper.make_model(helper.make_graph([], "test", [], []))
+
+        def fail_serialization(*_args, **_kwargs):
+            raise RuntimeError("Cannot serialize model")
+
+        monkeypatch.setattr(
+            onnx._get_serializer("protobuf"), "serialize_proto", fail_serialization
+        )
+        with pytest.raises(RuntimeError, match="Cannot serialize model"):
+            onnx.save_model(model, destination)
+        if existing:
+            assert destination.read_bytes() == sentinel
+        else:
+            assert not destination.exists()
+
+    @pytest.mark.skipif(os.name == "nt", reason="Requires POSIX file permissions")
+    @pytest.mark.parametrize("named_file", [True, False])
+    def test_save_write_only_model_with_external_data(
+        self, tmp_path: Path, named_file: bool
+    ) -> None:
+        destination = tmp_path / "model.onnx"
+        destination.write_bytes(b"stale data" * 1000)
+        destination.chmod(0o200)
+        try:
+            if os.access(destination, os.R_OK):
+                pytest.skip("Current user can bypass read permission checks")
+            values = np.arange(6, dtype=np.float32)
+            model = helper.make_model(
+                helper.make_graph(
+                    [], "test", [], [], [from_array(values, name="weight")]
+                )
+            )
+            if named_file:
+                with open(destination, "wb") as stream:
+                    onnx.save_model(
+                        model,
+                        stream,
+                        save_as_external_data=True,
+                        location="weights.bin",
+                        size_threshold=0,
+                    )
+            else:
+                onnx.save_model(
+                    model,
+                    destination,
+                    save_as_external_data=True,
+                    location="weights.bin",
+                    size_threshold=0,
+                )
+        finally:
+            destination.chmod(0o600)
+        loaded = onnx.load_model(destination)
+        np.testing.assert_array_equal(to_array(loaded.graph.initializer[0]), values)
+
+    @pytest.mark.skipif(os.name == "nt", reason="Requires POSIX FIFOs")
+    @pytest.mark.parametrize(
+        "operation",
+        [
+            "load_model",
+            "load_tensor",
+            "load_tensors",
+            "load_container",
+            "load_main",
+            "save_main",
+            "check_main",
+        ],
+    )
+    def test_fifo_is_rejected_without_blocking(
+        self, tmp_path: Path, operation: str
+    ) -> None:
+        values = np.arange(6, dtype=np.float32)
+        tensor = from_array(values, name="weight")
+        set_external_data(tensor, location="weights.bin")
+        tensor.ClearField("raw_data")
+        model = helper.make_model(helper.make_graph([], "test", [], [], [tensor]))
+        (tmp_path / "model.onnx").write_bytes(model.SerializeToString())
+        os.mkfifo(tmp_path / "weights.bin")
+        os.mkfifo(tmp_path / "main.onnx")
+        # Keep a regression bounded even if the native open blocks with the GIL held.
+        script = """
+import os
+import sys
+import onnx
+from onnx import external_data_helper, model_container
+
+operation = sys.argv[1]
+base = sys.argv[2]
+try:
+    if operation == "load_model":
+        onnx.load_model(os.path.join(base, "model.onnx"))
+    elif operation == "load_container":
+        model_container.ModelContainer().load(os.path.join(base, "model.onnx"))
+    elif operation == "load_main":
+        onnx.load_model(os.path.join(base, "main.onnx"))
+    elif operation == "save_main":
+        onnx.save_model(onnx.ModelProto(), os.path.join(base, "main.onnx"))
+    elif operation == "check_main":
+        onnx.checker.check_model(os.path.join(base, "main.onnx"))
+    else:
+        model = onnx.load_model(os.path.join(base, "model.onnx"), load_external_data=False)
+        if operation == "load_tensor":
+            external_data_helper.load_external_data_for_tensor(model.graph.initializer[0], base)
+        else:
+            external_data_helper.load_external_data_for_model(model, base)
+except onnx.checker.ValidationError:
+    pass
+else:
+    raise AssertionError("FIFO was accepted")
+"""
+        result = subprocess.run(  # noqa: S603 - fixed script and parametrized test operations
+            [sys.executable, "-c", script, operation, str(tmp_path)],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+        assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_save_model_pins_main_model_and_external_data_to_same_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Replacing the output directory before the model write must not split the output."""
+    base_path = tmp_path / "output"
+    original_path = tmp_path / "output-original"
+    base_path.mkdir()
+    model_path = base_path / "model.onnx"
+    model, _ = _make_external_data_test_model()
+    original_context = onnx._ExternalDataContext
+    replaced = False
+
+    class ReplacingContext:
+        def __init__(self, base_dir: str) -> None:
+            self._context = original_context(base_dir)
+
+        def open(self, location: str, tensor_name: str, read_only: bool) -> int:
+            return self._context.open(location, tensor_name, read_only)
+
+        def open_existing_model_file_for_write(self, location: str) -> int:
+            nonlocal replaced
+            try:
+                return self._context.open_existing_model_file_for_write(location)
+            finally:
+                if not replaced:
+                    base_path.rename(original_path)
+                    base_path.mkdir()
+                    replaced = True
+
+        def create_model_file(self, location: str) -> int:
+            return self._context.create_model_file(location)
+
+    monkeypatch.setattr(onnx, "_ExternalDataContext", ReplacingContext)
+    try:
+        onnx.save_model(
+            model,
+            model_path,
+            save_as_external_data=True,
+            location="data.bin",
+        )
+
+        assert (original_path / "model.onnx").is_file()
+        assert (original_path / "data.bin").is_file()
+        assert not (base_path / "model.onnx").exists()
+        assert not (base_path / "data.bin").exists()
+    finally:
+        if replaced:
+            shutil.rmtree(base_path)
+            original_path.rename(base_path)
+
+
+def test_main_model_filename_may_contain_two_dots(tmp_path: Path) -> None:
+    """Model filenames containing two dots remain valid."""
+    model, _ = _make_external_data_test_model()
+    model_path = tmp_path / "model..onnx"
+
+    onnx.save_model(model, model_path)
+
+    loaded = onnx.load_model(model_path)
+    assert loaded.graph.name == model.graph.name
+
+
+@pytest.mark.parametrize("mode", ["wb", "w+b"])
+def test_named_model_file_object_saves_external_data(tmp_path: Path, mode: str) -> None:
+    """A verified named output handle and its sidecars share one authority."""
+    model, array = _make_external_data_test_model()
+    model_path = tmp_path / "model.onnx"
+    with open(model_path, mode) as model_file:
+        onnx.save_model(
+            model,
+            model_file,
+            save_as_external_data=True,
+            location="data.bin",
+        )
+
+    loaded = onnx.load_model(model_path)
+    np.testing.assert_allclose(to_array(loaded.graph.initializer[0]), array)

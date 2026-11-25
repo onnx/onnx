@@ -257,3 +257,31 @@ class TestLargeOnnx:
                     assert tested == 1
             loaded_model = onnx.load_model(filename, load_external_data=True)
             onnx.checker.check_model(loaded_model)
+
+    @pytest.mark.parametrize("existing", [True, False])
+    @pytest.mark.parametrize("all_tensors_to_one_file", [True, False])
+    def test_save_serialization_failure_preserves_model_destination(
+        self, tmp_path, monkeypatch, existing, all_tensors_to_one_file
+    ) -> None:
+        large_model = _large_linear_regression()
+        destination = tmp_path / "model.onnx"
+        original_bytes = b"existing model must survive"
+        if existing:
+            destination.write_bytes(original_bytes)
+        serialize = onnx.ModelProto.SerializeToString
+
+        def fail_on_completed_copy(model, *args, **kwargs):
+            if model is not large_model.model_proto:
+                raise RuntimeError("Cannot serialize completed copy")
+            return serialize(model, *args, **kwargs)
+
+        monkeypatch.setattr(
+            onnx.ModelProto, "SerializeToString", fail_on_completed_copy
+        )
+        with pytest.raises(RuntimeError, match="Cannot serialize completed copy"):
+            large_model.save(str(destination), all_tensors_to_one_file)
+
+        if existing:
+            assert destination.read_bytes() == original_bytes
+        else:
+            assert not destination.exists()

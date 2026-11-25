@@ -19,63 +19,96 @@ When an ONNX model references external data files via relative paths, an attacke
 
 ## Defense Layers
 
-We use a 4-layer defense-in-depth approach. Each entry point applies the layers appropriate to its context (see the table below).
+File access uses one pinned directory authority for the lifetime of a model-level
+load, save, or check. The authority is created from the caller-selected base
+directory once. Path-based operations open the main model and every sidecar
+relative to that same authority; subsequent locations are never resolved again
+from a base-directory pathname.
 
-### Layer 1: Canonical Path Containment
+### Layer 1: Lexical Location Validation
 
-- **C++**: `std::filesystem::weakly_canonical()` resolves the path, then verifies it starts with the canonical base directory.
+Locations must be non-empty relative paths, must name a file, and must not
+contain a parent-directory component after lexical normalization. Filenames
+containing two dots remain valid. Absolute and rooted paths are rejected before file access.
 
-This catches `..` traversal and symlinks in any path component (not just the final one).
+### Layer 2: Pinned, Component-Relative Resolution
 
-### Layer 2: Symlink Detection
+- **POSIX**: The base directory is pinned by a file descriptor. Each parent is
+  opened relative to the preceding descriptor with `openat(O_DIRECTORY |
+  O_NOFOLLOW)`, and the leaf is opened relative to its verified parent with
+  `openat(O_NOFOLLOW)`. A path assembled from strings is never reopened.
+- **Windows**: The base directory is pinned by a handle. Each component is
+  opened relative to the preceding handle, with reparse-point traversal
+  disabled and every opened component checked for reparse attributes.
 
-- **C++**: `std::filesystem::is_symlink(data_path)` rejects the final-component symlink.
+Replacing or renaming the original pathname therefore does not redirect later
+accesses: they remain relative to the pinned directory identity.
 
-This is a belt-and-suspenders check alongside containment. It provides a clear, specific error message when the final path component is a symlink.
+The caller-selected base-directory path and main-model leaf may each be a
+symlink. They are followed once when their handles are opened; external-data
+components remain link-free.
 
-### Layer 3: Secure File Open with Post-Open Verification
+### Layer 3: Same-Object Validation
 
-Three platform-specific strategies, in order of preference:
+The opened external-data leaf must be a regular file with at most one hard link. Reads and
+writes validate the opened handle with `fstat()` or
+`GetFileInformationByHandle()`. Checker metadata uses descriptor-relative
+`fstatat(AT_SYMLINK_NOFOLLOW)` on POSIX or the relative Windows handle, so its
+file type, link count, and size refer to the same authority as loading.
 
-- **Linux 5.6+**: `openat2(RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS)` — atomic kernel containment. No TOCTOU. Falls back on `ENOSYS`.
-- **FreeBSD 13+ / macOS 15+**: `openat(O_RESOLVE_BENEATH | O_NOFOLLOW)` — equivalent BSD-style containment.
-- **POSIX fallback**: `open(O_NOFOLLOW)` + post-open inode comparison (`fstat` fd vs `stat` canonical path).
-- **Windows**: `CreateFileW(FILE_FLAG_OPEN_REPARSE_POINT)` + reparse point attribute check + inode comparison. Converted to CRT fd via `_open_osfhandle()` before returning.
-
-All POSIX fds are opened with `O_CLOEXEC`. All platforms return a CRT file descriptor.
-
-Hardlinks are detected via `fstat()` link count (POSIX) or `GetFileInformationByHandle()` (Windows), always fail closed.
-
-### Layer 4: Pre-Open Hardlink Count Check
-
-- **C++**: `std::filesystem::hard_link_count(data_path) > 1` rejects files with multiple hardlinks before opening.
-
-This is defense-in-depth alongside Layer 3's post-open hardlink check. It provides a clear error message at the path level before any file I/O occurs.
+All POSIX descriptors use `O_CLOEXEC`. All platforms return a CRT file
+descriptor to Python. Write mode creates missing leaves with owner-only
+permissions on POSIX and delays truncation until after validation.
 
 ## Protected Entry Points
 
-All Python entry points use the C++ `open_external_data()` function. In **read mode** it applies all four layers (pre-open validation via `resolve_external_data_location` for Layers 1, 2, 4, then Layer 3 post-open). In **write mode** it applies Layers 1 and 3 only — Layers 2 and 4 are skipped because the file may not yet exist. The C++ checker calls `resolve_external_data_location` directly without opening files, so Layer 3 does not apply there. With `check_external_data_files=False`, the checker does not call it at all: it applies only the lexical checks that reading and writing also apply to each location (relative; no `..` component and no component made only of dots and spaces, with `\` a separator on every platform; names a file) and, on Windows, rejects a root directory or other drive, so Layers 1, 2 and 4 do not run and a symlink or hardlink in the model directory goes undetected.
+All Python entry points use the C++ `ExternalDataContext`. Model-level entry
+points reuse one context across every tensor; single-tensor entry points create
+a one-shot context. Path-based model load/save and the C++ checker retain one
+context from the main-model open through all sidecar operations.
 
-| Entry Point | File | Mode | Layers |
+| Entry Point | File | Mode | Authority lifetime |
 |---|---|---|---|
-| `resolve_external_data_location` | `onnx/checker.cc` | read | 1, 2, 4 |
-| `check_model(..., check_external_data_files=False)` | `onnx/checker.cc` | none (no file access) | none (lexical checks only) |
-| `open_external_data` | `onnx/checker.cc` | read | 1, 2, 3, 4 |
-| `open_external_data` | `onnx/checker.cc` | write | 1, 3 |
-| `load_external_data_for_tensor` | `onnx/external_data_helper.py` | read | 1, 2, 3, 4 (via `open_external_data`) |
-| `save_external_data` | `onnx/external_data_helper.py` | write | 1, 3 (via `open_external_data`) |
-| `ModelContainer._load_large_initializers` | `onnx/model_container.py` | read | 1, 2, 3, 4 (via `open_external_data`) |
+| `open_external_data` | `onnx/checker.cc` | read/write | one file |
+| `check_model(path)` | `onnx/checker.cc` | model read/metadata | main model and all sidecars |
+| `load_model(path)` / `save_model(path)` | `onnx/__init__.py` | read/write | main model and all sidecars |
+| `load_external_data_for_tensor` | `onnx/external_data_helper.py` | read | one tensor |
+| `load_external_data_for_model` | `onnx/external_data_helper.py` | read | whole model |
+| `save_external_data` | `onnx/external_data_helper.py` | write | one tensor |
+| `write_external_data_tensors` | `onnx/external_data_helper.py` | write | whole model |
+| `ModelContainer` load/save | `onnx/model_container.py` | read/write | whole model operation |
 
 ## Known Limitations
 
+### File-Like Python Objects
+
+For an already-open Python file object with a `.name`, ONNX opens that name
+relative to a newly pinned parent directory and compares `fstat()` identities.
+Sidecars use the directory authority only when both handles name the same file.
+If the identity cannot be verified (for example, an external-data model is read
+from a custom object without `fileno()`), automatic sidecar processing fails
+closed. Models without external data remain usable with such objects.
+
 ### Windows
 
-- Reparse points (symlinks, junctions) are rejected via `FILE_FLAG_OPEN_REPARSE_POINT` + attribute check.
-- Symlink and hardlink tests are skipped on Windows in the test suite.
+- Reparse points (including symlinks and junctions) are rejected for every
+  external-data component.
+- Windows path lookup remains case-insensitive, matching ordinary NTFS
+  behavior.
 
-### Case-Insensitive Filesystems
+### Save Failures
 
-The canonical path containment checks (Layers 1 and 3) use string comparison. On case-insensitive filesystems (Windows NTFS, macOS HFS+), paths with different casing may incorrectly fail containment. This fails closed (false rejection, not a bypass).
+For path-based outputs, both model save APIs serialize the completed model before
+creating or truncating the model destination. Existing destinations are pinned before sidecar writes;
+missing destinations are created exclusively after serialization. If another
+writer creates the destination in between, saving fails without overwriting it.
+Sidecar writes are not transactional and may already have occurred on failure.
+
+### Metadata-Only Checking
+
+`check_model(path, check_external_data_files=False)` still opens and parses the
+main model. It validates external-data metadata without accessing the sidecars.
+The directory context does not change that behavior.
 
 ## Testing
 
