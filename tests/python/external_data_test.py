@@ -20,6 +20,7 @@ from onnx import (
     NodeProto,
     TensorProto,
     checker,
+    external_data_helper,
     helper,
     parser,
     shape_inference,
@@ -150,6 +151,92 @@ class TestLoadExternalData(TestLoadExternalDataBase):
 
         attribute_tensor = model.graph.node[0].attribute[0].t
         np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
+
+    def test_load_external_data_for_model_reuses_directory_authority(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """All tensors in one model load must use the same pinned base directory."""
+        original_context = external_data_helper._ExternalDataContext
+        constructed_contexts = []
+
+        class CountingContext:
+            def __init__(self, base_dir: str) -> None:
+                self._context = original_context(base_dir)
+                constructed_contexts.append(self)
+
+            def open(self, location: str, tensor_name: str, read_only: bool) -> int:
+                return self._context.open(location, tensor_name, read_only)
+
+        monkeypatch.setattr(
+            external_data_helper, "_ExternalDataContext", CountingContext
+        )
+        model = onnx.load_model(
+            self.model_filename, self.serialization_format, load_external_data=False
+        )
+
+        load_external_data_for_model(model, self.temp_dir)
+
+        assert len(constructed_contexts) == 1
+
+    @pytest.mark.parametrize("replace_before_open", [True, False])
+    def test_load_model_pins_main_model_and_external_data_to_same_directory(
+        self, monkeypatch: pytest.MonkeyPatch, replace_before_open: bool
+    ) -> None:
+        """Replacing a pinned directory must not redirect the model or sidecars."""
+        if os.name == "nt" and not replace_before_open:
+            pytest.skip("Windows may deny renaming a directory with an open child file")
+        original_context = onnx._ExternalDataContext
+        base_path = pathlib.Path(self.temp_dir)
+        original_path = base_path.with_name(f"{base_path.name}-original")
+        replaced = False
+
+        class ReplacingContext:
+            def __init__(self, base_dir: str) -> None:
+                self._context = original_context(base_dir)
+
+            def open_model_file(self, location: str) -> int:
+                nonlocal replaced
+                fd = None
+                try:
+                    if not replace_before_open:
+                        fd = self._context.open_model_file(location)
+                    base_path.rename(original_path)
+                    replaced = True
+                    base_path.mkdir()
+                    (base_path / "input_value.bin").write_bytes(
+                        bytes(self_initializer_nbytes)
+                    )
+                    (base_path / "attribute_value.bin").write_bytes(
+                        bytes(self_attribute_nbytes)
+                    )
+                    if fd is None:
+                        fd = self._context.open_model_file(location)
+                except BaseException:
+                    if fd is not None:
+                        os.close(fd)
+                    raise
+                else:
+                    return fd
+
+            def open(self, location: str, tensor_name: str, read_only: bool) -> int:
+                return self._context.open(location, tensor_name, read_only)
+
+        self_initializer_nbytes = self.initializer_value.nbytes
+        self_attribute_nbytes = self.attribute_value.nbytes
+        monkeypatch.setattr(onnx, "_ExternalDataContext", ReplacingContext)
+        try:
+            model = onnx.load_model(self.model_filename, self.serialization_format)
+        finally:
+            if replaced:
+                shutil.rmtree(base_path)
+                original_path.rename(base_path)
+
+        np.testing.assert_allclose(
+            to_array(model.graph.initializer[0]), self.initializer_value
+        )
+        np.testing.assert_allclose(
+            to_array(model.graph.node[0].attribute[0].t), self.attribute_value
+        )
 
     def test_save_external_data(self) -> None:
         model = onnx.load_model(self.model_filename, self.serialization_format)
@@ -861,7 +948,8 @@ class TestCheckExternalDataBounds:
         with open(model_filename, "wb") as model_file:
             model_file.write(model.SerializeToString())
 
-        if payload_size == 16:
+        segment_size = 4 * self.value.dtype.itemsize
+        if payload_size == segment_size:
             checker.check_model(model_filename)
         else:
             with pytest.raises(checker.ValidationError, match="too small"):
@@ -1977,9 +2065,9 @@ class TestExternalDataInfoSecurity:
         )
         info = ExternalDataInfo(tensor)
         assert info.location == "weights.bin"
-        assert info.offset == 16
+        assert info.offset == int(tensor.external_data[1].value)
         assert isinstance(info.offset, int)
-        assert info.length == 1024
+        assert info.length == int(tensor.external_data[2].value)
         assert isinstance(info.length, int)
         assert info.checksum == "sha256:abc123"
 
@@ -2159,3 +2247,78 @@ class TestLoadExternalDataFileSizeValidation(TestLoadExternalDataBase):
 
         load_external_data_for_tensor(tensor, self.temp_dir)
         assert tensor.raw_data == raw
+
+
+class TestModelFileAccess:
+    @pytest.mark.skipif(os.name != "nt", reason="Windows drive-relative paths")
+    @pytest.mark.parametrize(
+        "path_kind", ["relative", "drive_relative", "rooted", "absolute"]
+    )
+    def test_windows_model_path_forms(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, path_kind: str
+    ) -> None:
+        monkeypatch.chdir(tmp_path)
+        destination = str(tmp_path / "model.onnx")
+        drive, tail = os.path.splitdrive(destination)
+        path = {
+            "relative": "model.onnx",
+            "drive_relative": drive + "model.onnx",
+            "rooted": tail,
+            "absolute": destination,
+        }[path_kind]
+        assert onnx._get_file_path(path) == destination
+        model = helper.make_model(helper.make_graph([], "test", [], []))
+        onnx.save_model(model, path)
+        assert onnx.load_model(path) == model
+
+    @pytest.mark.skipif(
+        os.name == "nt", reason="POSIX symlink and '..' lookup semantics"
+    )
+    @pytest.mark.parametrize("relative", [True, False])
+    @pytest.mark.parametrize("named_file", [True, False])
+    def test_symlink_dotdot_selects_model_and_sidecar_directory(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        relative: bool,
+        named_file: bool,
+    ) -> None:
+        base = tmp_path / "base"
+        other = tmp_path / "other"
+        base.mkdir()
+        (other / "subdir").mkdir(parents=True)
+        (base / "link").symlink_to(other / "subdir", target_is_directory=True)
+        sentinel = b"do not overwrite the lexically normalized path"
+        (base / "model.onnx").write_bytes(sentinel)
+        monkeypatch.chdir(tmp_path)
+        path = os.path.join("base", "link", "..", "model.onnx")
+        if not relative:
+            path = os.path.join(str(tmp_path), path)
+        values = np.arange(6, dtype=np.float32)
+        model = helper.make_model(
+            helper.make_graph([], "test", [], [], [from_array(values, name="weight")])
+        )
+        if named_file:
+            with open(path, "wb") as stream:
+                onnx.save_model(
+                    model,
+                    stream,
+                    save_as_external_data=True,
+                    location="weights.bin",
+                    size_threshold=0,
+                )
+            with open(path, "rb") as stream:
+                loaded = onnx.load_model(stream)
+        else:
+            onnx.save_model(
+                model,
+                path,
+                save_as_external_data=True,
+                location="weights.bin",
+                size_threshold=0,
+            )
+            loaded = onnx.load_model(path)
+        np.testing.assert_array_equal(to_array(loaded.graph.initializer[0]), values)
+        assert (base / "model.onnx").read_bytes() == sentinel
+        assert not (base / "weights.bin").exists()
+        assert (other / "weights.bin").read_bytes() == values.tobytes()

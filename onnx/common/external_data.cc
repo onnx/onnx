@@ -501,6 +501,53 @@ int64_t ExternalDataContext::open(const std::string& location, const std::string
 #endif
 }
 
+static std::filesystem::path model_filename(const std::string& location) {
+  const auto path = utf8_to_path(location);
+  if (path.empty() || path.has_parent_path() || path.has_root_name() || path == "." || path == "..") {
+    fail_check("Model filename must be a single filename: ", location);
+  }
+  return path;
+}
+
+int64_t ExternalDataContext::open_model_file(const std::string& location) const {
+  const auto filename = model_filename(location);
+#ifdef _WIN32
+  // The caller's main model may be a symlink; sidecars remain relative to the
+  // supplied directory. External data itself never follows links.
+  ScopedHandle handle(open_windows_component(
+      impl_->base_handle,
+      filename,
+      GENERIC_READ | SYNCHRONIZE,
+      FILE_OPEN,
+      FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT,
+      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+      "model"));
+  validate_windows_handle(handle.get(), "model", false);
+  const int fd = _open_osfhandle(reinterpret_cast<intptr_t>(handle.get()), _O_RDONLY | _O_BINARY);
+  if (fd < 0) {
+    fail_check("Cannot convert model file handle to fd.");
+  }
+  handle.release();
+  return fd;
+#else
+  int flags = O_RDONLY | O_NONBLOCK;
+#ifdef O_CLOEXEC
+  flags |= O_CLOEXEC;
+#endif
+  ScopedFd fd(openat(impl_->base_fd, filename.c_str(), flags));
+  if (fd.get() < 0) {
+    fail_check_with_code(
+        errno == ENOENT ? error_code::kExternalDataFileMissing : error_code::kExternalDataLocationInvalid,
+        "Cannot open model file.");
+  }
+  struct stat file_stat{};
+  if (fstat(fd.get(), &file_stat) != 0 || !S_ISREG(file_stat.st_mode)) {
+    fail_check("Model path is not a regular file.");
+  }
+  return fd.release();
+#endif
+}
+
 std::uintmax_t ExternalDataContext::file_size(const std::string& location, const std::string& tensor_name) const {
   const auto components = external_data_path_components(impl_->base_dir, location, tensor_name);
 #ifdef _WIN32

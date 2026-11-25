@@ -83,6 +83,8 @@ from typing import IO, Literal
 from onnx import serialization
 from onnx.onnx_cpp2py_export import ONNX_ML
 from onnx.external_data_helper import (
+    _ExternalDataContext,
+    _load_external_data_for_model,
     load_external_data_for_model,
     write_external_data_tensors,
     convert_model_to_external_data,
@@ -182,12 +184,19 @@ def _save_bytes(content: bytes, f: IO[bytes] | str | os.PathLike) -> None:
 
 
 def _get_file_path(f: IO[bytes] | str | os.PathLike | None) -> str | None:
-    if isinstance(f, (str, os.PathLike)):
-        return os.path.abspath(f)
-    if hasattr(f, "name"):
+    if not isinstance(f, (str, os.PathLike)):
+        if not hasattr(f, "name"):
+            return None
         assert f is not None
-        return os.path.abspath(f.name)
-    return None
+        f = f.name
+    path = os.fspath(f)
+    drive, _ = os.path.splitdrive(path)
+    if os.path.isabs(path) and (os.name != "nt" or drive):
+        return path
+    # Resolve only the current-directory prefix. Normalizing the caller's
+    # components would change the meaning of a symlink followed by "..".
+    # A drive-relative Windows path uses that drive's current directory.
+    return os.path.join(os.path.abspath(drive or os.curdir), path)
 
 
 def _get_serializer(
@@ -230,13 +239,38 @@ def load_model(
     Returns:
         Loaded in-memory ModelProto.
     """
-    model = _get_serializer(format, f).deserialize_proto(_load_bytes(f), ModelProto())
+    return _load_model(f, format, load_external_data)
+
+
+def _load_model(
+    f: IO[bytes] | str | os.PathLike,
+    format: _SupportedFormat | None = None,  # noqa: A002
+    load_external_data: bool = True,
+    *,
+    _external_data_context: _ExternalDataContext | None = None,
+) -> ModelProto:
+    model_filepath = _get_file_path(f)
+    external_data_context = _external_data_context
+    if isinstance(f, (str, os.PathLike)):
+        assert model_filepath is not None
+        if not os.path.exists(model_filepath):
+            raise FileNotFoundError(model_filepath)
+        base_dir = os.path.dirname(model_filepath)
+        if external_data_context is None:
+            external_data_context = _ExternalDataContext(base_dir)
+        fd = external_data_context.open_model_file(os.path.basename(model_filepath))
+        with os.fdopen(fd, "rb") as readable:
+            serialized = readable.read()
+    else:
+        serialized = _load_bytes(f)
+    model = _get_serializer(format, f).deserialize_proto(serialized, ModelProto())
 
     if load_external_data:
-        model_filepath = _get_file_path(f)
         if model_filepath:
             base_dir = os.path.dirname(model_filepath)
-            load_external_data_for_model(model, base_dir)
+            _load_external_data_for_model(
+                model, base_dir, _context=external_data_context
+            )
 
     return model
 

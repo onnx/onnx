@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <array>
+#include <cerrno>
 #include <filesystem> // NOLINT(build/c++17)
 #include <fstream>
 #include <string>
@@ -12,8 +14,36 @@
 #include "onnx/common/path.h"
 #endif
 #include "onnx/checker.h"
+#include "onnx/common/scoped_resource.h"
 
 namespace ONNX_NAMESPACE {
+
+template <typename T>
+void LoadProtoFromFd(int fd, const std::string& proto_path, T& proto) {
+  std::string data;
+  std::array<char, 64U * 1024U> buffer{};
+  while (true) {
+#ifdef _WIN32
+    const int count = _read(fd, buffer.data(), static_cast<unsigned int>(buffer.size()));
+#else
+    const ssize_t count = read(fd, buffer.data(), buffer.size());
+#endif
+    if (count < 0) {
+      if (errno == EINTR) {
+        continue;
+      }
+      fail_check("Unable to read proto file: ", proto_path);
+    }
+    if (count == 0) {
+      break;
+    }
+    data.append(buffer.data(), static_cast<size_t>(count));
+  }
+  if (!ParseProtoFromBytes(&proto, data.data(), data.size())) {
+    fail_check(
+        "Unable to parse proto from file: ", proto_path, ". Please check if it is a valid protobuf file of proto. ");
+  }
+}
 
 template <typename T>
 void LoadProtoFromPath(const std::string& proto_path, T& proto) {

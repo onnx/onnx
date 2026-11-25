@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+import onnx
 from onnx.onnx_cpp2py_export import checker
 
 if TYPE_CHECKING:
@@ -56,3 +57,37 @@ def test_fifo_open_does_not_block(tmp_path: Path, read_only: bool) -> None:
     )
     assert result.returncode != 0
     assert "external data is not a regular file" in result.stderr
+
+
+@pytest.mark.parametrize("location", ["weights.bin", "#weights.bin"])
+@pytest.mark.parametrize("file_size", [None, 12, 24])
+def test_path_checker_validates_hash_prefixed_sidecar(
+    tmp_path: Path, location: str, file_size: int | None
+) -> None:
+    tensor = onnx.TensorProto(
+        name="weight",
+        data_type=onnx.TensorProto.FLOAT,
+        dims=[6],
+        data_location=onnx.TensorProto.EXTERNAL,
+    )
+    tensor.external_data.add(key="location", value=location)
+    tensor.external_data.add(key="length", value="24")
+    model = onnx.helper.make_model(onnx.helper.make_graph([], "test", [], [], [tensor]))
+    path = tmp_path / "model.onnx"
+    path.write_bytes(model.SerializeToString())
+    if file_size is not None:
+        (tmp_path / location).write_bytes(bytes(file_size))
+
+    # Metadata-only checking deliberately does not inspect either sidecar.
+    onnx.checker.check_model(path, check_external_data_files=False)
+    expected_size = 6 * 4
+    if file_size == expected_size:
+        onnx.checker.check_model(path)
+    else:
+        with pytest.raises(onnx.checker.ValidationError) as error:
+            onnx.checker.check_model(path)
+        assert error.value.code == (
+            "external-data-file-missing"
+            if file_size is None
+            else "external-data-out-of-range"
+        )

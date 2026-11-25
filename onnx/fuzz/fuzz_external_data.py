@@ -11,6 +11,8 @@ finding.
 
 from __future__ import annotations
 
+# Numeric comparisons below select operations from the fixed fuzz-input format.
+# ruff: noqa: PLR2004
 import contextlib
 import os
 import shutil
@@ -63,12 +65,23 @@ _original_open_external_data_fd = external_data_helper._open_external_data_fd
 
 
 def _checked_open_external_data_fd(
-    base_dir: str, location: str, tensor_name: str, read_only: bool
+    base_dir: str,
+    location: str,
+    tensor_name: str,
+    read_only: bool,
+    *,
+    context: external_data_helper._ExternalDataContext | None = None,
 ) -> int:
     # Every external-data read and write, including ModelContainer.load, opens
     # through this helper. Checking the descriptor here reports an escape even
     # when a later bounds or reshape error aborts the operation.
-    fd = _original_open_external_data_fd(base_dir, location, tensor_name, read_only)
+    fd = _original_open_external_data_fd(
+        base_dir,
+        location,
+        tensor_name,
+        read_only,
+        context=context,
+    )
     fd_stat = os.fstat(fd)
     sentinel_stat = _SENTINEL.stat()
     if (fd_stat.st_dev, fd_stat.st_ino) == (sentinel_stat.st_dev, sentinel_stat.st_ino):
@@ -264,7 +277,7 @@ def _exercise(
         loaded.load(str(model_path), load_large_initializers=True)
 
 
-def TestOneInput(data: bytes) -> None:
+def TestOneInput(data: bytes) -> None:  # noqa: N802 -- Atheris entry point
     if len(data) < 6:
         return
     locations = _locations()
