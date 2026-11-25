@@ -75,3 +75,27 @@ class Gemm_7(OpRun):
         else:
             _meth = _gemm01 if transB else _gemm00
         return (_meth(a, b, c, alpha, beta).astype(a.dtype),)
+
+
+class Gemm_29(OpRun):
+    def _run(self, a, b, c=None, alpha=None, beta=None, transA=None, transB=None):
+        if a.ndim < 1:
+            raise ValueError(f"Gemm input A must have rank >= 1, got {a.ndim}.")
+        if b.ndim != 2:
+            raise ValueError(f"Gemm input B must have rank 2, got {b.ndim}.")
+        if transA and a.ndim > 1:
+            a = a.swapaxes(-1, -2)
+        if transB:
+            b = b.T
+        result = np.matmul(a, b) * alpha
+        if c is not None:
+            if c.ndim > result.ndim or any(
+                c_dim not in (1, y_dim)
+                for c_dim, y_dim in zip(c.shape[::-1], result.shape[::-1], strict=False)
+            ):
+                raise ValueError(
+                    f"Gemm input C shape {c.shape} cannot broadcast to {result.shape}."
+                )
+            if beta != 0:
+                result += c * beta
+        return (result.astype(a.dtype),)

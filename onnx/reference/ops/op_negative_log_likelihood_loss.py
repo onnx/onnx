@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import ml_dtypes
 import numpy as np
 
 from onnx.reference.op_run import OpRun
@@ -19,6 +20,12 @@ def _compute_negative_log_likelihood_loss(
     N = input_shape[0]
     C = input_shape[1]
 
+    # float16 and bfloat16 are computed in float32: the sums of the losses and
+    # of the weights overflow float16 (max 65504) once there are more targets
+    # than that, and bfloat16 stops accumulating at 256. Only the gathered
+    # losses and weights are promoted, not the whole input.
+    cdtype = np.float32 if x.dtype in (np.float16, ml_dtypes.bfloat16) else x.dtype
+
     # initialize the positional weights when required
     gather_weight = None
     if weight is not None:
@@ -26,16 +33,18 @@ def _compute_negative_log_likelihood_loss(
         # when the target value is > C or < 0, it doesn't matter which value we are
         # taking in gather_weight, since it will be set to 0 in the following if-block
         # use np.int32 to make it compatible with x86 machines
-        gather_weight = np.take(weight, np.array(target, dtype=np.int32), mode="clip")
+        gather_weight = np.take(
+            weight, np.array(target, dtype=np.int32), mode="clip"
+        ).astype(cdtype)
         # set `ignore_index`'s loss weight to 0.
         # The loss tensor will be multiplied by this weight tensor,
         # so `ignore_index`'s loss value will be eliminated.
         if ignore_index is not None:
             gather_weight = np.where(target == ignore_index, 0, gather_weight).astype(
-                dtype=x.dtype
+                dtype=cdtype
             )
     elif ignore_index is not None:
-        gather_weight = np.where(target == ignore_index, 0, 1).astype(dtype=x.dtype)
+        gather_weight = np.where(target == ignore_index, 0, 1).astype(dtype=cdtype)
 
     # if input is 4-d and above, make it 3-d
     if len(input_shape) != 3:
@@ -47,7 +56,7 @@ def _compute_negative_log_likelihood_loss(
     # the D here should be H * W because we reshape
     # [N, C, H, W] to [N, C, H * W].
     D = x.shape[2]
-    neg_gather_element_input = np.zeros((N, D), dtype=x.dtype)
+    neg_gather_element_input = np.zeros((N, D), dtype=cdtype)
     for i in range(N):
         for d in range(D):
             if target[i][d] != ignore_index:
@@ -63,7 +72,7 @@ def _compute_negative_log_likelihood_loss(
     if gather_weight is not None:
         loss = gather_weight * loss
         if reduction == "mean":
-            loss = loss.sum() / gather_weight.sum()
+            loss = (loss.sum() / gather_weight.sum()).astype(x.dtype)
             return (loss,)
 
     if reduction == "mean":

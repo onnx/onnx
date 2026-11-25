@@ -338,7 +338,7 @@ def merge_models(
                        By default, the name is g1.name and g2.name concatenated with an underscore delimiter
         doc_string (string): Optional docstring for the combined graph
                              If not provided, a default docstring with the concatenation of g1 and g2 docstrings is used
-        producer_name (string): Optional producer name for the combined model. Default: 'onnx.compose'
+        producer_name (string): Optional producer name for the combined model. Default: 'onnx.compose.merge_models'
         producer_version (string): Optional producer version for the combined model. Default: "1.0"
         domain (string): Optional domain of the combined model. Default: ""
         model_version (int): Optional version of the graph encoded. Default: 1

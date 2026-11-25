@@ -12,6 +12,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -32,12 +33,15 @@
 #include "onnx/version_converter/adapters/compatible.h"
 #include "onnx/version_converter/adapters/dropout_11_12.h"
 #include "onnx/version_converter/adapters/extend_supported_types.h"
+#include "onnx/version_converter/adapters/gemm_29_28.h"
 #include "onnx/version_converter/adapters/gemm_6_7.h"
 #include "onnx/version_converter/adapters/gemm_7_6.h"
 #include "onnx/version_converter/adapters/gridsample_19_20.h"
 #include "onnx/version_converter/adapters/group_normalization_20_21.h"
 #include "onnx/version_converter/adapters/group_normalization_21_20.h"
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
+#include "onnx/version_converter/adapters/mean_variance_normalization_29_28.h"
+#include "onnx/version_converter/adapters/nd_indices_29_28.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/optional_ops.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
@@ -91,7 +95,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
          (version_it->second.find(curr_version + step) != version_it->second.end() && up));
   }
 
-  void debug(const std::string& str) const {
+  void debug(std::string_view str) const {
     if (DEBUG)
       std::cerr << str << '\n';
   }
@@ -104,15 +108,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
         " and ",
         version_range.second,
         ")")
-  }
-
-  void assertDefaultDomain(const std::string& initial_domain, const std::string& target_domain) const {
-    ONNX_ASSERTM(
-        (initial_domain.empty() || initial_domain == "ai.onnx") &&
-            (target_domain.empty() || target_domain == "ai.onnx"),
-        "Warning: default onnx version converter can only convert "
-        " between default domain opset versions ('' or 'ai.onnx')\n")
-    ONNX_ASSERTM(initial_domain == target_domain, "initial_version and target_version must have the same domains")
   }
 
   void convert_graph(const std::shared_ptr<Graph>& g, const OpSetID& initial_version, const OpSetID& target_version)
@@ -445,7 +440,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("GatherND", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Gemm", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Greater", OpSetID(12), OpSetID(13)));
-    registerAdapter(std::make_unique<CompatibleAdapter>("Hardmax", OpSetID(12), OpSetID(13)));
+    registerAdapter(std::make_unique<Softmax_12_13>("Hardmax"));
     registerAdapter(std::make_unique<CompatibleAdapter>("Identity", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("If", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("IsNaN", OpSetID(12), OpSetID(13)));
@@ -1126,8 +1121,82 @@ class DefaultVersionConverter : public BaseVersionConverter {
     // Downgrading needs no restriction: opset 27 accepts a superset of the v28 float-only types.
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSum", OpSetID(28), OpSetID(27)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSumExp", OpSetID(28), OpSetID(27)));
+
+    /******** 28 -> 29 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("CausalConvWithState", OpSetID(28), OpSetID(29)));
+    registerAdapter(std::make_unique<MeanVarianceNormalization_28_29>());
+    registerAdapter(std::make_unique<CompatibleAdapter>("Gemm", OpSetID(28), OpSetID(29)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("GatherND", OpSetID(28), OpSetID(29)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ScatterElements", OpSetID(28), OpSetID(29)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ScatterND", OpSetID(28), OpSetID(29)));
+
+    /******** 29 -> 28 ********/
+    registerAdapter("CausalConvWithState", 29, 28, RemoveAttribute(Symbol("dilation"), int64_t{1}));
+    registerAdapter(std::make_unique<MeanVarianceNormalization_29_28>());
+    registerAdapter(std::make_unique<Gemm_29_28>());
+    registerAdapter(std::make_unique<NDIndices_29_28>("GatherND"));
+    registerAdapter(std::make_unique<NDIndices_29_28>("ScatterND"));
+    registerAdapter("ScatterElements", 29, 28, [](const std::shared_ptr<Graph>& /*unused*/, Node* node) {
+      const Symbol reduction{"reduction"};
+      ONNX_ASSERTM(
+          !node->hasAttribute(reduction) || node->s(reduction) != "mean",
+          "Scatter reduction 'mean' cannot be downgraded to opset 28. "
+          "Keep opset 29 or decompose the mean into scatter sums and counts.")
+      return node;
+    });
+    registerLinearAttentionAdapters();
   }
 
+ private:
+  void registerLinearAttentionAdapters() {
+    registerAdapter("LinearAttention", 28, 29, [](const std::shared_ptr<Graph>& /*unused*/, Node* node) {
+      const auto& inputs = node->inputs();
+      for (size_t i = 0; i < inputs.size() && i < 5; ++i) {
+        const auto* input = inputs[i];
+        const size_t rank = i == 3 ? 4 : 3;
+        if (!input->has_sizes() || input->sizes().size() != rank) {
+          continue;
+        }
+        const auto& sizes = input->sizes();
+        for (size_t axis = 2; axis < rank; ++axis) {
+          ONNX_ASSERTM(
+              !sizes[axis].is_int || sizes[axis].dim != 0,
+              "LinearAttention input %zu has a zero-width head dimension at axis %zu and cannot be upgraded "
+              "to opset 29, which requires positive key, value and decay widths. Retain opset 28.",
+              i,
+              axis);
+        }
+      }
+      return node;
+    });
+
+    // The default mode and an explicit equal value-head count retain v27 semantics.
+    registerAdapter("LinearAttention", 29, 28, [](const std::shared_ptr<Graph>& graph, Node* node) {
+      ONNX_ASSERTM(
+          node->outputs().size() <= 2 || node->outputs()[2]->uniqueName().empty(),
+          "LinearAttention state trajectories cannot be downgraded to opset 28. "
+          "Omit the states output or retain opset 29.");
+      const Symbol v_heads{"v_num_heads"};
+      if (node->hasAttribute(v_heads)) {
+        const int64_t count = node->i(v_heads);
+        const int64_t key_heads = node->i(Symbol{"kv_num_heads"});
+        ONNX_ASSERTM(
+            count == 0 || count == key_heads,
+            "LinearAttention with expanded value/state heads cannot be downgraded to opset 28.");
+        node->removeAttribute(v_heads);
+      }
+      if (node->outputs().size() > 2) {
+        // The importer can bind omitted input slots to this empty-named output.
+        auto* undefined = graph->create(kUndefined);
+        undefined->insertBefore(node);
+        node->outputs()[2]->replaceAllUsesWith(undefined->output());
+        node->eraseOutput(2);
+      }
+      return node;
+    });
+  }
+
+ public:
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
       const override;
 };

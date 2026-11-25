@@ -31,11 +31,12 @@ def _rms_normalization(
     # epsilon adjustment to avoid divide-by-zero.
     rmseps = x_squared_mean + epsilon
     rms = np.sqrt(rmseps)
-    y_mat = (x_float / rms).astype(X.dtype)
+    # The result has the type of the scale W, which may differ from X.
+    y_mat = (x_float / rms).astype(W.dtype)
     # W is linear coefficient.
     Y = y_mat * W
 
-    return Y.astype(X.dtype)
+    return Y.astype(W.dtype)
 
 
 class RMSNormalization(OpRun):

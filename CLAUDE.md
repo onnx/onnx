@@ -30,7 +30,10 @@ pip install -e . -v                        # Development install
 ONNX_BUILD_TESTS=1 pip install -e . -v     # With C++ tests
 ```
 
-If [pixi](https://pixi.prefix.dev/latest/) is available in your environment, `pixi run install` (and `pixi run pytest`, `pixi run gtest`, `pixi run gen-all`) is the preferred, more reproducible way to build and test — see `pixi.toml` for the full task list. Fall back to the plain commands below when pixi isn't available.
+On Windows PowerShell, set `$env:ONNX_BUILD_TESTS = "1"` before running
+`pip install -e . -v` to build the C++ tests.
+
+If [pixi](https://pixi.prefix.dev/latest/) is available in your environment, `pixi run install` (and `pixi run pytest`, `pixi run gtest`, `pixi run lint`, `pixi run gen-all`) is the preferred, more reproducible way to build, test, lint, and regenerate files — see `pixi.toml` for the full task list. Fall back to the plain commands below when pixi isn't available.
 
 Pure Python changes take effect immediately in editable installs. C++ changes require rebuild.
 
@@ -40,8 +43,10 @@ Pure Python changes take effect immediately in editable installs. C++ changes re
 pytest                                      # All Python tests
 
 # C++ tests (build with ONNX_BUILD_TESTS=1 first)
-# Linux/macOS:
-LD_LIBRARY_PATH=./.setuptools-cmake-build/ .setuptools-cmake-build/onnx_gtests
+# Linux:
+LD_LIBRARY_PATH="./.setuptools-cmake-build${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" .setuptools-cmake-build/onnx_gtests
+# macOS:
+DYLD_LIBRARY_PATH="./.setuptools-cmake-build${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}" .setuptools-cmake-build/onnx_gtests
 # Windows:
 .setuptools-cmake-build\Release\onnx_gtests.exe
 ```
@@ -50,13 +55,22 @@ Tests live in `tests/` with `*_test.py` naming.
 
 ## Linting
 
+With Pixi, run the same pre-commit hooks used by CI:
+
 ```bash
+pixi run lint
+```
+
+Without Pixi, use `lintrunner`:
+
+```bash
+pip install lintrunner lintrunner-adapters
 lintrunner init    # First-time setup
 lintrunner         # Lint changed files
 lintrunner -a      # Auto-fix
 ```
 
-Runs ruff, mypy, clang-format, editorconfig-checker, and a namespace checker. **`lintrunner` must pass with no errors before a coding task is considered complete.**
+`lintrunner` runs ruff, mypy, clang-format, editorconfig-checker, and a namespace checker. **The applicable lint command must pass with no errors before a coding task is considered complete.**
 
 ## Code Conventions
 
@@ -71,10 +85,14 @@ Edit the source, then regenerate. CI verifies these are up to date.
 
 | Generated files | Source of truth | Regenerate with |
 |---|---|---|
-| `docs/Operators.md`, `docs/Changelog.md`, `docs/TestCoverage.md` | Op schemas in `onnx/defs/` | `python onnx/defs/gen_doc.py` |
-| `onnx/*_pb2.py`, `onnx/*_pb.h`, `onnx/onnx_data.proto` | `onnx/onnx.in.proto`, `onnx/onnx-ml.in.proto` | `python onnx/gen_proto.py` |
+| `docs/Operators*.md`, `docs/Changelog*.md` | Op schemas in `onnx/defs/` | `python onnx/defs/gen_doc.py` |
+| `docs/TestCoverage*.md` | Backend test cases in `onnx/backend/test/` | `python onnx/backend/test/stat_coverage.py` |
+| Generated `.proto` and `.proto3` variants in `onnx/` | `onnx/*.in.proto` | `python onnx/gen_proto.py -l` and `python onnx/gen_proto.py -l --ml` |
 
-Edit `.in.proto` files, **not** `.proto` files. When adding/changing operator schemas, run all three scripts.
+Prefer `pixi run gen-all` to run all generators. After operator-schema changes,
+regenerate the operator docs and test-coverage report. After protobuf changes, edit
+the `.in.proto` sources, **not** generated `.proto` files, and regenerate both the
+default and ML variants.
 
 ## C++/Python Boundary
 

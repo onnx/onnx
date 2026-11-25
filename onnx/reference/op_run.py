@@ -511,7 +511,6 @@ class OpRun(abc.ABC):
                 operator schema)
             n_outputs: number of outputs (default is defined by the
                 operator schema)
-            verbose: verbosity
             **kwargs: node attributes
 
         Returns:
@@ -705,6 +704,22 @@ class OpFunctionContextDependant(OpFunction):
                 continue
             dtype = onnx.helper.np_dtype_to_tensor_dtype(t.dtype)
             types.append(onnx.helper.make_tensor_type_proto(dtype, t.shape))  # type: ignore[arg-type]
-        cl = self.parent._load_impl(self.onnx_node, types)
-        inst = cl(self.onnx_node, self.run_params)
+        node = onnx.NodeProto()
+        node.CopyFrom(self.onnx_node)
+        for att in node.attribute:
+            if att.ref_attr_name:
+                value = kwargs[att.name]
+                if att.type == onnx.AttributeProto.TENSOR:
+                    value = onnx.numpy_helper.from_array(value)
+                elif att.type == onnx.AttributeProto.TENSORS:
+                    value = [onnx.numpy_helper.from_array(t) for t in value]
+                elif att.type == onnx.AttributeProto.GRAPH:
+                    value = value.proto_
+                elif att.type == onnx.AttributeProto.GRAPHS:
+                    value = [graph.proto_ for graph in value]
+                att.CopyFrom(
+                    onnx.helper.make_attribute(att.name, value, attr_type=att.type)
+                )
+        cl = self.parent._load_impl(node, types)
+        inst = cl(node, self.run_params)
         return self._run_impl(inst.impl_, *inputs, **kwargs)

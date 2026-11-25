@@ -34,17 +34,35 @@ def _candidate_target_versions(model):
     return targets
 
 
+def _is_valid(model):
+    try:
+        onnx.checker.check_model(model, full_check=True)
+    except Exception:
+        return False
+    return True
+
+
 def TestOneInput(data):
     try:
         model = onnx.load_model_from_string(data)
     except Exception:
         return
 
+    valid = _is_valid(model)
     for target_version in _candidate_target_versions(model):
         try:
-            version_converter.convert_version(model, target_version)
+            converted = version_converter.convert_version(model, target_version)
         except Exception:
+            # Refusing a conversion is fine; producing an invalid model is not.
             continue
+        if valid:
+            try:
+                onnx.checker.check_model(converted, full_check=True)
+            except Exception as error:
+                raise AssertionError(
+                    f"Converting a valid model to opset {target_version} "
+                    "produced an invalid model"
+                ) from error
 
 
 def main():
