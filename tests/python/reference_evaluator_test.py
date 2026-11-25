@@ -5591,6 +5591,49 @@ class TestReferenceEvaluator:
                 ref.run(None, {"X": data})
 
     @pytest.mark.parametrize(
+        ("p", "magnitude", "expected_value"),
+        [
+            (1, np.float32(3e38), np.float32(0.5)),
+            (2, np.float32(1e30), np.float32(2**-0.5)),
+            (2, np.float32(1e-30), np.float32(2**-0.5)),
+        ],
+    )
+    def test_lp_normalization_preserves_finite_extreme_inputs(
+        self, p: int, magnitude: np.float32, expected_value: np.float32
+    ) -> None:
+        node = make_node("LpNormalization", ["X"], ["Y"], axis=-1, p=p)
+        x = np.array([[magnitude, -magnitude], [0.0, 0.0]], dtype=np.float32)
+        (got,) = ReferenceEvaluator(node).run(None, {"X": x})
+        expected = np.array(
+            [[expected_value, -expected_value], [0.0, 0.0]], dtype=np.float32
+        )
+        assert_allclose(got, expected, rtol=2e-7, atol=0)
+
+    @pytest.mark.parametrize("p", [1, 2])
+    def test_lp_normalization_preserves_nonfinite_behavior(self, p: int) -> None:
+        node = make_node("LpNormalization", ["X"], ["Y"], axis=-1, p=p)
+        x = np.array([[np.inf, 1.0], [np.nan, 1.0]], dtype=np.float32)
+        with np.errstate(invalid="ignore"):
+            (got,) = ReferenceEvaluator(node).run(None, {"X": x})
+        assert np.isnan(got[0, 0])
+        assert got[0, 1] == 0
+        assert np.isnan(got[1]).all()
+
+    @pytest.mark.parametrize("p", [1, 2])
+    @pytest.mark.parametrize("dtype", [np.float16, ml_dtypes.bfloat16])
+    def test_lp_normalization_half_precision_long_slice(self, p: int, dtype) -> None:
+        # In float16 the sum of 65520 scaled ones exceeds the maximum (65504);
+        # in bfloat16 it stalls at 256. Both normalized results are
+        # representable, so the reduction must be accumulated in float32.
+        n = 65520
+        node = make_node("LpNormalization", ["X"], ["Y"], axis=-1, p=p)
+        x = np.ones((1, n), dtype=dtype)
+        (got,) = ReferenceEvaluator(node).run(None, {"X": x})
+        expected = np.full((1, n), 1 / n if p == 1 else n**-0.5, dtype=np.float32)
+        assert got.dtype == dtype
+        assert_allclose(got.astype(np.float32), expected, rtol=4e-3, atol=0)
+
+    @pytest.mark.parametrize(
         ("shape", "size", "dtype", "elem_type"),
         [
             ((2, 3, 2, 2), 3, np.float32, TensorProto.FLOAT),
@@ -8577,6 +8620,37 @@ class TestReferenceEvaluator:
         assert actual.dtype == np.float16
         assert_array_equal(actual, np.ones((1, 2), dtype=np.float16))
 
+    def test_rms_normalization_output_has_scale_type(self):
+        model = make_model(
+            make_graph(
+                [make_node("RMSNormalization", ["X", "Scale"], ["Y"])],
+                "rms_normalization_mixed_types",
+                [
+                    make_tensor_value_info("X", TensorProto.FLOAT, [2, 3]),
+                    make_tensor_value_info("Scale", TensorProto.FLOAT16, [3]),
+                ],
+                [make_tensor_value_info("Y", TensorProto.FLOAT16, [2, 3])],
+            ),
+            opset_imports=[make_opsetid("", 23)],
+        )
+        check_model(model, full_check=True)
+        x = np.arange(6, dtype=np.float32).reshape(2, 3) - 2
+        scale = np.array([0.5, 1.0, 2.0], dtype=np.float16)
+        feeds = {"X": x, "Scale": scale}
+
+        (actual,) = ReferenceEvaluator(model).run(None, feeds)
+
+        # The function body must agree with the reference implementation.
+        class RMSNormalization(OpRunExpand):
+            op_domain = ""
+
+        (expanded,) = ReferenceEvaluator(model, new_ops=[RMSNormalization]).run(
+            None, feeds
+        )
+        assert actual.dtype == np.float16
+        assert expanded.dtype == np.float16
+        assert_allclose(actual, expanded)
+
     def test_layer_normalization_float16_uses_float32_stash(self):
         model = make_model(
             make_graph(
@@ -9407,6 +9481,76 @@ class TestReferenceEvaluator:
         a = np.ones((2, 3), dtype=np.float32)
         b = np.ones((2, 3), dtype=np.float16)
         with pytest.raises(ValueError, match="identical dtypes"):
+            ref.run(None, {"A": a, "B": b})
+
+    @staticmethod
+    def _geglu_model(approximate: str | None = None) -> ModelProto:
+        # Dynamic shapes so model-level shape inference does not reject the
+        # mismatched-shape/dtype cases before they reach the reference _run.
+        a = make_tensor_value_info("A", TensorProto.FLOAT, [None, None])
+        b = make_tensor_value_info("B", TensorProto.FLOAT, [None, None])
+        y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        kwargs = {} if approximate is None else {"approximate": approximate}
+        node = make_node("GeGLU", ["A", "B"], ["Y"], **kwargs)
+        graph = make_graph([node], "geglu", [a, b], [y])
+        return make_model(graph, opset_imports=[make_opsetid("", 29)])
+
+    # Expected values are computed in float64 with math.erf and math.tanh.
+    @pytest.mark.parametrize(
+        ("approximate", "expected"),
+        [
+            (
+                None,
+                [
+                    [0.4206724, -0.045500264, -2.9959502],
+                    [-0.008099388, 0.00012668497, 0.34573123],
+                ],
+            ),
+            (
+                "none",
+                [
+                    [0.4206724, -0.045500264, -2.9959502],
+                    [-0.008099388, 0.00012668497, 0.34573123],
+                ],
+            ),
+            (
+                "tanh",
+                [
+                    [0.420596, -0.045402307, -2.9963627],
+                    [-0.007274784, 7.024595e-05, 0.345714],
+                ],
+            ),
+        ],
+    )
+    def test_geglu(self, approximate: str | None, expected: list) -> None:
+        ref = ReferenceEvaluator(self._geglu_model(approximate))
+        a = np.array([[1.0, -2.0, 3.0], [-3.0, -4.0, 0.5]], dtype=np.float32)
+        b = np.array([[0.5, 1.0, -1.0], [2.0, -1.0, 1.0]], dtype=np.float32)
+        (got,) = ref.run(None, {"A": a, "B": b})
+        # Same tolerance as the backend node tests: at a = -4, float32 keeps only
+        # about 12 bits of 1 + erf(a / sqrt(2)).
+        assert_allclose(got, np.array(expected, dtype=np.float32), rtol=1e-3)
+        assert got.dtype == np.float32
+
+    def test_geglu_shape_mismatch_raises(self) -> None:
+        ref = ReferenceEvaluator(self._geglu_model())
+        a = np.ones((2, 3), dtype=np.float32)
+        b = np.ones((2, 1), dtype=np.float32)
+        with pytest.raises(ValueError, match="identical shapes"):
+            ref.run(None, {"A": a, "B": b})
+
+    def test_geglu_dtype_mismatch_raises(self) -> None:
+        ref = ReferenceEvaluator(self._geglu_model())
+        a = np.ones((2, 3), dtype=np.float32)
+        b = np.ones((2, 3), dtype=np.float16)
+        with pytest.raises(ValueError, match="identical dtypes"):
+            ref.run(None, {"A": a, "B": b})
+
+    def test_geglu_bad_approximate_raises(self) -> None:
+        ref = ReferenceEvaluator(self._geglu_model(approximate="sigmoid"))
+        a = np.ones((2, 3), dtype=np.float32)
+        b = np.ones((2, 3), dtype=np.float32)
+        with pytest.raises(ValueError, match="must be 'none' or 'tanh'"):
             ref.run(None, {"A": a, "B": b})
 
     @pytest.mark.parametrize(

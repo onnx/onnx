@@ -29289,7 +29289,7 @@ This version of the operator has been available since version 23 of the default 
         must happen in different floating-point precision.
         For example, if `stash_type` is 1, this operator casts
         all input variables to 32-bit float, perform the computation, and
-        finally cast `Normalized` back to the original type of `X`.
+        finally cast `Normalized` to the type of `scale`.
         The second stage then scales the outcome of the first stage using:
         ```
         Y= Mul(Normalized, Scale)
@@ -34856,6 +34856,82 @@ This version of the operator has been available since version 29 of the default 
 <dd>Constrain indices to int32 or int64 tensors.</dd>
 </dl>
 
+### <a name="GeGLU-29"></a>**GeGLU-29**</a>
+
+  GeGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
+  input `B`, and produces one output `Y`. It applies the Gelu activation to the gate
+  and multiplies the result elementwise by the linear input:
+
+  ```
+  Y = Gelu(A) * B
+  ```
+
+  The gate activation is the `Gelu` operator with the same `approximate` attribute.
+  With `approximate = "none"` (the default) it is the exact form
+
+  ```
+  Gelu(a) = 0.5 * a * (1 + erf(a / sqrt(2)))
+  ```
+
+  and with `approximate = "tanh"` it is the tanh approximation
+
+  ```
+  Gelu(a) = 0.5 * a * (1 + tanh(sqrt(2 / pi) * (a + 0.044715 * a^3)))
+  ```
+
+  Any other value of `approximate` is invalid. For float16 and bfloat16 inputs the
+  function body computes `Gelu(A) * B` in float32 and casts the result back to the
+  input type, because Gelu evaluated in float16 loses nearly all precision for
+  negative gate values.
+
+  Inputs `A` and `B` must have identical shapes; broadcasting is not applied and the
+  output `Y` has the same shape as the inputs. A model whose `A` and `B` shapes
+  differ at runtime is invalid, even though the `Mul` in the function body would
+  broadcast them.
+
+  Exporters typically produce `A` and `B` in one of two ways: for the common
+  two-projection form wire the two projection outputs directly to `A` (gate) and `B`
+  (value); for a fused/packed single projection, split it upstream into `A` and `B`
+  with `Split` (contiguous layout) or `Slice`/`Gather` (interleaved layout).
+
+  GeGLU was introduced in "GLU Variants Improve Transformer" (Shazeer, 2020,
+  https://arxiv.org/abs/2002.05202) and is used as the feed-forward gate in models
+  such as T5 v1.1 and Gemma.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>approximate</tt> : string (default is none)</dt>
+<dd>Gelu approximation algorithm used for the gate: `"none"` (default) or `"tanh"`. Any other value is invalid.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (differentiable) : T</dt>
+<dd>Gate input tensor</dd>
+<dt><tt>B</tt> (differentiable) : T</dt>
+<dd>Linear (value) input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="Gemm-29"></a>**Gemm-29**</a>
 
   Generalized matrix multiplication: `Y = alpha * A' * B' + beta * C`.
@@ -34985,6 +35061,134 @@ This version of the operator has been available since version 29 of the default 
 <dd>Constrain input, weights, bias, and output to floating-point tensors.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain group indices to int32 or int64 tensors.</dd>
+</dl>
+
+### <a name="LinearAttention-29"></a>**LinearAttention-29**</a>
+
+  Unified recurrent linear attention for prefill and autoregressive decoding.
+
+  Let B be the batch size, T the sequence length, d_k the key head width,
+  and d_v the value head width. The required positive attributes q_num_heads
+  and kv_num_heads specify the query head count H_q and key head count H_kv.
+  Both d_k and d_v must be positive; T may be zero. All sequence inputs share
+  the same B and T.
+
+  Inputs query, key and value have shapes [B,T,H_q*d_k], [B,T,H_kv*d_k]
+  and [B,T,H_v*d_v]. Heads are packed contiguously in the last dimension:
+  element j of head h has packed index h*d+j, where d is that input's head width.
+
+  With v_num_heads=0 (default), H_v=H_kv and H_q must be a multiple of H_kv.
+  The output head count H_o is H_q. Query head h reads state head
+  floor(h/(H_q/H_kv)), so adjacent query heads share each state head.
+  State head h uses key head h.
+
+  With v_num_heads>0, H_v=v_num_heads, H_q must equal H_kv, and H_v must be
+  a multiple of H_kv. H_o is H_v. Value/state head h uses query and key head
+  floor(h/(H_v/H_kv)). For H_kv=2 and H_v=6, this mapping is [0,0,0,1,1,1].
+  Negative v_num_heads is invalid. State, decay and beta use H_v heads.
+
+  The output tensor output has shape [B,T,H_o*d_v], with contiguous head packing.
+  past_state and present_state have shape [B,H_v,d_k,d_v].
+  The initial state is past_state when supplied, otherwise zeros.
+  Input values and the initial state are converted to float32 for the recurrence
+  and output computation. The output tensor output has query's element type.
+  The state outputs have past_state's element type when supplied, otherwise
+  query's element type. A float32 past_state therefore retains float32 state
+  with float16 or bfloat16 activations.
+
+  For each batch element and token, let S be a state head's preceding
+  [d_k,d_v] matrix, k its mapped key vector, and v its value vector.
+  The update_rule attribute is one of "linear", "gated", "delta", or
+  "gated_delta" (default). Process tokens in increasing order t=0,...,T-1.
+  For each token, apply these steps in order:
+  1. For "gated" and "gated_delta", D = exp(decay) * S; otherwise D = S.
+     Decay is log-space [B,T,H_v] for per-head decay or [B,T,H_v*d_k]
+     for per-key-element decay, packed by head. It broadcasts over d_v.
+  2. For "delta" and "gated_delta", u = beta * (v - D^T k); otherwise u = v.
+     Beta has shape [B,T,H_v] for per-head rates or [B,T,1] shared by all heads.
+  3. S_new = D + k outer u, where (k outer u)[i,j] = k[i] * u[j].
+  4. For each output head, o = scale * q^T S_new using its mapped query and
+     state heads. The resulting vectors form output, and S_new is the
+     preceding state for the next token.
+
+  exp and scalar/vector multiplication are elementwise; transpose and
+  matrix-vector products act on the displayed head matrix/vector dimensions.
+
+  Decay must be supplied for "gated" and "gated_delta" and omitted otherwise.
+  Beta must be supplied for "delta" and "gated_delta" and omitted otherwise.
+  Q/K normalization is not performed by this operator. A zero scale attribute
+  (default) uses 1/sqrt(d_k). chunk_size (default 64) is an implementation hint
+  and does not change results.
+
+  present_state is the final state. The optional states output has shape
+  [B,T,H_v,d_k,d_v]; states[:,t,:,:,:] is the state after token t's complete
+  decay and update, converted to present_state's element type. These conversions
+  do not round the internal float32 recurrence between tokens. For T>0, the
+  last snapshot equals present_state. For T=0, output has shape [B,0,H_o*d_v],
+  states has shape [B,0,H_v,d_k,d_v], and present_state is the initial state.
+  Omitting states does not change output or present_state and does not require
+  intermediate-state storage. When requested, states contains B*T*H_v*d_k*d_v
+  elements.
+
+  The operator does not modify inputs or retain state between invocations.
+  The caller supplies any state carried from a preceding invocation.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>chunk_size</tt> : int (default is 64)</dt>
+<dd>Implementation hint for processing sequence chunks. Does not change results.</dd>
+<dt><tt>kv_num_heads</tt> : int (required)</dt>
+<dd>Number of compact key heads. Always required.</dd>
+<dt><tt>q_num_heads</tt> : int (required)</dt>
+<dd>Number of query heads. Always required.</dd>
+<dt><tt>scale</tt> : float (default is 0.0)</dt>
+<dd>Output scaling factor. When 0.0 (default), derives d_k = query.shape[-1] / q_num_heads and uses 1/sqrt(d_k). Set explicitly to override.</dd>
+<dt><tt>update_rule</tt> : string (default is gated_delta)</dt>
+<dd>The update rule for the linear attention recurrence. One of: 'linear', 'gated', 'delta', 'gated_delta'. Default is 'gated_delta'.</dd>
+<dt><tt>v_num_heads</tt> : int (default is 0)</dt>
+<dd>Value/state head count. Zero (default) uses kv_num_heads and preserves query GQA. A positive value requires q_num_heads == kv_num_heads and must be a multiple of kv_num_heads. Q/K head h is repeated adjacently v_num_heads / kv_num_heads times. The output has v_num_heads heads, and value, state, decay and beta use this head count.</dd>
+</dl>
+
+#### Inputs (3 - 6)
+
+<dl>
+<dt><tt>query</tt> (differentiable) : T</dt>
+<dd>Query vectors with 3D packed shape (B, T, H_q * d_k). Heads are packed into the last dimension.</dd>
+<dt><tt>key</tt> (differentiable) : T</dt>
+<dd>Key vectors with 3D packed shape (B, T, H_kv * d_k). The operator does not normalize these vectors.</dd>
+<dt><tt>value</tt> (differentiable) : T</dt>
+<dd>Value vectors with 3D packed shape (B, T, H_v * d_v), where H_v is kv_num_heads unless a positive v_num_heads is specified.</dd>
+<dt><tt>past_state</tt> (optional, non-differentiable) : S</dt>
+<dd>Recurrent state from previous step with shape (B, H_v, d_k, d_v). Always 4D. If not provided, defaults to zeros.</dd>
+<dt><tt>decay</tt> (optional, differentiable) : T</dt>
+<dd>Exponential decay gate in log-space, with shape (B, T, H_v * d_k) or (B, T, H_v). Required for 'gated' and 'gated_delta' modes.</dd>
+<dt><tt>beta</tt> (optional, differentiable) : T</dt>
+<dd>Update rate with shape (B, T, H_v) or (B, T, 1). Required for 'delta' and 'gated_delta' modes.</dd>
+</dl>
+
+#### Outputs (2 - 3)
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Attention output with 3D packed shape (B, T, H_o * d_v), where H_o is q_num_heads unless a positive v_num_heads is specified.</dd>
+<dt><tt>present_state</tt> (non-differentiable) : S</dt>
+<dd>Updated recurrent state with shape (B, H_v, d_k, d_v). Always 4D.</dd>
+<dt><tt>states</tt> (optional, non-differentiable) : S</dt>
+<dd>Optional recurrent state trajectory with shape (B, T, H_v, d_k, d_v), in the same type as present_state. Entry [:, t] is the state after token t's complete decay/update, before token t+1. For T > 0 the last entry equals present_state; for T = 0 the trajectory is empty. Omitting this output does not require storing intermediate states.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
+<dd>Constrain activation input and output types to float16, bfloat16, or float32 tensors.</dd>
+<dt><tt>S</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
+<dd>State tensors have type float16, bfloat16, or float32. When past_state is omitted, state outputs have the activation type T.</dd>
 </dl>
 
 ### <a name="Log1p-29"></a>**Log1p-29**</a>
