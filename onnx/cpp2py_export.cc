@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "onnx/checker.h"
+#include "onnx/common/external_data.h"
 #include "onnx/common/ir_pb_converter.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
@@ -685,6 +686,15 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       nb::arg("skip_opset_compatibility_check") = false,
       nb::arg("check_custom_domain") = false,
       nb::arg("check_external_data_files") = true);
+
+  nb::class_<checker::ExternalDataContext>(checker, "_ExternalDataContext")
+      .def(nb::init<const std::string&>())
+      .def(
+          "open",
+          &checker::ExternalDataContext::open,
+          nb::arg("location"),
+          nb::arg("tensor_name"),
+          nb::arg("read_only"));
 
   checker.def("_open_external_data", &checker::open_external_data);
 

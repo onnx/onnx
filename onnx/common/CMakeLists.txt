@@ -13,6 +13,8 @@ target_sources(onnx PRIVATE
     assertions.h
     common.h
     constants.h
+    external_data.cc
+    external_data.h
     file_utils.h
     graph_node_list.h
     interned_strings.cc
