@@ -32,6 +32,7 @@ class ONNX_API ExternalDataContext final {
   ExternalDataContext(const ExternalDataContext&) = delete;
   ExternalDataContext& operator=(const ExternalDataContext&) = delete;
   int64_t open(const std::string& location, const std::string& tensor_name, bool read_only) const;
+  int64_t open_model_file(const std::string& location) const;
   std::uintmax_t file_size(const std::string& location, const std::string& tensor_name) const;
 
  private:

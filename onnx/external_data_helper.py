@@ -24,11 +24,21 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
 
+_ExternalDataContext = c_checker._ExternalDataContext
+
+
 def _open_external_data_fd(
-    base_dir: str, location: str, tensor_name: str, read_only: bool
+    base_dir: str,
+    location: str,
+    tensor_name: str,
+    read_only: bool,
+    *,
+    context: _ExternalDataContext | None = None,
 ) -> int:
     """Open external data via C++ and return a CRT file descriptor."""
-    return c_checker._open_external_data(base_dir, location, tensor_name, read_only)
+    if context is None:
+        context = _ExternalDataContext(base_dir)
+    return context.open(location, tensor_name, read_only)
 
 
 # Security: 3-layer defense against malicious external_data entries (GHSA-538c-55jv-c5g9)
@@ -143,7 +153,12 @@ def _validate_external_data_file_bounds(
     return data_file.read()
 
 
-def _read_external_data_bytes(tensor: TensorProto, base_dir: str) -> bytes:
+def _read_external_data_bytes(
+    tensor: TensorProto,
+    base_dir: str,
+    *,
+    context: _ExternalDataContext | None = None,
+) -> bytes:
     """Reads and returns the raw bytes stored in the external file for tensor.
 
     Unlike load_external_data_for_tensor, this does not mutate tensor: the
@@ -153,12 +168,15 @@ def _read_external_data_bytes(tensor: TensorProto, base_dir: str) -> bytes:
     Arguments:
         tensor: a TensorProto object.
         base_dir: directory that contains the external data.
+        context: optional pinned directory authority shared by a model-level operation.
 
     Returns:
         The raw bytes read from the external data file.
     """
     info = ExternalDataInfo(tensor)
-    fd = _open_external_data_fd(base_dir, info.location, tensor.name, True)
+    fd = _open_external_data_fd(
+        base_dir, info.location, tensor.name, True, context=context
+    )
     with os.fdopen(fd, "rb") as data_file:
         return _validate_external_data_file_bounds(data_file, info, tensor.name)
 
@@ -187,9 +205,31 @@ def load_external_data_for_model(model: ModelProto, base_dir: str) -> None:
         model: ModelProto to load external data to
         base_dir: directory that contains external data
     """
+    _load_external_data_for_model(model, base_dir)
+
+
+def _load_external_data_for_model(
+    model: ModelProto,
+    base_dir: str,
+    *,
+    _context: _ExternalDataContext | None = None,
+) -> None:
+    """Loads external tensors into model
+
+    Arguments:
+        model: ModelProto to load external data to
+        base_dir: directory that contains external data
+    """
+    context = _context
     for tensor in _get_all_tensors(model):
         if uses_external_data(tensor):
-            load_external_data_for_tensor(tensor, base_dir)
+            if context is None:
+                context = _ExternalDataContext(base_dir)
+            tensor.raw_data = _read_external_data_bytes(
+                tensor, base_dir, context=context
+            )
+            tensor.data_location = TensorProto.DEFAULT
+            del tensor.external_data[:]
 
 
 def set_external_data(

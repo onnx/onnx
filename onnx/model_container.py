@@ -282,15 +282,26 @@ class ModelContainer:
                 look into the model without executing it and method
                 :meth:`_load_large_initializers` can be used to load them later
         """
-        self.model_proto_ = onnx.load_model(file_path, load_external_data=False)
+        base_dir = os.path.dirname(file_path)
+        external_data_context = ext_data._ExternalDataContext(base_dir)
+        self.model_proto_ = onnx._load_model(
+            file_path,
+            load_external_data=False,
+            _external_data_context=external_data_context,
+        )
         if load_large_initializers:
-            self._load_large_initializers(file_path)
+            self._load_large_initializers(file_path, external_data_context)
 
-    def _load_large_initializers(self, file_path):
+    def _load_large_initializers(
+        self,
+        file_path,
+        external_data_context: ext_data._ExternalDataContext | None = None,
+    ):
         """Loads large initializers.
 
         Arguments:
             file_path: model file, the weight are expected to be in the same folder as this file
+            external_data_context: optional pinned authority shared with the main model open
         """
         if self.model_proto_ is None:
             raise RuntimeError("A model must be loaded before loading the weights.")
@@ -300,12 +311,19 @@ class ModelContainer:
             if not ext_data.uses_external_data(tensor):
                 continue
 
+            if external_data_context is None:
+                external_data_context = ext_data._ExternalDataContext(base_dir)
+
             info = ext_data.ExternalDataInfo(tensor)
             key = f"#t{i}"
             _set_external_data(tensor, location=key)
 
             fd = ext_data._open_external_data_fd(
-                base_dir, info.location, tensor.name, True
+                base_dir,
+                info.location,
+                tensor.name,
+                True,
+                context=external_data_context,
             )
             with os.fdopen(fd, "rb") as data_file:
                 raw_data = ext_data._validate_external_data_file_bounds(

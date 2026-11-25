@@ -382,6 +382,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     // of each key is the one that describes the data.
     bool has_location = false;
     std::filesystem::path data_path;
+    std::optional<std::uintmax_t> file_size;
+    auto external_data_context = ctx.get_external_data_context();
     const StringStringEntryProto* offset_entry = nullptr;
     const StringStringEntryProto* length_entry = nullptr;
     for (const StringStringEntryProto& entry : tensor.external_data()) {
@@ -408,13 +410,19 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               entry.value(),
               "' cannot be resolved. Pass a model path to check_model to check external data.");
         }
-        if (ctx.check_external_data_files()) {
-          data_path = resolve_external_data_location(ctx.get_model_dir(), entry.value(), tensor.name());
-        } else {
-          const auto relative_path =
-              check_external_data_location_syntax(ctx.get_model_dir(), entry.value(), tensor.name());
-          check_external_data_location_in_model_dir(ctx.get_model_dir(), relative_path, tensor.name());
-          data_path = utf8_to_path(ctx.get_model_dir()) / relative_path;
+        const auto relative_path =
+            check_external_data_location_syntax(ctx.get_model_dir(), entry.value(), tensor.name());
+        check_external_data_location_in_model_dir(ctx.get_model_dir(), relative_path, tensor.name());
+        data_path = utf8_to_path(ctx.get_model_dir()) / relative_path;
+        // Classify after joining the model directory: a file named '#weights.bin'
+        // beside a model on disk is still a file, not an in-memory tensor key.
+        const auto data_path_str = path_to_utf8(data_path);
+        file_size.reset();
+        if (ctx.check_external_data_files() && !data_path_str.empty() && data_path_str[0] != '#') {
+          if (!external_data_context) {
+            external_data_context = std::make_shared<ExternalDataContext>(ctx.get_model_dir());
+          }
+          file_size = external_data_context->file_size(entry.value(), tensor.name());
         }
       } else if (entry.key() == "offset") {
         offset_entry = &entry;
@@ -442,20 +450,6 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     const auto data_path_str = path_to_utf8(data_path);
     if (data_path_str.empty() || data_path_str[0] == '#') {
       return;
-    }
-    std::optional<std::uintmax_t> file_size;
-    if (ctx.check_external_data_files()) {
-      std::error_code ec;
-      file_size = std::filesystem::file_size(data_path, ec);
-      if (ec) {
-        fail_check(
-            "Unable to get the size of external data file ",
-            data_path_str,
-            " (tensor name: ",
-            tensor.name(),
-            "): ",
-            ec.message());
-      }
     }
     check_external_data_size(tensor, nelem, file_size, offset, length);
     return;
@@ -1650,9 +1644,6 @@ void check_model(
     bool skip_opset_compatibility_check,
     bool check_custom_domain,
     bool check_external_data_files) {
-  ModelProto model;
-  LoadProtoFromPath(model_path, model);
-
   CheckerContext ctx;
   // Keep the effective model directory, including its Windows drive, for all
   // relative model paths ("model.onnx", "./model.onnx", "sub/model.onnx").
@@ -1663,6 +1654,12 @@ void check_model(
     fail_check("Unable to determine the model directory for ", model_path, ": ", ec.message());
   }
   ctx.set_model_dir(path_to_utf8(absolute_model_path.parent_path()));
+  auto external_data_context = std::make_shared<ExternalDataContext>(ctx.get_model_dir());
+  ctx.set_external_data_context(external_data_context);
+  ScopedFd model_fd(
+      static_cast<int>(external_data_context->open_model_file(path_to_utf8(absolute_model_path.filename()))));
+  ModelProto model;
+  LoadProtoFromFd(model_fd.get(), model_path, model);
   ctx.set_skip_opset_compatibility_check(skip_opset_compatibility_check);
   ctx.set_check_custom_domain(check_custom_domain);
   ctx.set_check_external_data_files(check_external_data_files);
