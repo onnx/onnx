@@ -10,14 +10,14 @@ from onnx.reference.ops._op import OpRunReduceNumpy
 
 
 def _reduce_l1(data: np.ndarray, axes: tuple[int, ...] | None, keepdims: int | bool):
-    # Accumulate float16 and bfloat16 in float32: bfloat16 stalls at 256 when
-    # summing ones.
-    working = (
-        data.astype(np.float32)
-        if data.dtype in (np.float16, ml_dtypes.bfloat16)
-        else data
+    # Accumulate float16 and bfloat16 in float32: bfloat16 stalls at 256 and
+    # float16 stalls at 2048 when summing ones along non-contiguous axes.
+    acc_dtype = (
+        np.float32 if data.dtype in (np.float16, ml_dtypes.bfloat16) else data.dtype
     )
-    res = np.sum(np.abs(working), axis=axes, keepdims=keepdims).astype(dtype=data.dtype)
+    res = np.sum(np.abs(data), axis=axes, keepdims=keepdims, dtype=acc_dtype).astype(
+        dtype=data.dtype
+    )
     if keepdims == 0 and not isinstance(res, np.ndarray):
         # The runtime must return a numpy array of a single float.
         res = np.array(res)

@@ -52,37 +52,45 @@ def _run_reduce(op_type, x, axes, opset, keepdims=1):
 @pytest.mark.parametrize("opset", [11, 13])
 @pytest.mark.parametrize("dtype", _LOW_PRECISION)
 def test_reduce_sum_low_precision_long_slice(opset, dtype):
-    # Summing 1024 ones in bfloat16 stalled at 256 when accumulated in the
-    # input dtype.
-    x = np.ones((2, 1024), dtype=dtype)
-    got = _run_reduce("ReduceSum", x, [1], opset=opset)
+    # Summing 4096 ones along axis=0 (non-contiguous, bypassing NumPy's
+    # pairwise path) stalled at 2048 in float16 and 256 in bfloat16 when
+    # accumulated in the input dtype.
+    x = np.ones((4096, 2), dtype=dtype)
+    got = _run_reduce("ReduceSum", x, [0], opset=opset)
 
     assert got.dtype == np.dtype(dtype)
-    assert_array_equal(got, np.full((2, 1), 1024, dtype=dtype))
+    assert_array_equal(got, np.full((1, 2), 4096, dtype=dtype))
 
 
 @pytest.mark.parametrize("opset", [11, 13])
 def test_reduce_sum_float16_cancelling_partial_sums(opset):
-    # Intermediate partial sum exceeds float16 max (65504), while the final
-    # sum (40000) is representable.
-    x = np.array([[40000.0, 40000.0, -40000.0]], dtype=np.float16)
-    got = _run_reduce("ReduceSum", x, [1], opset=opset)
+    # Intermediate partial sum (256 * 1000 = 256000) exceeds float16 max
+    # (65504) and overflowed to inf along axis=0, while the final sum (25600)
+    # is representable.
+    x = np.concatenate(
+        [
+            np.full((256, 2), 1000.0, dtype=np.float16),
+            np.full((256, 2), -900.0, dtype=np.float16),
+        ],
+        axis=0,
+    )
+    got = _run_reduce("ReduceSum", x, [0], opset=opset)
 
     assert got.dtype == np.float16
-    assert_array_equal(got, np.array([[40000.0]], dtype=np.float16))
+    assert_array_equal(got, np.full((1, 2), 25600.0, dtype=np.float16))
 
 
 @pytest.mark.parametrize("opset", [13, 18])
 @pytest.mark.parametrize("dtype", _LOW_PRECISION)
 def test_reduce_l1_low_precision_long_slice(opset, dtype):
-    # Summing 1024 +/-1 values in bfloat16 stalled at 256 when accumulated in
-    # the input dtype.
-    x = np.ones((2, 1024), dtype=dtype)
-    x[:, ::2] = -x[:, ::2]
-    got = _run_reduce("ReduceL1", x, [1], opset=opset)
+    # Summing 4096 +/-1 values along axis=0 stalled at 2048 in float16 and
+    # 256 in bfloat16 when accumulated in the input dtype.
+    x = np.ones((4096, 2), dtype=dtype)
+    x[::2, :] = -x[::2, :]
+    got = _run_reduce("ReduceL1", x, [0], opset=opset)
 
     assert got.dtype == np.dtype(dtype)
-    assert_array_equal(got, np.full((2, 1), 1024, dtype=dtype))
+    assert_array_equal(got, np.full((1, 2), 4096, dtype=dtype))
 
 
 @pytest.mark.parametrize("op_type,opset", [("ReduceSum", 13), ("ReduceL1", 18)])
