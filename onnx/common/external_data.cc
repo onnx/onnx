@@ -300,8 +300,7 @@ static HANDLE open_windows_leaf(
     const std::vector<std::filesystem::path>& components,
     ACCESS_MASK access,
     ULONG disposition,
-    const std::string& tensor_name,
-    bool open_reparse_point = true) {
+    const std::string& tensor_name) {
   std::vector<HANDLE> directories;
   ONNX_NAMESPACE::ScopeExit close_directories([&]() noexcept {
     for (HANDLE handle : directories) {
@@ -329,7 +328,7 @@ static HANDLE open_windows_leaf(
       components.back(),
       access,
       disposition,
-      FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | (open_reparse_point ? FILE_OPEN_REPARSE_POINT : 0),
+      FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_REPARSE_POINT,
       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
       tensor_name);
 }
@@ -510,41 +509,64 @@ static std::filesystem::path model_filename(const std::string& location) {
 }
 
 int64_t ExternalDataContext::open_model_file(const std::string& location) const {
+  return open_model_file_impl(location, ModelFileOpenMode::kRead);
+}
+
+int64_t ExternalDataContext::open_existing_model_file_for_write(const std::string& location) const {
+  return open_model_file_impl(location, ModelFileOpenMode::kWriteExisting);
+}
+
+int64_t ExternalDataContext::create_model_file(const std::string& location) const {
+  return open_model_file_impl(location, ModelFileOpenMode::kCreateNew);
+}
+
+int64_t ExternalDataContext::open_model_file_impl(const std::string& location, ModelFileOpenMode mode) const {
   const auto filename = model_filename(location);
+  const bool read_only = mode == ModelFileOpenMode::kRead;
 #ifdef _WIN32
-  // The caller's main model may be a symlink; sidecars remain relative to the
-  // supplied directory. External data itself never follows links.
-  ScopedHandle handle(open_windows_component(
+  const ULONG disposition = mode == ModelFileOpenMode::kCreateNew ? FILE_CREATE : FILE_OPEN;
+  // Handle validation needs metadata access even for write-only model streams.
+  HANDLE handle = open_windows_component(
       impl_->base_handle,
       filename,
-      GENERIC_READ | SYNCHRONIZE,
-      FILE_OPEN,
-      FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT,
+      (read_only ? GENERIC_READ : GENERIC_WRITE) | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
+      disposition,
+      FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT |
+          (mode == ModelFileOpenMode::kCreateNew ? FILE_OPEN_REPARSE_POINT : 0),
       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-      "model"));
-  validate_windows_handle(handle.get(), "model", false);
-  const int fd = _open_osfhandle(reinterpret_cast<intptr_t>(handle.get()), _O_RDONLY | _O_BINARY);
+      "model");
+  ScopedHandle guard(handle);
+  validate_windows_handle(handle, "model", false);
+  HANDLE released = guard.release();
+  const int flags = read_only ? (_O_RDONLY | _O_BINARY) : (_O_WRONLY | _O_BINARY); // typos: ignore
+  const int fd = _open_osfhandle(reinterpret_cast<intptr_t>(released), flags);
   if (fd < 0) {
+    CloseHandle(released);
     fail_check("Cannot convert model file handle to fd.");
   }
-  handle.release();
-  return fd;
+  return static_cast<int64_t>(fd);
 #else
-  int flags = O_RDONLY | O_NONBLOCK;
+  // Neither reading nor writing a FIFO should block before type validation.
+  int flags = (read_only ? O_RDONLY : O_WRONLY) | O_NONBLOCK;
+  if (mode == ModelFileOpenMode::kCreateNew) {
+    flags |= O_CREAT | O_EXCL;
+  }
 #ifdef O_CLOEXEC
   flags |= O_CLOEXEC;
 #endif
-  ScopedFd fd(openat(impl_->base_fd, filename.c_str(), flags));
-  if (fd.get() < 0) {
+  const int fd = (flags & O_CREAT) != 0 ? openat(impl_->base_fd, filename.c_str(), flags, 0666)
+                                        : openat(impl_->base_fd, filename.c_str(), flags);
+  if (fd < 0) {
     fail_check_with_code(
         errno == ENOENT ? error_code::kExternalDataFileMissing : error_code::kExternalDataLocationInvalid,
         "Cannot open model file.");
   }
-  struct stat file_stat{};
-  if (fstat(fd.get(), &file_stat) != 0 || !S_ISREG(file_stat.st_mode)) {
+  ScopedFd guard(fd);
+  struct stat fd_stat{};
+  if (fstat(fd, &fd_stat) != 0 || !S_ISREG(fd_stat.st_mode)) {
     fail_check("Model path is not a regular file.");
   }
-  return fd.release();
+  return guard.release();
 #endif
 }
 

@@ -8,7 +8,7 @@ import re
 import uuid
 import warnings
 from itertools import chain
-from typing import IO, TYPE_CHECKING
+from typing import IO, TYPE_CHECKING, Self
 
 import onnx.checker as onnx_checker
 import onnx.onnx_cpp2py_export.checker as c_checker
@@ -356,11 +356,17 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
     _write_external_data(tensor, base_path, tensor.raw_data)
 
 
-def _write_external_data(tensor: TensorProto, base_path: str, data: bytes) -> None:
+def _write_external_data(
+    tensor: TensorProto,
+    base_path: str,
+    data: bytes,
+    *,
+    context: _ExternalDataContext | None = None,
+) -> None:
     """Write an existing byte buffer using a tensor's external-data metadata."""
     info = ExternalDataInfo(tensor)
     with _open_external_data_file_for_write(
-        base_path, info.location, tensor.name
+        base_path, info.location, tensor.name, context=context
     ) as data_file:
         _write_external_data_to_file(tensor, data_file, data)
 
@@ -371,6 +377,7 @@ def _open_external_data_file_for_write(
     tensor_name: str,
     *,
     truncate: bool = False,
+    context: _ExternalDataContext | None = None,
 ) -> IO[bytes]:
     """Open an external-data file for writing and optionally truncate it safely.
 
@@ -379,7 +386,9 @@ def _open_external_data_file_for_write(
     ``open(..., "wb")`` or an ``O_TRUNC`` flag would modify the target before
     those post-open checks could reject it.
     """
-    fd = _open_external_data_fd(base_path, location, tensor_name, False)
+    fd = _open_external_data_fd(
+        base_path, location, tensor_name, False, context=context
+    )
     data_file = os.fdopen(fd, "r+b")
     if truncate:
         try:
@@ -389,6 +398,55 @@ def _open_external_data_file_for_write(
             data_file.close()
             raise
     return data_file
+
+
+class _ModelFileWriter:
+    """Pin an existing output, deferring creation and truncation until write.
+
+    Both model save APIs use this lifecycle so serialization failures preserve
+    the destination. A missing output is created exclusively within the pinned
+    directory; a file that appears during serialization must not be overwritten.
+    Use as a context manager to close the descriptor on every exit path.
+    """
+
+    def __init__(self, context: _ExternalDataContext, location: str) -> None:
+        self._context = context
+        self._location = location
+        self._file: IO[bytes] | None = None
+        try:
+            fd = context.open_existing_model_file_for_write(location)
+        except onnx_checker.ValidationError as error:
+            if error.code != "external-data-file-missing":
+                raise
+        else:
+            self._file = self._open_stream(fd)
+
+    @staticmethod
+    def _open_stream(fd: int) -> IO[bytes]:
+        try:
+            return os.fdopen(fd, "wb")
+        except BaseException:
+            os.close(fd)
+            raise
+
+    def write(self, serialized: bytes) -> None:
+        if self._file is None:
+            self._file = self._open_stream(
+                self._context.create_model_file(self._location)
+            )
+        self._file.seek(0)
+        self._file.truncate()
+        self._file.write(serialized)
+
+    def close(self) -> None:
+        if self._file is not None:
+            self._file.close()
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, *_exc: object) -> None:
+        self.close()
 
 
 def _write_external_data_to_file(
@@ -516,6 +574,16 @@ def write_external_data_tensors(model: ModelProto, filepath: str) -> ModelProto:
     Returns:
         ModelProto: The modified model object.
     """
+    return _write_external_data_tensors(model, filepath)
+
+
+def _write_external_data_tensors(
+    model: ModelProto,
+    filepath: str,
+    *,
+    _context: _ExternalDataContext | None = None,
+) -> ModelProto:
+    """Write a model's sidecars through one shared directory context."""
     # Writing to external data happens in 2 passes:
     # 1. Tensors with raw data which pass the necessary conditions (size threshold etc) are marked for serialization
     # 2. The raw data in these tensors is serialized to a file
@@ -538,8 +606,13 @@ def write_external_data_tensors(model: ModelProto, filepath: str) -> ModelProto:
             infos[id(tensor)].offset or 0,
         )
     )
+    context = _context
+    if context is None and tensors_to_write:
+        context = _ExternalDataContext(filepath)
     for tensor in tensors_to_write:
-        save_external_data(tensor, filepath)
+        if not tensor.HasField("raw_data"):
+            raise onnx_checker.ValidationError("raw_data field doesn't exist.")
+        _write_external_data(tensor, filepath, tensor.raw_data, context=context)
         tensor.ClearField("raw_data")
 
     return model
