@@ -261,7 +261,9 @@ static int64_t parse_external_data_integer(const StringStringEntryProto& entry, 
 // the model directory once it is read on Windows.
 template <typename Pred>
 static bool any_path_component(const std::filesystem::path& normalized_path, Pred pred) {
-  const std::string path_str = path_to_utf8(normalized_path);
+  // A Windows drive prefix is not part of the first component: "C:..\\data.bin"
+  // must be checked as "..\\data.bin", not as a component named "C:..".
+  const std::string path_str = path_to_utf8(normalized_path.relative_path());
   std::string_view rest = path_str;
   while (true) {
     const auto end = rest.find_first_of("/\\");
@@ -327,8 +329,9 @@ static std::filesystem::path check_external_data_location_syntax(
         location,
         "' points outside the directory.");
   }
-  // ".", "sub/.." and "weights/" name a directory, never a file.
-  if (relative_path == std::filesystem::path(".") || !relative_path.has_filename()) {
+  // ".", "sub/..", "weights/" and "weights\\" name a directory, never a file.
+  // On POSIX, has_filename() does not recognize '\\' as a separator.
+  if (relative_path == std::filesystem::path(".") || !relative_path.has_filename() || location.back() == '\\') {
     fail_check_with_code(
         error_code::kExternalDataLocationInvalid,
         "Location of external TensorProto ( tensor name: ",
@@ -1800,23 +1803,15 @@ void check_model(
   LoadProtoFromPath(model_path, model);
 
   CheckerContext ctx;
-  std::string model_dir;
-  size_t pos = model_path.find_last_of("\\/");
-  if (pos != std::string::npos) {
-    model_dir = model_path.substr(0, pos + 1);
-  } else {
-    // A bare model filename is resolved against the working directory. Keep
-    // that effective directory here as well, including its Windows drive, so
-    // drive-relative external locations such as "C:data.bin" are classified
-    // the same way in metadata-only and default checking.
-    std::error_code ec;
-    const auto current_dir = std::filesystem::current_path(ec);
-    if (ec) {
-      fail_check("Unable to determine the model directory for ", model_path, ": ", ec.message());
-    }
-    model_dir = path_to_utf8(current_dir);
+  // Keep the effective model directory, including its Windows drive, for all
+  // relative model paths ("model.onnx", "./model.onnx", "sub/model.onnx").
+  // absolute() does not resolve symlinks or access the external data files.
+  std::error_code ec;
+  const auto absolute_model_path = std::filesystem::absolute(utf8_to_path(model_path), ec);
+  if (ec) {
+    fail_check("Unable to determine the model directory for ", model_path, ": ", ec.message());
   }
-  ctx.set_model_dir(model_dir);
+  ctx.set_model_dir(path_to_utf8(absolute_model_path.parent_path()));
   ctx.set_skip_opset_compatibility_check(skip_opset_compatibility_check);
   ctx.set_check_custom_domain(check_custom_domain);
   ctx.set_check_external_data_files(check_external_data_files);

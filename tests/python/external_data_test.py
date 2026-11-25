@@ -1086,6 +1086,7 @@ class TestCheckExternalDataWithoutFiles:
             ({"location": "."}, "should name a file"),
             ({"location": "nested/.."}, "should name a file"),
             ({"location": "nested/"}, "should name a file"),
+            ({"location": "nested\\"}, "should name a file"),
             ({"location": "data.bin", "offset": "-1"}, "non-negative integer"),
             ({"location": "data.bin", "length": "abc"}, "non-negative integer"),
             ({"location": "data.bin", "length": "12"}, "too small"),
@@ -1111,6 +1112,7 @@ class TestCheckExternalDataWithoutFiles:
             "current_directory",
             "directory_after_normalization",
             "trailing_separator",
+            "trailing_backslash",
             "negative_offset",
             "length_not_an_integer",
             "length_too_small",
@@ -1216,16 +1218,40 @@ class TestCheckExternalDataWithoutFiles:
 
     @pytest.mark.skipif(os.name != "nt", reason="Windows path syntax")
     @pytest.mark.parametrize("check_files", [False, True])
-    def test_windows_same_drive_location_with_bare_model_path_passes(
-        self, monkeypatch: pytest.MonkeyPatch, check_files: bool
+    @pytest.mark.parametrize(
+        ("location", "match"),
+        [
+            ("..\\data.bin", "points outside the directory"),
+            ("...", "only of dots and spaces"),
+        ],
+    )
+    def test_windows_drive_relative_directory_fails(
+        self, location: str, match: str, check_files: bool
     ) -> None:
         drive = os.path.splitdrive(self.temp_dir)[0]
-        model_filename = self.create_test_model({"location": f"{drive}data.bin"})
+        model_filename = self.create_test_model({"location": drive + location})
+        with pytest.raises(checker.ValidationError, match=match):
+            checker.check_model(model_filename, check_external_data_files=check_files)
+
+    @pytest.mark.skipif(os.name != "nt", reason="Windows path syntax")
+    @pytest.mark.parametrize("check_files", [False, True])
+    @pytest.mark.parametrize(
+        "model_path", ["model.onnx", "./model.onnx", "nested/model.onnx"]
+    )
+    def test_windows_same_drive_location_with_relative_model_path_passes(
+        self, monkeypatch: pytest.MonkeyPatch, check_files: bool, model_path: str
+    ) -> None:
+        monkeypatch.chdir(self.temp_dir)
+        self.temp_dir = str(
+            pathlib.Path(self.temp_dir) / pathlib.Path(model_path).parent
+        )
+        pathlib.Path(self.temp_dir).mkdir(exist_ok=True)
+        drive = os.path.splitdrive(self.temp_dir)[0]
+        self.create_test_model({"location": f"{drive}data.bin"})
         with open(os.path.join(self.temp_dir, "data.bin"), "wb") as data_file:
             data_file.write(self.value.tobytes())
-        monkeypatch.chdir(self.temp_dir)
         checker.check_model(
-            os.path.basename(model_filename),
+            model_path,
             check_external_data_files=check_files,
         )
 
@@ -1415,12 +1441,14 @@ class TestSaveExternalDataLocation:
         [
             ("..\\data.bin", "points outside the directory"),
             ("data/", "should name a file"),
+            ("data\\", "should name a file"),
             ("...", "only of dots and spaces"),
             ("nested/.. ", "only of dots and spaces"),
         ],
         ids=[
             "backslash_parent_directory",
             "trailing_separator",
+            "trailing_backslash",
             "three_dots",
             "dots_and_trailing_space",
         ],
