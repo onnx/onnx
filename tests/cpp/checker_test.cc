@@ -38,6 +38,52 @@ TEST(CHECKER, ValidDataLocationTest) {
 #endif
 }
 
+TEST(CHECKER, ValidationErrorCodeTest) {
+#ifndef ONNX_NO_EXCEPTIONS
+  namespace error_code = ONNX_NAMESPACE::checker::error_code;
+  auto code_of = [](const ModelProto& model) -> std::string {
+    try {
+      ONNX_NAMESPACE::checker::check_model(model);
+    } catch (const ONNX_NAMESPACE::checker::ValidationError& e) {
+      return std::string(e.code());
+    }
+    return "<no error>";
+  };
+
+  ModelProto model;
+  EXPECT_EQ(code_of(model), error_code::kIrVersionMissing);
+
+  model.set_ir_version(10);
+  EXPECT_EQ(code_of(model), error_code::kOpsetImportMissing);
+
+  model.add_opset_import()->set_version(21);
+  EXPECT_EQ(code_of(model), error_code::kRequiredFieldEmpty);
+
+  try {
+    ONNX_NAMESPACE::checker::resolve_external_data_location("localfolder", "..", "tensor_name");
+    ADD_FAILURE() << "expected a ValidationError";
+  } catch (const ONNX_NAMESPACE::checker::ValidationError& e) {
+    EXPECT_EQ(e.code(), error_code::kExternalDataLocationInvalid);
+  }
+
+  ONNX_NAMESPACE::checker::ValidationError error("message");
+  EXPECT_TRUE(error.code().empty());
+  // OpSchema::Verify sets the code itself, so other callers get it too.
+  const auto* add_schema = OpSchemaRegistry::Schema("Add", 21);
+  ASSERT_NE(add_schema, nullptr);
+  NodeProto node;
+  node.set_op_type("Add");
+  node.add_input("x");
+  node.add_output("y");
+  try {
+    add_schema->Verify(node);
+    ADD_FAILURE() << "expected a ValidationError";
+  } catch (const ONNX_NAMESPACE::checker::ValidationError& e) {
+    EXPECT_EQ(e.code(), error_code::kNodeSchemaMismatch);
+  }
+#endif
+}
+
 TEST(CHECKER, ValidDataLocationSymLinkTest) {
 #if !defined(ONNX_NO_EXCEPTIONS) && !defined(_WIN32)
   // Use a temp directory as the base_dir (simulating the model directory).

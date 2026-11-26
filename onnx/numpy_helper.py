@@ -617,7 +617,15 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
 
     values = list(dict_.values())
     raw_value_type = np.result_type(values[0])
-    if not all(np.result_type(val) == raw_value_type for val in values):
+    # Unicode storage widths differ in NumPy, but all use ONNX STRING.
+    if not all(
+        np.result_type(val) == raw_value_type
+        or (
+            np.issubdtype(raw_value_type, np.str_)
+            and np.issubdtype(np.result_type(val), np.str_)
+        )
+        for val in values
+    ):
         raise TypeError(
             "The value type in the input dictionary is not the same "
             "for all values and therefore is not valid as a map."

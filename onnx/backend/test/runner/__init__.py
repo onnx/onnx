@@ -15,7 +15,7 @@ import time
 import unittest
 from collections import defaultdict
 from re import Pattern
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 from urllib.request import urlretrieve
 
 import numpy as np
@@ -87,31 +87,25 @@ class Runner:
         for rt in load_model_tests(kind="simple"):
             self._add_model_test(rt, "Simple")
 
-        for ct in load_model_tests(kind="pytorch-converted"):
-            self._add_model_test(ct, "PyTorchConverted")
-
-        for test_case in load_model_tests(kind="pytorch-operator"):
-            self._add_model_test(test_case, "PyTorchOperator")
-
     def _get_test_case(self, name: str) -> type[unittest.TestCase]:
         test_case = type(str(name), (unittest.TestCase,), {})
         if self._parent_module:
             test_case.__module__ = self._parent_module
         return test_case
 
-    def include(self, pattern: str) -> Runner:
+    def include(self, pattern: str) -> Self:
         self._include_patterns.add(re.compile(pattern))
         return self
 
-    def exclude(self, pattern: str) -> Runner:
+    def exclude(self, pattern: str) -> Self:
         self._exclude_patterns.add(re.compile(pattern))
         return self
 
-    def xfail(self, pattern: str) -> Runner:
+    def xfail(self, pattern: str) -> Self:
         self._xfail_patterns.add(re.compile(pattern))
         return self
 
-    def enable_report(self) -> Runner:
+    def enable_report(self) -> Self:
         import pytest  # noqa: PLC0415
 
         for category, items_map in self._test_items.items():

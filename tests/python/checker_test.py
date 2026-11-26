@@ -24,7 +24,8 @@ from onnx import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable, Sequence
+    from pathlib import Path
 
 
 class TestChecker:
@@ -1520,6 +1521,156 @@ class TestChecker:
         tensor3.name = "t"
         checker.check_tensor(tensor3)
 
+    @staticmethod
+    def _raw_data_tensor(dtype: int, dims: list[int], nbytes: int) -> TensorProto:
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.extend(dims)
+        tensor.name = "t"
+        tensor.raw_data = b"\x00" * nbytes
+        return tensor
+
+    def test_check_tensor_raw_data_size(self) -> None:
+        """Reject whole-byte tensors whose raw_data payload is too small."""
+        # (data type, bytes per element)
+        cases = [
+            (TensorProto.BOOL, 1),
+            (TensorProto.UINT8, 1),
+            (TensorProto.FLOAT8E4M3FN, 1),
+            (TensorProto.FLOAT16, 2),
+            (TensorProto.BFLOAT16, 2),
+            (TensorProto.FLOAT, 4),
+            (TensorProto.INT32, 4),
+            (TensorProto.DOUBLE, 8),
+            (TensorProto.INT64, 8),
+            (TensorProto.COMPLEX64, 8),
+            (TensorProto.COMPLEX128, 16),
+        ]
+        for dtype, elem_size in cases:
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(
+                    self._raw_data_tensor(dtype, [4], 4 * elem_size - 1)
+                )
+            # Exactly enough bytes must pass.
+            checker.check_tensor(self._raw_data_tensor(dtype, [4], 4 * elem_size))
+
+        # Trailing bytes are accepted: external data loaded without a length key reads to EOF.
+        checker.check_tensor(self._raw_data_tensor(TensorProto.FLOAT, [4], 64))
+
+        # Segmented tensors use the segment range instead of dims; raw_data holds one
+        # chunk of length end - begin, and begin/end must lie in [0, nelem].
+        tensor = self._raw_data_tensor(TensorProto.FLOAT, [1000], 16)
+        tensor.segment.begin = 0
+        tensor.segment.end = 4
+        checker.check_tensor(tensor)
+
+        # Segment missing begin or end.
+        for kwargs in ({"begin": 0}, {"end": 4}):
+            bad = self._raw_data_tensor(TensorProto.FLOAT, [1000], 16)
+            for k, v in kwargs.items():
+                setattr(bad.segment, k, v)
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(bad)
+
+        # Segment begin < 0.
+        bad = self._raw_data_tensor(TensorProto.FLOAT, [1000], 16)
+        bad.segment.begin = -1
+        bad.segment.end = 4
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(bad)
+
+        # Segment end > nelem.
+        bad = self._raw_data_tensor(TensorProto.FLOAT, [1000], 16)
+        bad.segment.begin = 0
+        bad.segment.end = 1001
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(bad)
+
+        # An unrecognized data_type has no known element size.
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(self._raw_data_tensor(99, [4], 16))
+
+        # Byte-size overflow is reported instead of overflowing int64 internally.
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(
+                self._raw_data_tensor(TensorProto.FLOAT, [2**63 - 1], 1)
+            )
+
+    @pytest.mark.parametrize(
+        "dtype, field, value_count",
+        [
+            (TensorProto.FLOAT, "float_data", 17),
+            (TensorProto.COMPLEX64, "float_data", 34),
+            (TensorProto.DOUBLE, "double_data", 17),
+            (TensorProto.COMPLEX128, "double_data", 34),
+            (TensorProto.INT32, "int32_data", 17),
+            (TensorProto.INT64, "int64_data", 17),
+            (TensorProto.UINT32, "uint64_data", 17),
+            (TensorProto.UINT64, "uint64_data", 17),
+            (TensorProto.STRING, "string_data", 17),
+            (TensorProto.FLOAT6E2M3, "int32_data", 17),
+            (TensorProto.FLOAT6E3M2, "int32_data", 17),
+            (TensorProto.INT4, "int32_data", 3),
+            (TensorProto.INT2, "int32_data", 2),
+        ],
+    )
+    def test_check_tensor_segment_typed_data(
+        self, dtype: int, field: str, value_count: int
+    ) -> None:
+        tensor = TensorProto(data_type=dtype, dims=[1000])
+        tensor.segment.begin = 2
+        tensor.segment.end = 19
+        values = getattr(tensor, field)
+        values.extend([b"value" if field == "string_data" else 0] * value_count)
+        checker.check_tensor(tensor)
+
+        values.pop()
+        with pytest.raises(checker.ValidationError, match=f"{field} size"):
+            checker.check_tensor(tensor)
+
+    @pytest.mark.parametrize("payload", ["raw", "typed", "external"])
+    @pytest.mark.parametrize(
+        "segment",
+        [
+            {"begin": 0},
+            {"end": 4},
+            {"begin": -1, "end": 4},
+            {"begin": 5, "end": 4},
+            {"begin": 0, "end": 1001},
+        ],
+        ids=["missing_end", "missing_begin", "negative_begin", "reversed", "past_end"],
+    )
+    def test_check_tensor_invalid_segment_all_payloads(
+        self,
+        payload: str,
+        segment: dict[str, int],
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        tensor = TensorProto(data_type=TensorProto.FLOAT, dims=[1000])
+        if payload == "raw":
+            tensor.raw_data = bytes(4000)
+        elif payload == "typed":
+            tensor.float_data.extend([0.0] * 1000)
+        else:
+            monkeypatch.chdir(tmp_path)
+            (tmp_path / "weights.bin").write_bytes(bytes(4000))
+            tensor.data_location = TensorProto.EXTERNAL
+            tensor.external_data.add(key="location", value="weights.bin")
+        for key, value in segment.items():
+            setattr(tensor.segment, key, value)
+        with pytest.raises(checker.ValidationError, match="segment"):
+            checker.check_tensor(tensor)
+
+    def test_check_tensor_empty_segment(self) -> None:
+        tensor = TensorProto(data_type=TensorProto.FLOAT, dims=[1000])
+        tensor.segment.begin = tensor.segment.end = 1000
+        checker.check_tensor(tensor)
+
+        tensor.float_data.append(0.0)
+        with pytest.raises(checker.ValidationError, match="0-element"):
+            checker.check_tensor(tensor)
+
     def test_check_tensor_packed_subbyte_raw_data(self) -> None:
         """Reject packed sub-byte tensors whose raw_data payload is too small."""
         # 4-bit types (INT4, UINT4, FLOAT4E2M1): 2 elements per byte.
@@ -1580,6 +1731,29 @@ class TestChecker:
 
         with pytest.raises(checker.ValidationError, match="Unrecognized data_type"):
             checker.check_tensor(tensor)
+
+    @pytest.mark.parametrize("dtype", (TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2))
+    @pytest.mark.parametrize(
+        "raw_data, count, valid",
+        [
+            (b"\x3f", 1, True),
+            (b"\x40", 1, False),
+            (b"\xff\xff\x03", 3, True),
+            (b"\xff\xff\x04", 3, False),
+        ],
+    )
+    def test_check_tensor_segment_float6_padding(
+        self, dtype: int, raw_data: bytes, count: int, valid: bool
+    ) -> None:
+        tensor = self._raw_data_tensor(dtype, [1000], len(raw_data))
+        tensor.raw_data = raw_data
+        tensor.segment.begin = 5
+        tensor.segment.end = 5 + count
+        if valid:
+            checker.check_tensor(tensor)
+        else:
+            with pytest.raises(checker.ValidationError, match="padding bits"):
+                checker.check_tensor(tensor)
 
     @pytest.mark.parametrize("dtype", (TensorProto.INT2, TensorProto.UINT2))
     def test_check_tensor_2bit_raw_data_size_does_not_overflow(
@@ -2010,3 +2184,344 @@ class TestChecker:
             match=r"Input channels C must be divisible by group for ConvTranspose",
         ):
             checker.check_model(model, full_check=True)
+
+
+_IDENTITY_MODEL = """
+<ir_version: 10, opset_import: ["" : 21]>
+agraph (float[2] x) => (float[2] y) {
+    y = Identity(x)
+}
+"""
+
+
+def _model_without_graph_name() -> ModelProto:
+    model = onnx.parser.parse_model(_IDENTITY_MODEL)
+    model.graph.name = ""
+    return model
+
+
+def _model_with_untyped_initializer() -> ModelProto:
+    model = onnx.parser.parse_model(_IDENTITY_MODEL)
+    model.graph.initializer.add(name="w")
+    return model
+
+
+def _model_with_ir_version(ir_version: int) -> ModelProto:
+    model = onnx.parser.parse_model(_IDENTITY_MODEL)
+    model.ir_version = ir_version
+    return model
+
+
+def _model_with_duplicate_metadata_key() -> ModelProto:
+    model = onnx.parser.parse_model(_IDENTITY_MODEL)
+    helper.set_model_props(model, {"key": "a"})
+    model.metadata_props.add(key="key", value="b")
+    return model
+
+
+def _model_with_duplicate_attribute() -> ModelProto:
+    model = onnx.parser.parse_model(_IDENTITY_MODEL)
+    for _ in range(2):
+        model.graph.node[0].attribute.append(helper.make_attribute("alpha", 1.0))
+    return model
+
+
+def _model_with_duplicate_initializer() -> ModelProto:
+    model = onnx.parser.parse_model(_IDENTITY_MODEL)
+    for _ in range(2):
+        model.graph.initializer.append(
+            numpy_helper.from_array(np.zeros(2, dtype=np.float32), "w")
+        )
+    return model
+
+
+def _model_with_initializer_and_sparse_initializer_of_same_name() -> ModelProto:
+    model = onnx.parser.parse_model(_IDENTITY_MODEL)
+    model.graph.initializer.append(
+        numpy_helper.from_array(np.zeros(2, dtype=np.float32), "w")
+    )
+    model.graph.sparse_initializer.append(
+        helper.make_sparse_tensor(
+            numpy_helper.from_array(np.ones(1, dtype=np.float32), "w"),
+            numpy_helper.from_array(np.zeros(1, dtype=np.int64), "w_indices"),
+            [2],
+        )
+    )
+    return model
+
+
+def _model_without_opset_import() -> ModelProto:
+    model = onnx.parser.parse_model(_IDENTITY_MODEL)
+    del model.opset_import[:]
+    return model
+
+
+def _model_with_newer_data_type() -> ModelProto:
+    value = helper.make_tensor_value_info("x", TensorProto.FLOAT4E2M1, [2])
+    graph = helper.make_graph(
+        [helper.make_node("Identity", ["x"], ["y"])],
+        "g",
+        [value],
+        [helper.make_tensor_value_info("y", TensorProto.FLOAT4E2M1, [2])],
+    )
+    return helper.make_model(
+        graph, ir_version=10, opset_imports=[helper.make_opsetid("", 21)]
+    )
+
+
+class TestValidationErrorCode:
+    @pytest.mark.parametrize(
+        ("model_text", "code"),
+        [
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21]>
+                agraph (float[2] x) => (float[2] z) {
+                    z = Identity(y)
+                    y = Identity(x)
+                }
+                """,
+                "input-not-defined",
+            ),
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21]>
+                agraph (float[2] x) => (float[2] y) {
+                    y = Identity(x)
+                    y = Identity(x)
+                }
+                """,
+                "not-ssa",
+            ),
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21]>
+                agraph (float[2] x) => (float[2] y) {
+                    y = NoSuchOp(x)
+                }
+                """,
+                "operator-not-registered",
+            ),
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21]>
+                agraph (float[2] x) => (float[2] y) {
+                    y = custom.Op(x)
+                }
+                """,
+                "opset-import-missing",
+            ),
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21]>
+                agraph (float[2] x) => (float[2] y) {
+                    y = Add(x)
+                }
+                """,
+                "node-schema-mismatch",
+            ),
+            (
+                """
+                <ir_version: 5, opset_import: ["" : 10]>
+                agraph (float[1, 1, 2, 2] x, float[4] s) => (float[1, 1, 4, 4] y) {
+                    y = Upsample(x, s)
+                }
+                """,
+                "operator-deprecated",
+            ),
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21]>
+                agraph (float[2] x) => (float[2] z) {
+                    y = Identity(x)
+                }
+                """,
+                "graph-output-not-produced",
+            ),
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21]>
+                agraph (bool cond, float[2] x) => (float[2] y) {
+                    y = If(cond) <
+                        then_branch = g1 () => (float[2] t) { t = NoSuchOp(x) },
+                        else_branch = g2 () => (float[2] e) { e = Identity(x) }
+                    >
+                }
+                """,
+                "operator-not-registered",
+            ),
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21, "local" : 1]>
+                agraph (float[2] x) => (float[2] y) {
+                    y = local.f(x)
+                }
+                <domain: "local", opset_import: ["" : 21]>
+                f (a) => (b) {
+                    b = Identity(c)
+                    c = Identity(a)
+                }
+                """,
+                "input-not-defined",
+            ),
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21]>
+                agraph (float[2] x) => (float[2] y) {
+                    y = Identity(typo)
+                }
+                """,
+                "input-not-defined",
+            ),
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21, "local" : 1]>
+                agraph (float[2] x) => (float[2] y) {
+                    y = local.f(x)
+                }
+                <domain: "local", opset_import: ["" : 21]>
+                f (a) => (b) {
+                    b = custom.Op(a)
+                }
+                """,
+                "opset-import-missing",
+            ),
+        ],
+        ids=[
+            "input_not_defined",
+            "not_ssa",
+            "operator_not_registered",
+            "opset_import_missing",
+            "node_schema_mismatch",
+            "operator_deprecated",
+            "graph_output_not_produced",
+            "in_subgraph",
+            "in_function",
+            "input_never_defined",
+            "opset_import_missing_in_function",
+        ],
+    )
+    def test_parsed_model(self, model_text: str, code: str) -> None:
+        model = onnx.parser.parse_model(model_text)
+        with pytest.raises(checker.ValidationError) as excinfo:
+            checker.check_model(model)
+        assert excinfo.value.code == code
+
+    @pytest.mark.parametrize(
+        ("make_model", "code"),
+        [
+            (lambda: _model_with_ir_version(0), "ir-version-missing"),
+            (
+                lambda: _model_with_ir_version(onnx.IR_VERSION + 1),
+                "ir-version-unsupported",
+            ),
+            (_model_with_duplicate_metadata_key, "metadata-props-duplicate-key"),
+            (_model_without_opset_import, "opset-import-missing"),
+            (_model_without_graph_name, "required-field-empty"),
+            (_model_with_untyped_initializer, "required-field-missing"),
+            (_model_with_newer_data_type, "data-type-requires-newer-ir-version"),
+            (_model_with_duplicate_attribute, "node-schema-mismatch"),
+            (_model_with_duplicate_initializer, "not-ssa"),
+            (_model_with_initializer_and_sparse_initializer_of_same_name, "not-ssa"),
+        ],
+        ids=[
+            "ir_version_missing",
+            "ir_version_unsupported",
+            "metadata_props_duplicate_key",
+            "no_opset_import",
+            "graph_name_empty",
+            "initializer_data_type_missing",
+            "data_type_requires_newer_ir_version",
+            "duplicate_attribute",
+            "duplicate_initializer",
+            "initializer_and_sparse_initializer_of_same_name",
+        ],
+    )
+    def test_built_model(self, make_model: Callable[[], ModelProto], code: str) -> None:
+        with pytest.raises(checker.ValidationError) as excinfo:
+            checker.check_model(make_model())
+        assert excinfo.value.code == code
+
+    @pytest.mark.parametrize(
+        ("external_data", "file_contents", "code"),
+        [
+            ({"location": "w.bin"}, None, "external-data-file-missing"),
+            ({"location": "../w.bin"}, b"\x00" * 8, "external-data-location-invalid"),
+            ({"location": "subdir"}, None, "external-data-location-invalid"),
+            (
+                {"location": "w.bin", "offset": "abc"},
+                b"\x00" * 8,
+                "external-data-entry-invalid",
+            ),
+            (
+                {"location": "w.bin", "offset": "100"},
+                b"\x00" * 8,
+                "external-data-out-of-range",
+            ),
+            ({"location": "w.bin"}, b"\x00" * 4, "external-data-out-of-range"),
+        ],
+        ids=[
+            "file_missing",
+            "outside_model_directory",
+            "directory",
+            "offset_not_an_integer",
+            "offset_past_end",
+            "file_too_small",
+        ],
+    )
+    def test_external_data(
+        self,
+        tmp_path: Path,
+        external_data: dict[str, str],
+        file_contents: bytes | None,
+        code: str,
+    ) -> None:
+        (tmp_path / "subdir").mkdir()
+        if file_contents is not None:
+            (tmp_path / "w.bin").write_bytes(file_contents)
+        model = onnx.parser.parse_model(_IDENTITY_MODEL)
+        tensor = numpy_helper.from_array(np.zeros(2, dtype=np.float32), "w")
+        tensor.ClearField("raw_data")
+        tensor.data_location = TensorProto.EXTERNAL
+        for key, value in external_data.items():
+            tensor.external_data.add(key=key, value=value)
+        model.graph.initializer.append(tensor)
+        model_path = tmp_path / "model.onnx"
+        model_path.write_bytes(model.SerializeToString())
+        with pytest.raises(checker.ValidationError) as excinfo:
+            checker.check_model(model_path)
+        assert excinfo.value.code == code
+
+    def test_message_is_unchanged(self) -> None:
+        model = onnx.parser.parse_model(_IDENTITY_MODEL)
+        model.ir_version = 0
+        with pytest.raises(
+            checker.ValidationError,
+            match=r"^The model does not have an ir_version set properly\.$",
+        ):
+            checker.check_model(model)
+
+    def test_check_tensor(self) -> None:
+        with pytest.raises(checker.ValidationError) as excinfo:
+            checker.check_tensor(TensorProto(name="t"))
+        assert excinfo.value.code == "required-field-missing"
+
+    def test_rule_without_code(self) -> None:
+        model = onnx.parser.parse_model(_IDENTITY_MODEL)
+        model.ir_version = 2
+        with pytest.raises(checker.ValidationError) as excinfo:
+            checker.check_model(model)
+        assert excinfo.value.code is None
+
+    def test_raised_from_python(self) -> None:
+        assert checker.ValidationError("message").code is None
+
+    def test_infer_node_outputs(self) -> None:
+        # Shape inference verifies the node against its schema the same way.
+        with pytest.raises(checker.ValidationError) as excinfo:
+            shape_inference.infer_node_outputs(
+                onnx.defs.get_schema("Add", 21),
+                helper.make_node("Add", ["x"], ["y"]),
+                {"x": helper.make_tensor_type_proto(TensorProto.FLOAT, [2])},
+            )
+        assert excinfo.value.code == "node-schema-mismatch"

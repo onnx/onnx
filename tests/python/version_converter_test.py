@@ -8,6 +8,7 @@ import os
 import struct
 import tempfile
 
+import ml_dtypes
 import numpy as np
 import pytest
 
@@ -22,6 +23,7 @@ from onnx import (
     shape_inference,
 )
 from onnx.reference import ReferenceEvaluator
+from onnx.reference.op_run import OpRun
 
 MOD_OPSET_27 = 27
 MOD_OPSET_28 = 28
@@ -30,6 +32,338 @@ EINSUM_OPSET_28 = 28
 
 
 class TestVersionConverter:
+    @pytest.mark.parametrize("initial_version,target_version", [(28, 29), (29, 28)])
+    @pytest.mark.parametrize("outer_mvn", [False, True])
+    def test_nested_capture_shadows_outer_type(
+        self, initial_version, target_version, outer_mvn
+    ) -> None:
+        leaf = onnx.parser.parse_graph(
+            """leaf () => (float[2] Z) {
+                Z = MeanVarianceNormalization <axes = [0]> (X)
+            }"""
+        )
+        if outer_mvn:
+            leaf = helper.make_graph(
+                [helper.make_node("Identity", ["X"], ["Z"])],
+                "leaf",
+                [],
+                [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [2])],
+            )
+        body = helper.make_graph(
+            [
+                helper.make_node("Identity", ["keep_going"], ["next_condition"]),
+                helper.make_node(
+                    "If", ["keep_going"], ["next_X"], then_branch=leaf, else_branch=leaf
+                ),
+            ],
+            "body",
+            [
+                helper.make_tensor_value_info("iteration", TensorProto.INT64, []),
+                helper.make_tensor_value_info("keep_going", TensorProto.BOOL, []),
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [2]),
+            ],
+            [
+                helper.make_tensor_value_info("next_condition", TensorProto.BOOL, []),
+                helper.make_tensor_value_info("next_X", TensorProto.FLOAT, [2]),
+            ],
+        )
+        outer_nodes = []
+        if outer_mvn:
+            outer_nodes.append(
+                helper.make_node(
+                    "MeanVarianceNormalization", ["outer_input"], ["X"], axes=[0]
+                )
+            )
+        outer_nodes.append(
+            helper.make_node(
+                "Loop", ["trip_count", "cond", "initial"], ["Y"], body=body
+            )
+        )
+        model = helper.make_model(
+            helper.make_graph(
+                outer_nodes,
+                "outer",
+                [
+                    helper.make_tensor_value_info(
+                        "outer_input" if outer_mvn else "X", TensorProto.DOUBLE, [3]
+                    )
+                ],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [2])],
+                initializer=[
+                    onnx.numpy_helper.from_array(
+                        np.array(1, dtype=np.int64), name="trip_count"
+                    ),
+                    onnx.numpy_helper.from_array(np.array(True), name="cond"),
+                    onnx.numpy_helper.from_array(
+                        np.array([1, 3], dtype=np.float32), name="initial"
+                    ),
+                ],
+            ),
+            opset_imports=[helper.make_opsetid("", initial_version)],
+        )
+        converted = onnx.version_converter.convert_version(model, target_version)
+        checker.check_model(converted, full_check=True)
+        converted_body = next(
+            attr.g
+            for node in converted.graph.node
+            if node.op_type == "Loop"
+            for attr in node.attribute
+            if attr.name == "body"
+        )
+        output = ReferenceEvaluator(converted_body, opsets={"": target_version}).run(
+            None,
+            {
+                "iteration": np.array(0, dtype=np.int64),
+                "keep_going": np.array(True),
+                "X": np.array([1, 3], dtype=np.float32),
+            },
+        )[1]
+        assert output.dtype == np.float32
+        np.testing.assert_allclose(output, [1, 3] if outer_mvn else [-1, 1])
+
+    @pytest.mark.parametrize("initial_version,target_version", [(28, 29), (29, 28)])
+    def test_sibling_branches_without_captures(
+        self, initial_version, target_version
+    ) -> None:
+        branch = helper.make_graph(
+            [
+                helper.make_node(
+                    "Constant",
+                    [],
+                    ["value"],
+                    value=helper.make_tensor("v", TensorProto.FLOAT, [1], [1]),
+                )
+            ],
+            "branch",
+            [],
+            [helper.make_tensor_value_info("value", TensorProto.FLOAT, [1])],
+        )
+        count = 64
+        model = helper.make_model(
+            helper.make_graph(
+                [
+                    helper.make_node(
+                        "If",
+                        ["cond"],
+                        [f"Y{i}"],
+                        then_branch=branch,
+                        else_branch=branch,
+                    )
+                    for i in range(count)
+                ],
+                "siblings",
+                [helper.make_tensor_value_info("cond", TensorProto.BOOL, [])],
+                [
+                    helper.make_tensor_value_info(f"Y{i}", TensorProto.FLOAT, [1])
+                    for i in range(count)
+                ],
+            ),
+            opset_imports=[helper.make_opsetid("", initial_version)],
+        )
+        converted = onnx.version_converter.convert_version(model, target_version)
+        checker.check_model(converted, full_check=True)
+        outputs = ReferenceEvaluator(converted).run(None, {"cond": np.array(True)})
+        assert len(outputs) == count
+        for output in outputs:
+            np.testing.assert_array_equal(output, np.array([1], dtype=np.float32))
+
+    @pytest.mark.parametrize("initial_version,target_version", [(28, 29), (29, 28)])
+    @pytest.mark.parametrize("sparse", [False, True])
+    def test_nested_capture_local_initializer(
+        self, initial_version, target_version, sparse
+    ) -> None:
+        leaf = onnx.parser.parse_graph(
+            """leaf () => (float[2] Y) {
+                Y = MeanVarianceNormalization <axes = [0]> (X)
+            }"""
+        )
+        branch = helper.make_graph(
+            [
+                helper.make_node(
+                    "If", ["cond"], ["Z"], then_branch=leaf, else_branch=leaf
+                )
+            ],
+            "branch",
+            [],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [2])],
+        )
+        values = np.array([1, 3], dtype=np.float32)
+        if sparse:
+            branch.sparse_initializer.append(
+                helper.make_sparse_tensor(
+                    onnx.numpy_helper.from_array(values, name="X"),
+                    onnx.numpy_helper.from_array(np.array([0, 1], dtype=np.int64)),
+                    [2],
+                )
+            )
+        else:
+            branch.initializer.append(onnx.numpy_helper.from_array(values, name="X"))
+        model = helper.make_model(
+            helper.make_graph(
+                [
+                    helper.make_node(
+                        "If", ["cond"], ["Y"], then_branch=branch, else_branch=branch
+                    )
+                ],
+                "outer",
+                [
+                    helper.make_tensor_value_info("X", TensorProto.FLOAT, [2]),
+                    helper.make_tensor_value_info("cond", TensorProto.BOOL, []),
+                ],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [2])],
+            ),
+            opset_imports=[helper.make_opsetid("", initial_version)],
+        )
+        if sparse:
+            with pytest.raises(
+                onnx.version_converter.ConvertError,
+                match="Sparse initializers are not supported",
+            ):
+                onnx.version_converter.convert_version(model, target_version)
+            return
+        converted = onnx.version_converter.convert_version(model, target_version)
+        checker.check_model(converted, full_check=True)
+        converted_branch = next(
+            attr.g
+            for attr in converted.graph.node[0].attribute
+            if attr.name == "then_branch"
+        )
+        np.testing.assert_array_equal(
+            onnx.numpy_helper.to_array(converted_branch.initializer[0]), values
+        )
+        output = ReferenceEvaluator(converted_branch, opsets={"": target_version}).run(
+            None, {"cond": np.array(True)}
+        )[0]
+        assert output.dtype == np.float32
+        np.testing.assert_allclose(output, [-1, 1])
+
+    @pytest.mark.parametrize("ir_version", [None, 0, 1])
+    def test_unparsable_graph_is_rejected(self, ir_version) -> None:
+        model = helper.make_model(
+            helper.make_graph([], "empty", [], []),
+            opset_imports=[helper.make_opsetid("", 28)],
+        )
+        if ir_version is None:
+            model.ClearField("ir_version")
+        else:
+            model.ir_version = ir_version
+        with pytest.raises(RuntimeError, match="unable to parse input model"):
+            onnx.version_converter.convert_version(model, 29)
+
+    @pytest.mark.parametrize(
+        ("initial_version", "target_version"), [(28, 29), (29, 28)]
+    )
+    @pytest.mark.parametrize("nested", [False, True])
+    @pytest.mark.parametrize("intermediate", [False, True])
+    @pytest.mark.parametrize("initializer", [False, True])
+    @pytest.mark.parametrize(
+        ("tensor_type", "dtype"),
+        [
+            ("float", np.float32),
+            ("float16", np.float16),
+            ("bfloat16", ml_dtypes.bfloat16),
+            ("double", np.float64),
+        ],
+    )
+    def test_mvn_captured_input(
+        self,
+        initial_version,
+        target_version,
+        nested,
+        intermediate,
+        initializer,
+        tensor_type,
+        dtype,
+    ) -> None:
+        prefix = "A = Identity (X)" if intermediate else ""
+        captured = "A" if intermediate else "X"
+        branch = onnx.parser.parse_graph(
+            f"""
+            branch () => ({tensor_type}[2] Z) {{
+                Z = MeanVarianceNormalization <axes = [0]> ({captured})
+            }}
+            """
+        )
+        if nested:
+            branch = helper.make_graph(
+                [
+                    helper.make_node(
+                        "If", ["cond"], ["Z"], then_branch=branch, else_branch=branch
+                    )
+                ],
+                "nested",
+                [],
+                [
+                    helper.make_tensor_value_info(
+                        "Z", helper.np_dtype_to_tensor_dtype(np.dtype(dtype)), [2]
+                    )
+                ],
+            )
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 13, opset_import: ["" : {initial_version}]>
+            mvn ({tensor_type}[2] X, bool cond) => ({tensor_type}[2] Y) {{
+                {prefix}
+                Y = If (cond)
+            }}
+            """
+        )
+        model.graph.node[-1].attribute.extend(
+            [
+                helper.make_attribute("then_branch", branch),
+                helper.make_attribute("else_branch", branch),
+            ]
+        )
+        x = np.array([1.0, 3.0], dtype=dtype)
+        feeds = {"cond": np.array(True)}
+        if initializer:
+            del model.graph.input[0]
+            model.graph.initializer.append(onnx.numpy_helper.from_array(x, name="X"))
+        else:
+            feeds["X"] = x
+        checker.check_model(model)
+        expected = ReferenceEvaluator(model).run(None, feeds)[0]
+        converted = onnx.version_converter.convert_version(model, target_version)
+        checker.check_model(converted, full_check=True)
+        got = ReferenceEvaluator(converted).run(None, feeds)[0]
+        assert got.dtype == dtype
+        np.testing.assert_allclose(got.astype(np.float64), expected.astype(np.float64))
+
+    @pytest.mark.parametrize(
+        ("initial_version", "target_version"), [(28, 29), (29, 28)]
+    )
+    def test_mvn_unannotated_custom_input(
+        self, initial_version, target_version
+    ) -> None:
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 13, opset_import: ["" : {initial_version}, "custom" : 1]>
+            mvn (float[2] X) => (float[2] Y) {{
+                A = custom.CustomIdentity (X)
+                Y = MeanVarianceNormalization <axes = [0]> (A)
+            }}
+            """
+        )
+
+        class CustomIdentity(OpRun):
+            op_domain = "custom"
+
+            def _run(self, X):
+                return (X,)
+
+        checker.check_model(model)
+        converted = onnx.version_converter.convert_version(model, target_version)
+        checker.check_model(converted, full_check=True)
+        feeds = {"X": np.array([1.0, 3.0], dtype=np.float32)}
+        expected = ReferenceEvaluator(model, new_ops=[CustomIdentity]).run(None, feeds)[
+            0
+        ]
+        got = ReferenceEvaluator(converted, new_ops=[CustomIdentity]).run(None, feeds)[
+            0
+        ]
+        assert got.dtype == expected.dtype
+        np.testing.assert_allclose(got, expected)
+
     def _converted(
         self,
         graph: GraphProto,
@@ -2539,6 +2873,70 @@ class TestVersionConverter:
         assert converted_model.graph.node[0].attribute[0].name == "axis"
         assert converted_model.graph.node[0].attribute[0].i == 2
         assert converted_model.opset_import[0].version == 12
+
+    @pytest.mark.parametrize(
+        "op_type, from_opset, to_opset",
+        [("ReduceSum", 13, 12), ("ReduceMean", 18, 17), ("ReduceMax", 18, 13)],
+    )
+    @pytest.mark.parametrize("has_axes", [True, False])
+    def test_reduce_drops_noop_with_empty_axes(
+        self, op_type: str, from_opset: int, to_opset: int, has_axes: bool
+    ) -> None:
+        nodes = [
+            helper.make_node(
+                op_type,
+                ["X", "axes"] if has_axes else ["X"],
+                ["Y"],
+                keepdims=1,
+                noop_with_empty_axes=0,
+            )
+        ]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, None)],
+            [helper.make_tensor("axes", TensorProto.INT64, [1], [1])]
+            if has_axes
+            else [],
+        )
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset
+        )
+        node = converted_model.graph.node[0]
+        assert [a.name for a in node.attribute] == (
+            ["keepdims", "axes"] if has_axes else ["keepdims"]
+        )
+
+    @pytest.mark.parametrize("axes", [None, [], [1]])
+    def test_reduce_with_noop_with_empty_axes(self, axes: list[int] | None) -> None:
+        nodes = [
+            helper.make_node(
+                "ReduceMean",
+                ["X", "axes"] if axes is not None else ["X"],
+                ["Y"],
+                noop_with_empty_axes=1,
+            )
+        ]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, None)],
+            [helper.make_tensor("axes", TensorProto.INT64, [len(axes)], axes)]
+            if axes is not None
+            else [],
+        )
+        if not axes:
+            with pytest.raises(RuntimeError, match="noop_with_empty_axes"):
+                self._converted(graph, helper.make_operatorsetid("", 18), 17)
+        else:
+            converted_model = self._converted(
+                graph, helper.make_operatorsetid("", 18), 17
+            )
+            node = converted_model.graph.node[0]
+            assert [a.name for a in node.attribute] == ["axes"]
+            assert list(node.attribute[0].ints) == axes
 
     @pytest.mark.parametrize(
         "op_type, attrs, from_opset, to_opset, output_type, output_shape",

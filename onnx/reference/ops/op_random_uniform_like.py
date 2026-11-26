@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import numpy as np
+
 from onnx.helper import np_dtype_to_tensor_dtype
 from onnx.reference.ops._op_common_random import _CommonRandom
 
@@ -13,7 +15,7 @@ class RandomUniformLike(_CommonRandom):
             dtype = np_dtype_to_tensor_dtype(x.dtype)
         dtype = self._dtype(x, dtype=dtype)
         state = self._get_state(seed)
-        res = state.rand(*x.shape).astype(dtype)
+        res = np.asarray(state.rand(*x.shape), dtype=dtype)
         res *= high - low
         res += low
         return (res.astype(dtype),)
