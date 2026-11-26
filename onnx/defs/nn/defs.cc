@@ -1970,7 +1970,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           auto& input_shape = getInputShape(ctx, 0);
           int rank = static_cast<int>(input_shape.dim_size());
-          int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
+          int64_t axis = getAttribute(ctx, "axis", 1);
           if (axis < 0) {
             axis += rank;
           }
@@ -1978,7 +1978,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'");
           }
           // TODO(ONNX): is the operation defined for input-rank < 2?
-          updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
+          const auto axis_index = static_cast<int>(axis);
+          updateOutputShape(
+              ctx, 0, {multiplyDims(input_shape, 0, axis_index), multiplyDims(input_shape, axis_index, rank)});
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(

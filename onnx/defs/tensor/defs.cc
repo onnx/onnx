@@ -1042,7 +1042,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!axisAttr) {
             fail_shape_inference("Required attribute axis is missing");
           }
-          int axis = static_cast<int>(axisAttr->i());
+          int64_t axis = axisAttr->i();
           if (axis < -rank || axis >= rank) {
             fail_shape_inference("axis must be in [-rank, rank-1].");
           }
@@ -1092,7 +1092,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           if (all_lengths_known) {
-            output_shape->mutable_dim(axis)->set_dim_value(total_length);
+            output_shape->mutable_dim(static_cast<int>(axis))->set_dim_value(total_length);
           }
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
@@ -1162,10 +1162,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           const auto& shape = ctx.getInputType(0)->tensor_type().shape();
           int rank = shape.dim_size();
-          int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
-          if (axis < -rank || axis >= rank) {
-            fail_type_inference("Invalid value of attribute 'axis'. Rank=", rank, " Value=", axis);
+          const int64_t axis_attr = getAttribute(ctx, "axis", 0);
+          if (axis_attr < -rank || axis_attr >= rank) {
+            fail_type_inference("Invalid value of attribute 'axis'. Rank=", rank, " Value=", axis_attr);
           }
+          int axis = static_cast<int>(axis_attr);
           if (axis < 0) {
             axis += rank;
           }
@@ -1177,7 +1178,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             return;
           }
-          int split_dim_value = static_cast<int>(split_dim.dim_value());
+          const int64_t split_dim_value = split_dim.dim_value();
 
           std::vector<int64_t> split;
           const auto num_outputs_attr = ctx.getAttribute("num_outputs");
@@ -1197,7 +1198,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             int64_t total_dim = 0;
             for (int64_t d : split) {
-              total_dim += d;
+              total_dim = checkedAdd(total_dim, d);
             }
             if (total_dim != split_dim_value) {
               fail_shape_inference(
@@ -1222,11 +1223,12 @@ ONNX_OPERATOR_SET_SCHEMA(
                     ")");
               }
               if (split_dim_value % num_outputs == 0) { // tensor is evenly splittable
-                int chunk_size = split_dim_value / num_outputs;
+                int64_t chunk_size = split_dim_value / num_outputs;
                 split.resize(num_outputs, chunk_size);
               } else { // tensor needs to be split unevenly
-                int chunk_size = (split_dim_value / num_outputs) + 1;
-                int last_chunk_size = split_dim_value - (chunk_size * (num_outputs - 1));
+                int64_t chunk_size = (split_dim_value / num_outputs) + 1;
+                int64_t last_chunk_size =
+                    checkedSubtract(split_dim_value, checkedMultiply(chunk_size, num_outputs - 1));
                 split.resize(num_outputs - 1, chunk_size);
                 split.push_back(last_chunk_size);
               }
@@ -1751,7 +1753,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("data tensor must have rank >= 1");
           }
           int q = indices_shape.dim_size();
-          int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
+          int64_t axis = getAttribute(ctx, "axis", 0);
           if (axis < -r || axis >= r) {
             fail_shape_inference("axis must be in [-r, r-1]");
           }
@@ -1765,7 +1767,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           for (int i = 0; i < out_rank; ++i) {
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = (i < axis) ? data_shape.dim(i)
                                                                                                   : // i < axis < r
-                (i >= axis && i < axis + q) ? indices_shape.dim(i - axis)
+                (i >= axis && i < axis + q) ? indices_shape.dim(i - static_cast<int>(axis))
                                             : // i - axis < q
                 data_shape.dim(i - q + 1); // i < out_rank < q + r - 1
           }
@@ -2881,7 +2883,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("Indices tensor must have rank >= 1");
             }
             if (axisAttr) {
-              int axis = static_cast<int>(axisAttr->i());
+              int64_t axis = axisAttr->i();
               if (axis < -r || axis >= r) {
                 fail_shape_inference("'axis' must be in [-rank(indices), rank(indices)-1]");
               }
@@ -3247,7 +3249,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             yTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
           } else {
             // 'axis' is provided.
-            int axis = static_cast<int>(axisAttr->i());
+            int64_t axis = axisAttr->i();
             if (!xTensorProto->tensor_type().has_shape()) {
               return;
             }

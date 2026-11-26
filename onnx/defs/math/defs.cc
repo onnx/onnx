@@ -1087,7 +1087,7 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
       if (r == 0) {
         fail_shape_inference("Input rank must be >= 1 for ", name, ".");
       }
-      int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
+      int64_t axis = getAttribute(ctx, "axis", -1);
       if (axis < -r || axis >= r) {
         fail_shape_inference("'axis' must be in [", -r, " , ", (r - 1), "]. Its actual value is: ", axis);
       }
