@@ -793,7 +793,7 @@ and contains the {name} values of the corresponding input.
       if (r == 0) {
         fail_shape_inference("Input rank must be >= 1 for ", name, ".");
       }
-      int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
+      int64_t axis = getAttribute(ctx, "axis", 1);
       if (axis < -r || axis >= r) {
         fail_shape_inference("'axis' must be in [", -r, " , ", (r - 1), "]. Its actual value is: ", axis);
       }
@@ -3229,7 +3229,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           ONNX_NAMESPACE::TensorShapeProto result_shape_proto = input_shape;
 
           // Get the axis where the DFT will be performed.
-          auto axis = static_cast<int>(getAttribute(ctx, "axis", 1));
+          const int64_t axis = getAttribute(ctx, "axis", 1);
           // The last dimension is the real and imaginary parts of the value.
           const int64_t rank = input_shape.dim_size();
           if (rank < 2) {

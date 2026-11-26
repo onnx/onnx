@@ -1112,8 +1112,7 @@ static void ScanInferenceFunction_opset9(InferenceContext& ctx) {
         const auto& shape = input_type->tensor_type().shape();
 
         // remove sequence length dimensions and add to subgraph_input_types
-        int axis = static_cast<int>(axes[i - num_loop_state_vars]);
-        axis = handle_negative_axis_validate("scan_input_axes", axis, shape.dim_size());
+        int axis = handle_negative_axis_validate("scan_input_axes", axes[i - num_loop_state_vars], shape.dim_size());
 
         // update sequence_len if a value is available
 
@@ -1182,8 +1181,8 @@ static void ScanInferenceFunction_opset9(InferenceContext& ctx) {
 
           auto subgraph_output_rank = subgraph_output_shape.dim_size();
           auto output_rank = subgraph_output_rank + 1;
-          int output_axis = static_cast<int>(output_axes[i - num_loop_state_vars]);
-          output_axis = handle_negative_axis_validate("scan_output_axes", output_axis, output_rank);
+          int output_axis =
+              handle_negative_axis_validate("scan_output_axes", output_axes[i - num_loop_state_vars], output_rank);
 
           for (int j = 0; j < output_axis; ++j)
             *inferred_shape.add_dim() = subgraph_output_shape.dim(j);

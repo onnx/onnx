@@ -30,7 +30,7 @@ inline bool axisIsZero(DataPropagationContext& ctx, bool defaultZero = false) {
       return false;
     }
   }
-  int axis = static_cast<int>(axisAttr->i());
+  int64_t axis = axisAttr->i();
   if (axis >= 0) {
     return axis == 0;
   }

@@ -57,7 +57,7 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
           const auto& inputShape = input0_type->tensor_type().shape();
 
           int r = inputShape.dim_size();
-          int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
+          int64_t axis = getAttribute(ctx, "axis", 0);
           if (axis < -r || axis > r - 1) {
             fail_shape_inference("Invalid value of attribute 'axis'. Rank=", r, " Value=", axis);
           }
@@ -100,7 +100,7 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
                 fail_shape_inference("Input 'split' can not be empty.");
               }
 
-              const auto& splitDim = inputShape.dim(axis);
+              const auto& splitDim = inputShape.dim(static_cast<int>(axis));
               if (!splitDim.has_dim_value()) {
                 // Unable to verify nor infer exact split dimension size.
                 return -1;
@@ -149,7 +149,7 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
                                     ->mutable_tensor_type()
                                     ->mutable_shape();
             *outputShape = inputShape;
-            auto* dim = outputShape->mutable_dim(axis);
+            auto* dim = outputShape->mutable_dim(static_cast<int>(axis));
             // Tensors in sequence could not have different shapes explicitly.
             // Only assign dim_value when all chunks have the same shape.
             if (splitSize > 0) {
