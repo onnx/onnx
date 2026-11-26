@@ -412,11 +412,11 @@ import onnx
 # outputs: "out0", shape=[200, 200, 3]
 model1 = onnx.load("path/to/the/model1.onnx")
 
-# outputs: "in0", shape=[N, 200, 200, 3]
+# inputs: "in0", shape=[N, 200, 200, 3]
 model2 = onnx.load("path/to/the/model2.onnx")
 
 # outputs: "out0", shape=[1, 200, 200, 3]
-new_model1 = onnx.compose.expand_out_dims(model1, dim_idx=0)
+new_model1 = onnx.compose.expand_out_dim(model1, dim_idx=0)
 
 # Models can now be merged
 combined_model = onnx.compose.merge_models(
@@ -424,7 +424,7 @@ combined_model = onnx.compose.merge_models(
 )
 
 # Can also be run in-place
-onnx.compose.expand_out_dims(model1, dim_idx=0, inplace=True)
+onnx.compose.expand_out_dim(model1, dim_idx=0, inplace=True)
 ```
 
 ## Tools
