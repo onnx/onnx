@@ -1833,6 +1833,54 @@ class TestReferenceEvaluator:
         assert got.min() > 0
         assert got.max() < 1
 
+    @pytest.mark.parametrize("op_type", ["RandomUniformLike", "RandomNormalLike"])
+    @pytest.mark.parametrize("shape", [(), (0,), (2, 4)])
+    @pytest.mark.parametrize(
+        "input_dtype,output_dtype,explicit_dtype",
+        [
+            (np.float32, np.float32, False),
+            (np.float64, np.float64, False),
+            (np.int64, np.float16, True),
+        ],
+    )
+    def test_random_like_preserves_shape(
+        self, op_type, shape, input_dtype, output_dtype, explicit_dtype
+    ):
+        input_type = onnx.helper.np_dtype_to_tensor_dtype(np.dtype(input_dtype))
+        output_type = onnx.helper.np_dtype_to_tensor_dtype(np.dtype(output_dtype))
+        attrs = {"seed": 0.0}
+        if explicit_dtype:
+            attrs["dtype"] = output_type
+        if op_type == "RandomUniformLike":
+            attrs.update(low=-2.0, high=3.0)
+        else:
+            attrs.update(mean=1.5, scale=0.25)
+        node = make_node(op_type, ["X"], ["Y"], **attrs)
+        graph = make_graph(
+            [node],
+            "random_like",
+            [make_tensor_value_info("X", input_type, shape)],
+            [make_tensor_value_info("Y", output_type, shape)],
+        )
+        model = make_model(graph)
+        check_model(model)
+        result = ReferenceEvaluator(model).run(
+            None, {"X": np.zeros(shape, dtype=input_dtype)}
+        )[0]
+        assert isinstance(result, np.ndarray)
+        assert result.shape == shape
+        assert result.dtype == output_dtype
+        state = np.random.RandomState(0)
+        if op_type == "RandomUniformLike":
+            expected = np.asarray(state.uniform(size=shape), dtype=output_dtype)
+            expected *= 5.0
+            expected += -2.0
+        else:
+            expected = np.asarray(state.normal(size=shape), dtype=output_dtype)
+            expected *= 0.25
+            expected += 1.5
+        assert_array_equal(result, expected)
+
     def test_onnxt_runtime_random_normal(self):
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
         node1 = make_node("RandomNormal", [], ["Y"], seed=0.0, shape=[2, 4])
