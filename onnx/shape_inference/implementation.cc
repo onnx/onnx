@@ -66,10 +66,6 @@ std::string GetElemTypeString(const TypeProto_SparseTensor& type) {
   return ONNX_NAMESPACE::to_string(type.elem_type());
 }
 
-inline bool IsOnnxDomainOp(const NodeProto& node, const std::string& op_type) {
-  return (IsOnnxDomain(node.domain()) && (node.op_type() == op_type));
-}
-
 } // namespace
 
 template <class T>
@@ -411,7 +407,7 @@ class ShapeInferenceImplBase {
   }
 
   void UpdateType(ValueInfoProto& valueInfo) {
-    if (valueInfo.has_type()) {
+    if (valueInfo.has_type() && valueInfo.type().value_case() != TypeProto::ValueCase::VALUE_NOT_SET) {
       value_types_by_name[valueInfo.name()] = valueInfo.mutable_type();
     } else {
       undefined_value_types_by_name[valueInfo.name()] = valueInfo.mutable_type();
@@ -429,7 +425,7 @@ class ShapeInferenceImplBase {
   }
 
   void ProcessConstant(const NodeProto& n) {
-    if (IsOnnxDomainOp(n, "Constant") && n.output().size() == 1) {
+    if (IsOnnxDomain(n.domain()) && n.op_type() == "Constant" && n.output().size() == 1) {
       const std::string& output_name = n.output(0);
       for (const auto& attr : n.attribute()) {
         if (attr.name() == "value") {
@@ -585,7 +581,6 @@ class ShapeInferenceImplBase {
     // use shape info from input (input has priority over initializer)
     if (iter != value_types_by_name.end()) {
       checkShapesAndTypes(initializer_type, *iter->second);
-      // CheckTensorShapesAndTypes(*initializer_tensor_type, *iter->second->mutable_tensor_type());
     } else if (ir_version >= 4) {
       // Support IR>=4: some tensors can only exist in initializer and not in input
       // So shape_inference should make use of initializer shapes

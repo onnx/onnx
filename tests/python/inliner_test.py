@@ -3,12 +3,192 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
-from onnx import checker, inliner, parser
+from onnx import checker, defs, helper, inliner, numpy_helper, parser
+from onnx.reference import ReferenceEvaluator
 
 
 class TestInliner:
+    def test_nested_sparse_initializer_collision(self):
+        model = parser.parse_model(
+            """
+            <ir_version: 13, opset_import: ["" : 29, "local" : 1]>
+            graph (float[2,1] X) => (float[2,1] Y) { Y = local.scan(X) }
+            <opset_import: ["" : 29], domain: "local">
+            scan (x) => (y) {
+                y = Scan (x) <
+                    num_scan_inputs = 1,
+                    body = step (float[1] item) => (float[1] result) {
+                        temp = Identity(item)
+                        result = Add(temp, temp__1)
+                    }
+                >
+            }
+            """
+        )
+        body = next(
+            attr.g
+            for attr in model.functions[0].node[0].attribute
+            if attr.name == "body"
+        )
+        body.sparse_initializer.append(
+            helper.make_sparse_tensor(
+                numpy_helper.from_array(np.array([7.0], dtype=np.float32), "temp__1"),
+                numpy_helper.from_array(np.array([0], dtype=np.int64)),
+                [1],
+            )
+        )
+        checker.check_model(model)
+        expanded = inliner.inline_local_functions(model)
+        checker.check_model(expanded)
+        expanded_body = next(
+            attr.g for attr in expanded.graph.node[0].attribute if attr.name == "body"
+        )
+        initializer = expanded_body.sparse_initializer[0]
+        assert initializer.values.name != expanded_body.node[0].output[0]
+        assert initializer.values.name == expanded_body.node[1].input[1]
+        assert initializer.values.raw_data == body.sparse_initializer[0].values.raw_data
+        assert initializer.indices == body.sparse_initializer[0].indices
+
+    def test_scan_initializer_preserves_input_override(self):
+        model = parser.parse_model(
+            """
+            <ir_version: 13, opset_import: ["" : 29, "local" : 1]>
+            graph (float[2,1] X) => (float[2,1] Y) { Y = local.scan(X) }
+            <opset_import: ["" : 29], domain: "local">
+            scan (x) => (y) {
+                y = Scan (x) <
+                    num_scan_inputs = 1,
+                    body = step (float[1] item) => (float[1] result) {
+                        result = Identity(item)
+                    }
+                >
+            }
+            """
+        )
+        body = next(
+            attr.g
+            for attr in model.functions[0].node[0].attribute
+            if attr.name == "body"
+        )
+        body.initializer.append(
+            numpy_helper.from_array(np.array([99.0], dtype=np.float32), name="item")
+        )
+        checker.check_model(model)
+        feeds = {"X": np.array([[2.0], [3.0]], dtype=np.float32)}
+        np.testing.assert_array_equal(
+            ReferenceEvaluator(model).run(None, feeds)[0], feeds["X"]
+        )
+        expanded = inliner.inline_local_functions(model)
+        checker.check_model(expanded)
+        np.testing.assert_array_equal(
+            ReferenceEvaluator(expanded).run(None, feeds)[0], feeds["X"]
+        )
+
+    @pytest.mark.parametrize("extra_output", ["", "Unexpected"])
+    def test_trailing_optional_output_binding(self, extra_output):
+        model = parser.parse_model(
+            """
+            <ir_version: 13, opset_import: ["" : 29, "local" : 1]>
+            graph (float[1] X) => (float[1] Y) { Y = local.identity(X) }
+            <opset_import: ["" : 29], domain: "local">
+            identity (x) => (y) { y = Identity(x) }
+            """
+        )
+        model.graph.node[0].output.append(extra_output)
+        if extra_output:
+            with pytest.raises(RuntimeError, match="actual parameters"):
+                inliner.inline_local_functions(model)
+        else:
+            checker.check_model(inliner.inline_local_functions(model), full_check=True)
+
+    def test_groupedmatmul_linked_transb(self):
+        model = parser.parse_model(
+            """
+            <ir_version: 13, opset_import: ["" : 29, "local" : 1]>
+            g (float[1,2] X, float[1,2,2] W, int64[1,1] I) => (float[1,1,2] Y) {
+                Y = local.project <transpose = 1> (X, W, I)
+            }
+            <domain: "local", opset_import: ["" : 29]>
+            project <transpose> (float[1,2] X, float[1,2,2] W, int64[1,1] I)
+                => (float[1,1,2] Y) {
+                Y = GroupedMatMul <transB: int = @transpose> (X, W, I)
+            }
+            """
+        )
+        node = model.functions[0].node[0]
+        schema = defs.get_schema("GroupedMatMul", 29)
+        input_types = [value.type.SerializeToString() for value in model.graph.input]
+        assert not schema.get_context_dependent_function(
+            node.SerializeToString(), input_types
+        )
+        inlined = inliner.inline_selected_functions(
+            model,
+            [("local", "project")],
+            exclude=True,
+            inline_schema_functions=True,
+        )
+        retained_node = inlined.functions[0].node[0]
+        assert retained_node.op_type == "GroupedMatMul"
+        assert retained_node.attribute[0].ref_attr_name == "transpose"
+        assert not retained_node.attribute[0].HasField("i")
+        checker.check_model(inlined)
+        feeds = {
+            "X": np.array([[1, 2]], dtype=np.float32),
+            "W": np.array([[[1, 3], [5, 7]]], dtype=np.float32),
+            "I": np.array([[0]], dtype=np.int64),
+        }
+        expected = np.array([[[7, 19]]], dtype=np.float32)
+        for candidate in (model, inlined):
+            evaluator = ReferenceEvaluator(candidate)
+            np.testing.assert_array_equal(evaluator.run(None, feeds)[0], expected)
+            function = evaluator.functions_[("local", "project")]
+            for transpose in (0, 1, 2, 0):
+                result = function.run(None, feeds, attributes={"transpose": transpose})
+                expected_call = (
+                    expected if transpose else np.array([[[11, 17]]], dtype=np.float32)
+                )
+                np.testing.assert_array_equal(result[0], expected_call)
+        bound = inliner.inline_selected_functions(
+            inlined, [], exclude=True, inline_schema_functions=True
+        )
+        assert not bound.functions
+        assert all(node.op_type != "GroupedMatMul" for node in bound.graph.node)
+        assert any(node.op_type == "Transpose" for node in bound.graph.node)
+        checker.check_model(bound)
+        np.testing.assert_array_equal(
+            ReferenceEvaluator(bound).run(None, feeds)[0], expected
+        )
+
+    def test_groupedmatmul_implicit_zero_transb(self):
+        model = parser.parse_model(
+            """
+            <ir_version: 13, opset_import: ["" : 29]>
+            g (float[1,2] X, float[1,2,2] W, int64[1,1] I) => (float[1,1,2] Y) {
+                Y = GroupedMatMul (X, W, I)
+            }
+            """
+        )
+        model.graph.node[0].attribute.add(name="transB", type=2)
+        checker.check_model(model)
+        feeds = {
+            "X": np.array([[1, 2]], dtype=np.float32),
+            "W": np.array([[[1, 3], [5, 7]]], dtype=np.float32),
+            "I": np.array([[0]], dtype=np.int64),
+        }
+        for candidate in (
+            model,
+            inliner.inline_selected_functions(
+                model, [], exclude=True, inline_schema_functions=True
+            ),
+        ):
+            np.testing.assert_array_equal(
+                ReferenceEvaluator(candidate).run(None, feeds)[0],
+                np.array([[[11, 17]]], dtype=np.float32),
+            )
+
     def test_basic(self):
         model = parser.parse_model(
             """

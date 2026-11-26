@@ -6,7 +6,8 @@ class LexicalScopeContext:
     ir_version: int = ...
     opset_imports: dict[str, int] = ...
 
-class ValidationError(Exception): ...
+class ValidationError(Exception):
+    code: str | None
 
 def check_value_info(bytes: bytes, checker_context: CheckerContext) -> None: ...  # noqa: A002
 def check_tensor(bytes: bytes, checker_context: CheckerContext) -> None: ...  # noqa: A002
@@ -36,12 +37,14 @@ def check_model(
     full_check: bool,
     skip_opset_compatibility_check: bool,
     check_custom_domain: bool,
+    check_external_data_files: bool = True,
 ) -> None: ...
 def check_model_path(
     path: str,
     full_check: bool,
     skip_opset_compatibility_check: bool,
     check_custom_domain: bool,
+    check_external_data_files: bool = True,
 ) -> None: ...
 def _open_external_data(
     base_dir: str, location: str, tensor_name: str, read_only: bool
