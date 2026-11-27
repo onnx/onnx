@@ -110,6 +110,25 @@ class TestToolsFunctions:
         y2 = oinf2.run(None, {"X": x})[0]
         assert_allclose(y1, y2)
 
+    def test_replace_constant_unnamed_tensors(self):
+        value = np.arange(200, dtype=np.float32)
+        Y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [200])
+        node0 = helper.make_node(
+            "Constant", [], ["A"], value=numpy_helper.from_array(value)
+        )
+        node1 = helper.make_node(
+            "Constant", [], ["B"], value=numpy_helper.from_array(value)
+        )
+        node2 = helper.make_node("Add", ["A", "B"], ["Y"])
+        graph = helper.make_graph([node0, node1, node2], "two_constants", [], [Y])
+        model_def = helper.make_model(graph)
+        onnx.checker.check_model(model_def)
+
+        repl = replace_initializer_by_constant_of_shape(model_def)
+        onnx.checker.check_model(repl)
+        got = ReferenceEvaluator(repl).run(None, {})[0]
+        assert_allclose(got, np.full(200, 1.0, dtype=np.float32))
+
     def test_replace_range(self):
         dtype = np.float32
         value = np.random.randn(2, 100).astype(dtype)

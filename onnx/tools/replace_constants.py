@@ -42,7 +42,7 @@ def _replace_constant(
             )
         if att.name == "value":
             value = att.t
-            new_name = f"{value.name}__SHAPE"
+            new_name = f"{node.output[0]}__SHAPE"
             dims = value.dims
             size = np.prod(dims, dtype=np.int64)
             if size <= threshold:
