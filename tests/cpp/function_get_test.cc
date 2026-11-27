@@ -10,6 +10,19 @@
 
 namespace ONNX_NAMESPACE::Test {
 
+TEST(FunctionAPITest, GetMelWeightMatrixFunctionWithVersion) {
+  const auto* const schema = OpSchemaRegistry::Schema("MelWeightMatrix", 29, "");
+  ASSERT_NE(schema, nullptr);
+  EXPECT_EQ(schema->SinceVersion(), 17);
+  EXPECT_EQ(schema->GetFunction(17), nullptr);
+  EXPECT_EQ(schema->GetFunction(28), nullptr);
+  const auto* const function = schema->GetFunction(29);
+  ASSERT_NE(function, nullptr);
+  EXPECT_EQ(function->name(), "MelWeightMatrix");
+  ASSERT_EQ(function->opset_import_size(), 1);
+  EXPECT_EQ(function->opset_import(0).version(), 29);
+}
+
 TEST(FunctionAPITest, GetFunctionOpWithVersion) {
   const auto* const schema = OpSchemaRegistry::Schema("MeanVarianceNormalization", 9, "");
   EXPECT_TRUE(schema);
