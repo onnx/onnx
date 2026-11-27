@@ -209,6 +209,92 @@ class Resize(Base):
         )
 
     @staticmethod
+    def export_resize_upsample_scales_linear_uint8() -> None:
+        node = onnx.helper.make_node(
+            "Resize",
+            inputs=["X", "", "scales"],
+            outputs=["Y"],
+            mode="linear",
+        )
+
+        data = np.array(
+            [
+                [
+                    [
+                        [0, 10],
+                        [20, 30],
+                    ]
+                ]
+            ],
+            dtype=np.uint8,
+        )
+
+        scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+        # The weighted averages are
+        # [[[[ 0.   2.5  7.5 10. ]
+        #    [ 5.   7.5 12.5 15. ]
+        #    [15.  17.5 22.5 25. ]
+        #    [20.  22.5 27.5 30. ]]]]
+        # and are rounded to the nearest integer, ties to even:
+        # [[[[ 0  2  8 10]
+        #    [ 5  8 12 15]
+        #    [15 18 22 25]
+        #    [20 22 28 30]]]]
+        output = onnx.numpy_helper.saturate_cast(
+            interpolate_nd(data, lambda x, _: linear_coeffs(x), scale_factors=scales),
+            np.uint8,
+        )
+
+        expect(
+            node,
+            inputs=[data, scales],
+            outputs=[output],
+            name="test_resize_upsample_scales_linear_uint8",
+        )
+
+    @staticmethod
+    def export_resize_upsample_scales_cubic_int8() -> None:
+        node = onnx.helper.make_node(
+            "Resize",
+            inputs=["X", "", "scales"],
+            outputs=["Y"],
+            mode="cubic",
+        )
+
+        data = np.array(
+            [
+                [
+                    [
+                        [-128, -96, -64, -32],
+                        [-96, -64, -32, 0],
+                        [-64, -32, 0, 32],
+                        [-32, 0, 32, 127],
+                    ]
+                ]
+            ],
+            dtype=np.int8,
+        )
+
+        scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+        # The cubic weighted averages overshoot the int8 range at the corners
+        # (-134.75 at the top left and 147.74 at the bottom right); they are
+        # rounded to the nearest integer, ties to even, and saturated to
+        # [-128, 127].
+        output = onnx.numpy_helper.saturate_cast(
+            interpolate_nd(data, lambda x, _: cubic_coeffs(x), scale_factors=scales),
+            np.int8,
+        )
+
+        expect(
+            node,
+            inputs=[data, scales],
+            outputs=[output],
+            name="test_resize_upsample_scales_cubic_int8",
+        )
+
+    @staticmethod
     def export_resize_upsample_scales_linear_align_corners() -> None:
         node = onnx.helper.make_node(
             "Resize",
