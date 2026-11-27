@@ -735,7 +735,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto input_element_type = input_type->tensor_type().elem_type();
             auto* to_attr = ctx.getAttribute("to");
             if (to_attr) {
-              auto output_element_type = static_cast<int32_t>(to_attr->i());
+              auto output_element_type = narrow<int32_t>(to_attr->i());
               int64_t input_element_bit_size = ElementBitWidth(input_element_type);
               int64_t output_element_bit_size = ElementBitWidth(output_element_type);
               if (input_element_bit_size > 0 && output_element_bit_size > 0 &&

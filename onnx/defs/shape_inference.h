@@ -599,10 +599,13 @@ inline void propagateElemTypeFromAttributeToOutput(
         "Attribute ", attributeName, " should be of integer type and specify a type in ", ctx.getDisplayName(), ".");
   }
   auto attr_value = attr_proto->i();
-  auto elem_type = static_cast<TensorProto_DataType>(attr_value);
-  if (!TensorProto_DataType_IsValid(elem_type)) {
+  // Check the range before narrowing, so a large value cannot wrap around to a
+  // different, valid data type.
+  if (attr_value < std::numeric_limits<int32_t>::min() || attr_value > std::numeric_limits<int32_t>::max() ||
+      !TensorProto_DataType_IsValid(static_cast<int32_t>(attr_value))) {
     fail_type_inference("Attribute ", attributeName, " does not specify a valid type in ", ctx.getDisplayName(), ".");
   }
+  auto elem_type = static_cast<TensorProto_DataType>(attr_value);
   updateOutputElemType(ctx, outputIndex, elem_type, expected_type);
 }
 
