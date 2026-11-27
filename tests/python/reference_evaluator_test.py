@@ -2977,6 +2977,54 @@ class TestReferenceEvaluator:
         assert got.dtype == np.float16
         assert_array_equal(got, np.full(expected_shape, 1400, dtype=np.float16))
 
+    @pytest.mark.parametrize(
+        ("dtype", "tensor_type"),
+        [
+            (np.float16, TensorProto.FLOAT16),
+            (ml_dtypes.bfloat16, TensorProto.BFLOAT16),
+        ],
+    )
+    def test_global_average_pool_low_precision_large_spatial(self, dtype, tensor_type):
+        # 65536 spatial elements: bfloat16 stalled at 256 and returned 0.0039
+        # instead of 1.0, and float16 overflowed np.average's scale cast.
+        x = np.ones((1, 2, 256, 256), dtype=dtype)
+        node = make_node("GlobalAveragePool", ["X"], ["Y"])
+        X = make_tensor_value_info("X", tensor_type, x.shape)
+        Y = make_tensor_value_info("Y", tensor_type, (1, 2, 1, 1))
+        model = make_model(
+            make_graph([node], "g", [X], [Y]),
+            opset_imports=[make_opsetid("", 22)],
+        )
+
+        got = ReferenceEvaluator(model).run(None, {"X": x})[0]
+
+        assert got.dtype == np.dtype(dtype)
+        assert_array_equal(got, np.ones((1, 2, 1, 1), dtype=dtype))
+
+    @pytest.mark.parametrize(
+        ("dtype", "tensor_type"),
+        [
+            (np.float32, TensorProto.FLOAT),
+            (np.float64, TensorProto.DOUBLE),
+        ],
+    )
+    def test_global_average_pool_float32_float64_unchanged(self, dtype, tensor_type):
+        rng = np.random.default_rng(0)
+        x = rng.standard_normal((2, 3, 4, 5)).astype(dtype)
+        node = make_node("GlobalAveragePool", ["X"], ["Y"])
+        X = make_tensor_value_info("X", tensor_type, x.shape)
+        Y = make_tensor_value_info("Y", tensor_type, (2, 3, 1, 1))
+        model = make_model(
+            make_graph([node], "g", [X], [Y]),
+            opset_imports=[make_opsetid("", 22)],
+        )
+
+        got = ReferenceEvaluator(model).run(None, {"X": x})[0]
+        expected = x.mean(axis=(2, 3), keepdims=True)
+
+        assert got.dtype == np.dtype(dtype)
+        assert_allclose(got, expected, rtol=1e-12 if dtype == np.float64 else 1e-6)
+
     def test_max_pool_2d_1(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
