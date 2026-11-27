@@ -478,8 +478,12 @@ struct DataPropagationContextImpl : public DataPropagationContext {
       if (tensor_type.has_shape()) {
         const TensorShapeProto& shape = tensor_type.shape();
         if (shape.dim_size() == 1 && shape.dim(0).has_dim_value()) {
+          const int64_t dim_value = shape.dim(0).dim_value();
+          // The value is optional, so skip it instead of materializing a model-controlled number of dimensions.
+          if (dim_value < 0 || dim_value > kMaxMaterializedRank) {
+            return nullptr;
+          }
           TensorShapeProto tsp;
-          int64_t dim_value = shape.dim(0).dim_value();
           for (int64_t i = 0; i < dim_value; ++i) {
             tsp.add_dim();
           }
