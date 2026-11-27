@@ -902,6 +902,19 @@ class TestComposeFunctions:
         """Tests error checking when the name of the inputs overlaps"""
         self._test_overlapping_names(inputs0=["i0", "i1"], inputs1=["i1", "i2"])
 
+    @pytest.mark.parametrize("io_map", [[], [("y", "z")]], ids=["empty", "connected"])
+    def test_merge_graphs_with_overlapping_unused_inputs(
+        self, io_map: list[tuple[str, str]]
+    ) -> None:
+        g1 = parser.parse_graph(
+            "g1 (float[1] x, float[1] unused) => (float[1] y) { y = Identity(x) }"
+        )
+        g2 = parser.parse_graph(
+            "g2 (float[1] z, float[1] unused) => (float[1] w) { w = Identity(z) }"
+        )
+        with pytest.raises(ValueError, match="Found repeated edge names: unused"):
+            compose.merge_graphs(g1, g2, io_map=io_map)
+
     def test_overlapping_output_names(self) -> None:
         """Tests error checking when the name of the output overlaps"""
         self._test_overlapping_names(outputs0=["o0", "o1"], outputs1=["o1", "o2"])
