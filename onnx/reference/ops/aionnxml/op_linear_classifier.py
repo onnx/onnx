@@ -38,7 +38,8 @@ class LinearClassifier(OpRunAiOnnxMl):
         if dtype != np.float64:
             x = x.astype(np.float32)
         coefficients = np.array(coefficients).astype(x.dtype)
-        intercepts = np.array(intercepts).astype(x.dtype)
+        if intercepts is not None:
+            intercepts = np.array(intercepts).astype(x.dtype)
         coefficients = coefficients.reshape((-1, x.shape[1])).T
         scores = np.dot(x, coefficients)
         if intercepts is not None:
