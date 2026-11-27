@@ -27,5 +27,6 @@ class FeatureVectorizer(OpRunAiOnnxMl):
             self._preprocess(a, axis)
             for a, axis in zip(args, inputdimensions, strict=False)
         ]
-        res = np.concatenate(args, axis=1)
+        # The output is always tensor(float), also for integer and double inputs.
+        res = np.concatenate(args, axis=1).astype(np.float32)
         return (res,)
