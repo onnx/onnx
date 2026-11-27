@@ -844,6 +844,37 @@ class Attention(Base):
         )
 
     @staticmethod
+    def export_attention_with_qk_matmul_raw_softcap() -> None:
+        """Mode ``0`` exposes the raw QK matmul result, before ``softcap``."""
+        node = onnx.helper.make_node(
+            "Attention",
+            inputs=["Q", "K", "V", "attn_mask"],
+            outputs=["Y", "", "", "qk_matmul_output"],
+            softcap=2.0,
+        )
+
+        Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+        V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+        attn_mask = np.random.rand(4, 6).astype(np.float32)
+
+        Y, _, _, qk_matmul_output = _compute_attention(
+            Q,
+            K,
+            V,
+            attn_mask=attn_mask,
+            softcap=2.0,
+        )
+
+        expect(
+            node,
+            inputs=[Q, K, V, attn_mask],
+            outputs=[Y, qk_matmul_output],
+            name="test_attention_4d_with_qk_matmul_raw_softcap",
+            opset_imports=[onnx.helper.make_opsetid("", 23)],
+        )
+
+    @staticmethod
     def export_attention_with_qk_matmul_softmax() -> None:
         node = onnx.helper.make_node(
             "Attention",
