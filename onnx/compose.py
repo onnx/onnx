@@ -42,7 +42,11 @@ def check_overlapping_names(
     def _edge_names(graph: GraphProto, exclude: set[str] | None = None) -> list[str]:
         if exclude is None:
             exclude = set()
-        edges = []
+        edges = [
+            entry.name
+            for entry in graph.input
+            if entry.name and entry.name not in exclude
+        ]
         for n in graph.node:
             for i in n.input:
                 if i != "" and i not in exclude:
@@ -58,7 +62,6 @@ def check_overlapping_names(
         io_map = []
     io_map_inputs = {elem[1] for elem in io_map}
 
-    # Edges already cover input/output
     overlap = _overlapping(_edge_names(g1), _edge_names(g2, exclude=io_map_inputs))
     if overlap:
         result.append(("edge", overlap))
