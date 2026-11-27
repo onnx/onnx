@@ -801,8 +801,13 @@ computes the output.)DOC";
         0,
         "Y",
         "Output data tensor that contains the result of the "
-        "convolution. The output dimensions are functions "
-        "of the kernel size, stride size, and pad lengths.",
+        "convolution. Its shape is (N x M x O1 x O2 ... x On), where "
+        "M = W.shape[0] and n is the number of spatial axes. With "
+        "auto_pad NOTSET (explicit pads) or VALID (all pads 0), each "
+        "spatial size is `O[i] = floor((input_spatial_shape[i] + "
+        "pads[i] + pads[i + n] - dilations[i] * (kernel_shape[i] - 1) "
+        "- 1) / strides[i]) + 1`. With SAME_UPPER or SAME_LOWER, "
+        "`O[i] = ceil(input_spatial_shape[i] / strides[i])`.",
         "T",
         OpSchema::Single,
         true,
