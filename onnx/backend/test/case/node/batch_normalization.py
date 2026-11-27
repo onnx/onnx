@@ -135,3 +135,42 @@ class BatchNormalization(Base):
             outputs=[y, output_mean, output_var],
             name="test_batchnorm_epsilon_training_mode",
         )
+
+    @staticmethod
+    def export_train_float16_large_values() -> None:
+        # Squaring values above 256 overflows float16 (max 65504) when the
+        # running variance is computed, and the running-statistics update must
+        # also blend in float32: quantizing the previous running mean to
+        # float16 before the momentum blend corrupts it through cancellation
+        # (channel 0 below: float32 gives -0.4, a float16 blend gives 0).
+        # Expected outputs are computed in float32.
+        x = np.linspace(0, 511, 24).reshape(2, 3, 4).astype(np.float16)
+        x[:, 0, :] = -63040
+        s = np.array([1.0, 1.0, 1.0], dtype=np.float16)
+        bias = np.array([0.0, 0.0, 0.0], dtype=np.float16)
+        mean = np.array([7004.0, 0.0, 0.0], dtype=np.float16)
+        var = np.array([1.0, 1.0, 1.0], dtype=np.float16)
+
+        x32 = x.astype(np.float32)
+        saved_mean = x32.mean(axis=(0, 2), keepdims=True)
+        saved_var = x32.var(axis=(0, 2), keepdims=True)
+        output_mean = (
+            mean.astype(np.float32) * 0.9 + saved_mean.reshape(3) * 0.1
+        ).astype(np.float16)
+        output_var = (var.astype(np.float32) * 0.9 + saved_var.reshape(3) * 0.1).astype(
+            np.float16
+        )
+        y = ((x32 - saved_mean) / np.sqrt(saved_var + 1e-5)).astype(np.float16)
+
+        node = onnx.helper.make_node(
+            "BatchNormalization",
+            inputs=["x", "s", "bias", "mean", "var"],
+            outputs=["y", "output_mean", "output_var"],
+            training_mode=1,
+        )
+        expect(
+            node,
+            inputs=[x, s, bias, mean, var],
+            outputs=[y, output_mean, output_var],
+            name="test_batchnorm_train_float16_large_values",
+        )
