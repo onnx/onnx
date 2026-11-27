@@ -5711,12 +5711,20 @@ class TestShapeInference(TestShapeInferenceHelper):
                     graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 6)]
                 )
 
-    def test_topk_default_axis(self) -> None:
+    # Opset 9 exercises TopK-1 while supporting the test helper's Reshape.
+    @pytest.mark.parametrize("version", [9, *all_versions_for("TopK")])
+    def test_topk_default_axis(self, version: int) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 4, 5, 10))],
-            [make_node("TopK", ["x", "k"], ["y", "z"])],
+            [
+                make_node("TopK", ["x"], ["y", "z"], k=2)
+                if version < 10
+                else make_node("TopK", ["x", "k"], ["y", "z"])
+            ],
             [],
-            initializer=[make_tensor("k", TensorProto.INT64, (1,), (2,))],
+            initializer=[make_tensor("k", TensorProto.INT64, (1,), (2,))]
+            if version >= 10
+            else [],
         )
         self._assert_inferred(
             graph,
@@ -5724,14 +5732,23 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("y", TensorProto.FLOAT, (3, 4, 5, 2)),
                 make_tensor_value_info("z", TensorProto.INT64, (3, 4, 5, 2)),
             ],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_topk(self) -> None:
+    @pytest.mark.parametrize("version", [9, *all_versions_for("TopK")])
+    @pytest.mark.parametrize("axis", [2, -2])
+    def test_topk(self, version: int, axis: int) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 4, 5, 10))],
-            [make_node("TopK", ["x", "k"], ["y", "z"], axis=2)],
+            [
+                make_node("TopK", ["x"], ["y", "z"], axis=axis, k=2)
+                if version < 10
+                else make_node("TopK", ["x", "k"], ["y", "z"], axis=axis)
+            ],
             [],
-            initializer=[make_tensor("k", TensorProto.INT64, (1,), (2,))],
+            initializer=[make_tensor("k", TensorProto.INT64, (1,), (2,))]
+            if version >= 10
+            else [],
         )
         self._assert_inferred(
             graph,
@@ -5739,9 +5756,11 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("y", TensorProto.FLOAT, (3, 4, 2, 10)),
                 make_tensor_value_info("z", TensorProto.INT64, (3, 4, 2, 10)),
             ],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_topk_raw_data(self) -> None:
+    @pytest.mark.parametrize("version", all_versions_for("TopK"))
+    def test_topk_raw_data(self, version: int) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 4, 5, 10))],
             [make_node("TopK", ["x", "k"], ["y", "z"], axis=2)],
@@ -5762,9 +5781,11 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("y", TensorProto.FLOAT, (3, 4, 3, 10)),
                 make_tensor_value_info("z", TensorProto.INT64, (3, 4, 3, 10)),
             ],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_topk_missing_k_value_output_rank_check(self) -> None:
+    @pytest.mark.parametrize("version", all_versions_for("TopK"))
+    def test_topk_missing_k_value_output_rank_check(self, version: int) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 4, 5, 10)), ("k", TensorProto.INT64, (1,))],
             [make_node("TopK", ["x", "k"], ["y", "z"], axis=2)],
@@ -5780,6 +5801,33 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "z", TensorProto.INT64, (None, None, None, None)
                 ),
             ],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @pytest.mark.parametrize("version", [9, *all_versions_for("TopK")])
+    def test_topk_unknown_axis_dimension(self, version: int) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 4, None, 10))],
+            [
+                make_node("TopK", ["x"], ["y", "z"], axis=2, k=2)
+                if version < 10
+                else make_node("TopK", ["x", "k"], ["y", "z"], axis=2)
+            ],
+            [],
+            initializer=[make_tensor("k", TensorProto.INT64, (1,), (2,))]
+            if version >= 10
+            else [],
+        )
+        # TopK-1 replaces the axis dimension directly. Later schemas infer only
+        # the rank when the axis dimension is unknown, even with a constant K.
+        expected_shape = (3, 4, 2, 10) if version < 10 else (None, None, None, None)
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("y", TensorProto.FLOAT, expected_shape),
+                make_tensor_value_info("z", TensorProto.INT64, expected_shape),
+            ],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
         )
 
     @pytest.mark.parametrize("k_value", [0, -1])
