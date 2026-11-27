@@ -144,6 +144,7 @@ __all__ = [
     "MatMulInteger",
     "Max",
     "MaxPool",
+    "MaxRoiPool",
     "MaxUnpool",
     "Mean",
     "MeanVarianceNormalization_9",
@@ -423,6 +424,7 @@ from onnx.reference.ops.op_matmul import MatMul
 from onnx.reference.ops.op_matmul_integer import MatMulInteger
 from onnx.reference.ops.op_max import Max
 from onnx.reference.ops.op_max_pool import MaxPool
+from onnx.reference.ops.op_max_roi_pool import MaxRoiPool
 from onnx.reference.ops.op_max_unpool import MaxUnpool
 from onnx.reference.ops.op_mean import Mean
 from onnx.reference.ops.op_mean_variance_normalization import (
