@@ -86,7 +86,7 @@ class _CommonQuantizeLinear(OpRun):
             x = x / y_scale
 
         if tensor_type in _QUANT_INTEGER_RANGES:
-            xi = np.rint(x).astype(np.int32)
+            xi = np.rint(x).astype(np.float64)
             if zero_point is not None:
                 xi += zero_point
             dtype = tensor_dtype_to_np_dtype(tensor_type)
