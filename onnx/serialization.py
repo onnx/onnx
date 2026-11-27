@@ -118,8 +118,8 @@ class _ProtobufSerializer(ProtoSerializer):
             raise TypeError(
                 f"Parameter 'serialized' must be bytes, but got type: {type(serialized)}"
             )
-        decoded = typing.cast("int | None", proto.ParseFromString(serialized))
-        if decoded is not None and decoded != len(serialized):
+        decoded = proto.ParseFromString(serialized)
+        if decoded != len(serialized):
             raise google.protobuf.message.DecodeError(
                 f"Protobuf decoding consumed too few bytes: {decoded} out of {len(serialized)}"
             )
