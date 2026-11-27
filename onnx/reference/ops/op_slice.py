@@ -31,8 +31,11 @@ def _slice(
         if steps is None:
             slices = [slice(s, e) for s, e in zip(starts, ends, strict=False)]
         else:
+            # A start below -dim is clamped to the first element, but numpy reads it
+            # as before the first element when the step is negative.
             slices = [
-                slice(s, e, d) for s, e, d in zip(starts, ends, steps, strict=False)
+                slice(max(s, -data.shape[i]), e, d)
+                for i, (s, e, d) in enumerate(zip(starts, ends, steps, strict=False))
             ]
     else:  # noqa: PLR5501
         if steps is None:
@@ -42,7 +45,7 @@ def _slice(
         else:
             slices = [slice(0, a) for a in data.shape]
             for s, e, a, d in zip(starts, ends, axes, steps, strict=False):
-                slices[a] = slice(s, e, d)
+                slices[a] = slice(max(s, -data.shape[a]), e, d)
     try:
         return data[tuple(slices)]
     except TypeError as e:  # pragma: no cover
