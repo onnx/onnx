@@ -3616,7 +3616,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           unifyInputDim(ctx, 3, 0, num_channels);
           unifyInputDim(ctx, 4, 0, num_channels);
 
-          if (ctx.getAttribute("training_mode") && static_cast<int>(ctx.getAttribute("training_mode")->i()) != 0) {
+          if (ctx.getAttribute("training_mode") && ctx.getAttribute("training_mode")->i() != 0) {
             if (ctx.getNumOutputs() != 3)
               fail_shape_inference("This number of op outputs should be 3 when Training_mode = True, but it is not.");
           } else {

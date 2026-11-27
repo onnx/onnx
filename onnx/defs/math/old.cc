@@ -1242,9 +1242,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           auto transAAttr = ctx.getAttribute("transA");
-          bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
+          bool transA = transAAttr ? transAAttr->i() != 0 : false;
           auto transBAttr = ctx.getAttribute("transB");
-          bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
+          bool transB = transBAttr ? transBAttr->i() != 0 : false;
           // Gemm computes Y = alpha * A' * B' + beta * C
           // A' is A or A^T depending on transA; B' is B or B^T depending on transB
           Dim M, N, K;
@@ -1304,9 +1304,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 2)) {
             auto transAAttr = ctx.getAttribute("transA");
-            bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
+            bool transA = transAAttr ? transAAttr->i() != 0 : false;
             auto transBAttr = ctx.getAttribute("transB");
-            bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
+            bool transB = transBAttr ? transBAttr->i() != 0 : false;
             auto& first_input_shape = getInputShape(ctx, 0);
             auto& second_input_shape = getInputShape(ctx, 1);
             if (first_input_shape.dim_size() != 2) {
@@ -2607,9 +2607,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 2)) {
             auto transAAttr = ctx.getAttribute("transA");
-            bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
+            bool transA = transAAttr ? transAAttr->i() != 0 : false;
             auto transBAttr = ctx.getAttribute("transB");
-            bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
+            bool transB = transBAttr ? transBAttr->i() != 0 : false;
 
             checkInputRank(ctx, 0, 2);
             checkInputRank(ctx, 1, 2);
@@ -2621,8 +2621,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
                 second_input_shape.dim(transB ? 0 : 1);
           } else if (
-              hasInputShape(ctx, 2) &&
-              (!ctx.getAttribute("broadcast") || static_cast<int>(ctx.getAttribute("broadcast")->i()) == 0)) {
+              hasInputShape(ctx, 2) && (!ctx.getAttribute("broadcast") || ctx.getAttribute("broadcast")->i() == 0)) {
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = ctx.getInputType(2)->tensor_type().shape();
           }
         }));
@@ -2665,9 +2664,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 2)) {
             auto transAAttr = ctx.getAttribute("transA");
-            bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
+            bool transA = transAAttr ? transAAttr->i() != 0 : false;
             auto transBAttr = ctx.getAttribute("transB");
-            bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
+            bool transB = transBAttr ? transBAttr->i() != 0 : false;
             auto& first_input_shape = getInputShape(ctx, 0);
             auto& second_input_shape = getInputShape(ctx, 1);
             if (first_input_shape.dim_size() != 2) {
@@ -2718,9 +2717,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 2)) {
             auto transAAttr = ctx.getAttribute("transA");
-            bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
+            bool transA = transAAttr ? transAAttr->i() != 0 : false;
             auto transBAttr = ctx.getAttribute("transB");
-            bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
+            bool transB = transBAttr ? transBAttr->i() != 0 : false;
             auto& first_input_shape = getInputShape(ctx, 0);
             auto& second_input_shape = getInputShape(ctx, 1);
             if (first_input_shape.dim_size() != 2) {
