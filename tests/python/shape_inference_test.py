@@ -2313,11 +2313,10 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Squeeze", ["x"], "y")],
             [],
         )
-        operatorsetid = OperatorSetIdProto()
-        operatorsetid.domain = ""
-        operatorsetid.version = 11
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (3, 2))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (3, 2))],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, 11)],
         )
 
     def test_squeeze_no_axes_dynamic_input_opset11(self) -> None:
@@ -2348,26 +2347,37 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (1, 1, 3, 1, 2, 1))]
         )
 
-    def test_unsqueeze_unsorted_axes(self) -> None:
+    # Model opset 10 selects Unsqueeze-1 and supports the helper's two-input Reshape.
+    @pytest.mark.parametrize("version, axes", [(10, (4, 0)), (11, (-1, 0))])
+    def test_unsqueeze_axes_attribute(
+        self, version: int, axes: tuple[int, ...]
+    ) -> None:
         graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (3, 4, 5)), ("axes", TensorProto.INT64, (2,))],
-            [make_node("Unsqueeze", ["x", "axes"], "y")],
+            [("x", TensorProto.FLOAT, (3, 4, 5))],
+            [make_node("Unsqueeze", ["x"], ["y"], axes=axes)],
             [],
-            initializer=[make_tensor("axes", TensorProto.INT64, (2,), (4, 0))],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (1, 3, 4, 5, 1))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (1, 3, 4, 5, 1))],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_unsqueeze_negative_axes(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("Unsqueeze") if v >= 13]
+    )
+    @pytest.mark.parametrize("axes", [(4, 0), (0, -1)])
+    def test_unsqueeze_axes_input(self, version: int, axes: tuple[int, ...]) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 4, 5)), ("axes", TensorProto.INT64, (2,))],
             [make_node("Unsqueeze", ["x", "axes"], "y")],
             [],
-            initializer=[make_tensor("axes", TensorProto.INT64, (2,), (0, -1))],
+            initializer=[make_tensor("axes", TensorProto.INT64, (2,), axes)],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (1, 3, 4, 5, 1))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (1, 3, 4, 5, 1))],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_unsqueeze_scalar(self) -> None:
