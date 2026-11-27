@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 #include <vector>
 
 #include "onnx/common/assertions.h"
@@ -44,5 +45,18 @@ inline std::vector<int64_t> ReadInt64Tensor(const Tensor& tensor) {
         " elements)")
   }
   return ParseData<int64_t>(&tensor);
+}
+
+// Puts `to` in place of `from`: `to` takes over the name of `from`, so graph outputs and
+// values captured by subgraphs (bound by name) now refer to it, and uses of `from` in the
+// current graph are rewired to `to`. `from` gets a fresh name.
+inline void ReplaceValueKeepingName(Graph& graph, Value* from, Value* to) {
+  const std::string name = from->uniqueName();
+  from->setUniqueName(graph.getNextUniqueName(), false);
+  to->setUniqueName(name, false);
+  // With the name moved, uses() only reports users in the current graph.
+  for (Use u : from->uses()) {
+    u.user->replaceInputWith(from, to);
+  }
 }
 } // namespace ONNX_NAMESPACE::version_conversion
