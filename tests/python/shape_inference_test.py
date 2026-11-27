@@ -11258,7 +11258,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 10)],
         )
 
-    def test_pad(self) -> None:
+    @pytest.mark.parametrize("version", [11, 13, 18, 19, 21, 23, 24, 25])
+    def test_pad(self, version: int) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (1, None, 2)), ("pads", TensorProto.INT64, (6,))],
             [make_node("Pad", ["x", "pads"], "y")],
@@ -11280,7 +11281,26 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (3, None, 4))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (3, None, 4))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @pytest.mark.parametrize("version", [18, 25])
+    def test_pad_with_axes(self, version: int) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (4, 7, 6))],
+            [make_node("Pad", ["x", "pads", "", "axes"], ["y"])],
+            [],
+            initializer=[
+                make_tensor("pads", TensorProto.INT64, (4,), (2, 1, 3, 0)),
+                make_tensor("axes", TensorProto.INT64, (2,), (-1, 0)),
+            ],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (5, 7, 11))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     @pytest.mark.parametrize("version", [2, 11, 13])
