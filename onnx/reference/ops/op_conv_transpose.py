@@ -32,7 +32,10 @@ class ConvTranspose(OpRun):
             output_padding = [0 for s in X.shape[2:]] * 2
         if strides is None:
             strides = [1 for s in X.shape[2:]]
-        if pads is None and auto_pad not in {"SAME_UPPER", "SAME_LOWER"}:
+        if output_shape is not None:
+            # pads are ignored and computed from output_shape
+            pads = None
+        elif pads is None and auto_pad not in {"SAME_UPPER", "SAME_LOWER"}:
             pads = [0 for i in range(2 * len(strides))]
         if pads is None:
             if output_shape is None:
@@ -122,7 +125,8 @@ class ConvTranspose(OpRun):
                     group=1,
                     kernel_shape=kernel_shape,
                     output_padding=output_padding,
-                    output_shape=output_shape,
+                    # pads are resolved above and give the same output_shape
+                    output_shape=None,
                     pads=pads,
                     strides=strides,
                 )
