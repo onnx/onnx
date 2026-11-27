@@ -231,14 +231,16 @@ def _reshape_or_raise(
         ) from e
 
 
-def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PLR0911
+def to_array(tensor: onnx.TensorProto, base_dir: str | None = None) -> np.ndarray:  # noqa: PLR0911
     """Converts a tensor def object to a numpy array.
 
     This function uses ml_dtypes if the dtype is not a native numpy dtype.
 
     Args:
         tensor: a TensorProto object.
-        base_dir: if external tensor exists, base_dir can help to find the path to it
+        base_dir: directory containing external tensor data. This must be provided
+            explicitly for an external tensor. Pass an empty string to use the
+            current working directory intentionally.
 
     Returns:
         arr: the converted array.
@@ -267,6 +269,11 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
     # subsequent save of the model.
     external_raw_data = None
     if onnx.external_data_helper.uses_external_data(tensor):
+        if base_dir is None:
+            raise ValueError(
+                "External tensor data requires an explicit base_dir; "
+                "pass an empty string to use the current working directory."
+            )
         external_raw_data = onnx.external_data_helper._read_external_data_bytes(
             tensor, base_dir
         )
@@ -470,24 +477,25 @@ def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProt
     return tensor
 
 
-def to_list(sequence: onnx.SequenceProto) -> list[Any]:
+def to_list(sequence: onnx.SequenceProto, base_dir: str | None = None) -> list[Any]:
     """Converts a sequence def to a Python list.
 
     Args:
         sequence: a SequenceProto object.
+        base_dir: directory containing external tensor data.
 
     Returns:
         list: the converted list.
     """
     elem_type = sequence.elem_type
     if elem_type == onnx.SequenceProto.TENSOR:
-        return [to_array(v) for v in sequence.tensor_values]
+        return [to_array(v, base_dir) for v in sequence.tensor_values]
     if elem_type == onnx.SequenceProto.SPARSE_TENSOR:
-        return [to_array(v) for v in sequence.sparse_tensor_values]  # type: ignore[arg-type]
+        return [to_array(v, base_dir) for v in sequence.sparse_tensor_values]  # type: ignore[arg-type]
     if elem_type == onnx.SequenceProto.SEQUENCE:
-        return [to_list(v) for v in sequence.sequence_values]
+        return [to_list(v, base_dir) for v in sequence.sequence_values]
     if elem_type == onnx.SequenceProto.MAP:
-        return [to_dict(v) for v in sequence.map_values]
+        return [to_dict(v, base_dir) for v in sequence.map_values]
     raise TypeError("The element type in the input sequence is not supported.")
 
 
@@ -548,11 +556,12 @@ def from_list(
     return sequence
 
 
-def to_dict(map_proto: onnx.MapProto) -> dict[Any, Any]:
+def to_dict(map_proto: onnx.MapProto, base_dir: str | None = None) -> dict[Any, Any]:
     """Converts a map def to a Python dictionary.
 
     Args:
         map_proto: a MapProto object.
+        base_dir: directory containing external tensor data.
 
     Returns:
         The converted dictionary.
@@ -563,7 +572,7 @@ def to_dict(map_proto: onnx.MapProto) -> dict[Any, Any]:
     else:
         key_list = list(map_proto.keys)
 
-    value_list = to_list(map_proto.values)
+    value_list = to_list(map_proto.values, base_dir)
     if len(key_list) != len(value_list):
         raise IndexError(
             f"Length of keys and values for MapProto (map name: {map_proto.name}) are not the same."
@@ -653,11 +662,14 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
     return map_proto
 
 
-def to_optional(optional: onnx.OptionalProto) -> Any | None:
+def to_optional(
+    optional: onnx.OptionalProto, base_dir: str | None = None
+) -> Any | None:
     """Converts an optional def to a Python optional.
 
     Args:
         optional: an OptionalProto object.
+        base_dir: directory containing external tensor data.
 
     Returns:
         opt: the converted optional.
@@ -667,27 +679,31 @@ def to_optional(optional: onnx.OptionalProto) -> Any | None:
         return None
     if elem_type == onnx.OptionalProto.TENSOR:
         return (
-            to_array(optional.tensor_value)
+            to_array(optional.tensor_value, base_dir)
             if optional.HasField("tensor_value")
             else None
         )
     if elem_type == onnx.OptionalProto.SPARSE_TENSOR:
         return (
-            to_array(optional.sparse_tensor_value)  # type: ignore[arg-type]
+            to_array(optional.sparse_tensor_value, base_dir)  # type: ignore[arg-type]
             if optional.HasField("sparse_tensor_value")
             else None
         )
     if elem_type == onnx.OptionalProto.SEQUENCE:
         return (
-            to_list(optional.sequence_value)
+            to_list(optional.sequence_value, base_dir)
             if optional.HasField("sequence_value")
             else None
         )
     if elem_type == onnx.OptionalProto.MAP:
-        return to_dict(optional.map_value) if optional.HasField("map_value") else None
+        return (
+            to_dict(optional.map_value, base_dir)
+            if optional.HasField("map_value")
+            else None
+        )
     if elem_type == onnx.OptionalProto.OPTIONAL:
         return (
-            to_optional(optional.optional_value)
+            to_optional(optional.optional_value, base_dir)
             if optional.HasField("optional_value")
             else None
         )
