@@ -200,14 +200,11 @@ class Col2Im(OpRun):
         data = data.reshape((*data.shape[:1], C, bl, *data.shape[2:]))
 
         ks = tuple(block_shape)
-        res = None
+        res = np.empty((*data.shape[:2], *image_shape), dtype=data.dtype)
         for n in range(data.shape[0]):
             for c in range(data.shape[1]):
                 out = col2im_naive_implementation(
                     data[n, c, ...], image_shape, ks, dilations, pads, strides
                 )
-                if res is None:
-                    new_shape = data.shape[:2] + out.shape
-                    res = np.empty(new_shape, dtype=data.dtype)
                 res[n, c, ...] = out
         return (res,)
