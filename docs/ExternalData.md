@@ -52,6 +52,8 @@ onnx.save_model(onnx_model, "path/to/save/the/model.onnx", save_as_external_data
 
 ## onnx.checker for Models with External Data
 
+For what the checker verifies about external data, and how to check a model whose external data files are not available, see [Checking models with external data](docsgen/source/api/checker.md#checking-models-with-external-data).
+
 ### Models with External Data (<2GB)
 
 Current checker supports checking models with external data. Specify either loaded onnx model or model path to the checker.
