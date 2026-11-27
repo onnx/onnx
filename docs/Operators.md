@@ -11146,8 +11146,103 @@ expect(node, inputs=[x], outputs=[y], name="test_constantofshape_int_zeros")
 
 ### <a name="Conv"></a><a name="conv">**Conv**</a>
 
-  The convolution operator consumes an input tensor and a filter, and
-  computes the output.
+  Conv slides a filter across the input. A filter, also called a kernel, is a small set of numbers. At each position, Conv multiplies the input numbers by the matching kernel numbers and adds the results.
+
+  The kernel stays in its original order as it moves. It is not flipped or reversed. The technical name for this calculation is cross-correlation.
+
+  For example, start with:
+
+  - Input numbers: `[1, 2, 4, 8]`.
+  - Kernel numbers: `[2, 3]`.
+
+  Move the kernel one position at a time:
+
+  | Input numbers under the kernel | Multiply, then add | Result |
+  | --- | --- | --- |
+  | `[1, 2]` | `1 x 2 + 2 x 3` | `8` |
+  | `[2, 4]` | `2 x 2 + 4 x 3` | `16` |
+  | `[4, 8]` | `4 x 2 + 8 x 3` | `32` |
+
+  The output is `[8, 16, 32]`.
+
+  This example uses one line of numbers. For an image, the kernel moves across the height and width. It also works with extra directions, such as the depth of a three-dimensional image.
+
+  Conv reuses the same kernel at every position. Each output channel has its own kernel and forms one separate layer of results.
+
+  An input can contain several channels, or layers of numbers. For example, a colour image usually has separate red, green and blue channels.
+
+  For each output channel, Conv uses a small set of kernel weights for every input channel connected to it. It multiplies the matching numbers and adds the results across those channels and kernel positions.
+
+  A batch means several inputs processed together. Conv processes each batch item separately. Each batch item contains channels, and each channel contains positions. For an image, those positions form rows and columns.
+
+  The names used by ONNX are:
+
+  - `X`: the input numbers.
+  - `W`: the kernel weights, arranged by output channel, connected input channel and kernel position.
+  - `B`: an optional bias, meaning one extra number for each output channel.
+  - `Y`: the output numbers.
+
+  When a bias is provided, Conv adds it once to each result in that output channel. For example, a bias of 5 changes a result of 8 to 13. With no bias, nothing extra is added.
+
+  Number positions from zero. In each spatial direction, the input position matched to a kernel position is:
+
+  ```text
+  input_position = output_position * stride - padding_at_beginning + kernel_position * dilation
+  ```
+
+  Apply this rule in each spatial direction. Multiply the input value at the resulting position by the matching kernel weight, and add across the kernel positions and connected input channels. An input position outside the original input has value zero.
+
+  The following settings control the calculation:
+
+  - **Stride** (`strides`) is how far the kernel moves between results. The default is 1. With stride 2, it moves two input positions at a time.
+  - **Dilation** (`dilations`) is the spacing between the input positions sampled by the kernel. The default, 1, uses neighbouring positions. A dilation of 2 leaves one position between samples. For example, a three-number kernel then uses the first, third and fifth positions, covering a span of five positions.
+  - **Padding** (`pads`) adds zeros before or after the input. Any kernel position outside the original input therefore sees zero. Padding does not add channels or batch items.
+  - **Groups** (`group`) split the input channels into consecutive, equally sized sections and do the same for the output channels. Each output channel uses only the input channels in its own section. The default, 1, uses all input channels. With four input channels, six output channels and two groups, the first two input channels produce the first three output channels; the other two produce the remaining three. The group count must be a whole number of at least 1, and both channel counts must divide evenly by it.
+  - **Kernel size** (`kernel_shape`) is the number of kernel positions in each direction. If this setting is omitted, Conv reads the size from `W`.
+
+  Each direction, such as height or width, has its own stride, dilation, kernel size and padding. Stride, dilation and kernel size must be whole numbers of 1 or more; pad lengths must be whole numbers of 0 or more.
+
+  The number of output positions depends on the input size, padding, kernel size, dilation and stride. Work it out separately for each direction, such as height and width.
+
+  First, find the span covered by the kernel:
+
+  1. Subtract 1 from the kernel size.
+  2. Multiply by the dilation.
+  3. Add 1.
+
+  For example, a kernel with three positions and a dilation of 2 covers a span of five input positions.
+
+  For valid input sizes and settings, calculate the output size as follows:
+
+  1. Add the padding at both ends to the input size.
+  2. Subtract the kernel span.
+  3. Divide by the stride and round down to a whole number.
+  4. Add 1.
+
+  The same steps can be written as:
+
+  ```text
+  kernel_span = (kernel_size - 1) * dilation + 1
+  output_size = floor((input_size + padding_at_beginning + padding_at_end - kernel_span) / stride) + 1
+  ```
+
+  Here, `floor` means round down to a whole number.
+
+  For the earlier example, the input size is 4, the kernel span is 2, there is no padding, and the stride is 1. Subtracting gives 2, dividing gives 2, and adding 1 gives an output size of 3.
+
+  The `auto_pad` setting offers four padding choices:
+
+  - **NOTSET**, the default: use the padding amounts in `pads`. If `pads` is omitted, use no padding.
+  - **VALID**: use no padding.
+  - **SAME_UPPER** and **SAME_LOWER**: choose padding automatically. Divide the input size by the stride and round up to get the target output size. When the stride is 1, this keeps the output size equal to the input size. With a larger stride, it usually makes the output smaller.
+
+  For either SAME option, work out how much padding is needed: subtract 1 from the required output size, multiply by the stride, add the kernel span, then subtract the input size. If the result is negative, add no zeros.
+
+  The padding is then split as evenly as possible between the two ends. If one extra zero is needed, SAME_UPPER puts it at the end and SAME_LOWER puts it at the beginning.
+
+  For example, use five input numbers, a kernel size of 2, a stride of 2 and a dilation of 1. Both SAME choices produce three output positions and need one extra zero. SAME_UPPER adds it at the end; SAME_LOWER adds it at the beginning.
+
+  Use either `pads` or `auto_pad`, not both. When `pads` is used for several spatial directions, list the beginning padding for every direction first, followed by the ending padding in the same direction order.
 
 #### Version
 
