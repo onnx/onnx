@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import numpy as np
+
 from onnx.helper import np_dtype_to_tensor_dtype
 from onnx.reference.ops._op_common_random import _CommonRandom
 
@@ -13,7 +15,7 @@ class RandomNormalLike(_CommonRandom):
             dtype = np_dtype_to_tensor_dtype(x.dtype)
         dtype = self._dtype(x, dtype=dtype)
         state = self._get_state(seed)
-        res = state.randn(*x.shape).astype(dtype)
+        res = np.asarray(state.randn(*x.shape), dtype=dtype)
         res *= scale
         res += mean
         return (res.astype(dtype),)
