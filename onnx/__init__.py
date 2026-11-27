@@ -345,7 +345,7 @@ def save_model(
     model_filepath = _get_file_path(f)
     if model_filepath is not None:
         basepath = os.path.dirname(model_filepath)
-        proto = write_external_data_tensors(proto, basepath)
+        proto = write_external_data_tensors(proto, basepath, create_new=True)
 
     serialized = _get_serializer(format, model_filepath).serialize_proto(proto)
     _save_bytes(serialized, f)

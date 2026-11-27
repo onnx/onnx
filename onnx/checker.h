@@ -267,7 +267,8 @@ int64_t open_external_data(
     const std::string& base_dir,
     const std::string& location,
     const std::string& tensor_name,
-    bool read_only);
+    bool read_only,
+    bool create_new = false);
 ONNX_API bool check_is_experimental_op(const NodeProto& node);
 
 } // namespace ONNX_NAMESPACE::checker

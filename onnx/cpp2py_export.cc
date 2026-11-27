@@ -686,7 +686,14 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       nb::arg("check_custom_domain") = false,
       nb::arg("check_external_data_files") = true);
 
-  checker.def("_open_external_data", &checker::open_external_data);
+  checker.def(
+      "_open_external_data",
+      &checker::open_external_data,
+      nb::arg("base_dir"),
+      nb::arg("location"),
+      nb::arg("tensor_name"),
+      nb::arg("read_only"),
+      nb::arg("create_new") = false);
 
   // Submodule `version_converter`
   auto version_converter = onnx_cpp2py_export.def_submodule("version_converter");

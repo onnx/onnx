@@ -1966,7 +1966,8 @@ int64_t open_external_data(
     const std::string& base_dir,
     const std::string& location,
     const std::string& tensor_name,
-    bool read_only) {
+    bool read_only,
+    bool create_new) {
   std::filesystem::path data_path;
   if (read_only) {
     data_path = resolve_external_data_location(base_dir, location, tensor_name);
@@ -1979,7 +1980,7 @@ int64_t open_external_data(
   // CreateFileW with FILE_FLAG_OPEN_REPARSE_POINT: opens reparse point itself
   // (symlink/junction) without following, and returns CRT-independent HANDLE.
   DWORD access = read_only ? GENERIC_READ : (GENERIC_READ | GENERIC_WRITE);
-  DWORD creation = read_only ? OPEN_EXISTING : OPEN_ALWAYS;
+  DWORD creation = read_only ? OPEN_EXISTING : (create_new ? CREATE_NEW : OPEN_ALWAYS);
   HANDLE h = CreateFileW(
       data_path.native().c_str(),
       access,
@@ -2049,7 +2050,8 @@ static int try_kernel_contained_open(
     const std::string& base_dir,
     const std::string& location,
     [[maybe_unused]] const std::string& tensor_name,
-    [[maybe_unused]] bool read_only) {
+    [[maybe_unused]] bool read_only,
+    [[maybe_unused]] bool create_new) {
   const auto normalized_base_dir = base_dir.empty() ? std::string(".") : base_dir;
   int raw_dirfd = open(normalized_base_dir.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC);
   if (raw_dirfd < 0) {
@@ -2063,8 +2065,8 @@ static int try_kernel_contained_open(
   static thread_local bool openat2_supported = true;
   if (openat2_supported) {
     struct open_how how = {};
-    how.flags =
-        read_only ? static_cast<uint64_t>(O_RDONLY | O_CLOEXEC) : static_cast<uint64_t>(O_CREAT | O_RDWR | O_CLOEXEC);
+    how.flags = read_only ? static_cast<uint64_t>(O_RDONLY | O_CLOEXEC)
+                          : static_cast<uint64_t>(O_CREAT | O_RDWR | O_CLOEXEC | (create_new ? O_EXCL : 0));
     how.mode = read_only ? 0 : 0600;
     how.resolve = RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS;
     fd = static_cast<int>(syscall(SYS_openat2, raw_dirfd, rel.c_str(), &how, sizeof(how)));
@@ -2086,7 +2088,7 @@ static int try_kernel_contained_open(
   if (read_only) {
     fd = openat(raw_dirfd, rel.c_str(), flags | O_RDONLY);
   } else {
-    fd = openat(raw_dirfd, rel.c_str(), flags | O_CREAT | O_RDWR, 0600);
+    fd = openat(raw_dirfd, rel.c_str(), flags | O_CREAT | O_RDWR | (create_new ? O_EXCL : 0), 0600);
   }
   // NOLINTEND(bugprone-signed-bitwise)
   if (fd < 0) {
@@ -2101,7 +2103,8 @@ int64_t open_external_data(
     const std::string& base_dir,
     const std::string& location,
     const std::string& tensor_name,
-    bool read_only) {
+    bool read_only,
+    bool create_new) {
   // Pre-open validation (defense-in-depth).
   std::filesystem::path data_path;
   if (read_only) {
@@ -2113,14 +2116,14 @@ int64_t open_external_data(
   }
 
   // Try kernel-level contained open (openat2 or O_RESOLVE_BENEATH).
-  int fd = try_kernel_contained_open(base_dir, location, tensor_name, read_only);
+  int fd = try_kernel_contained_open(base_dir, location, tensor_name, read_only, create_new);
   bool kernel_verified = (fd >= 0);
 
   // Fallback: open() + O_NOFOLLOW + post-open inode verification.
   if (fd < 0) {
     // POSIX open flags are int bitmasks.
     // NOLINTBEGIN(bugprone-signed-bitwise)
-    int flags = read_only ? O_RDONLY : (O_CREAT | O_RDWR);
+    int flags = read_only ? O_RDONLY : (O_CREAT | O_RDWR | (create_new ? O_EXCL : 0));
 #ifdef O_CLOEXEC
     flags |= O_CLOEXEC;
 #endif

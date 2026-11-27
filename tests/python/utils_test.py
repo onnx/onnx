@@ -9,6 +9,7 @@ import shutil
 import tarfile
 import tempfile
 
+import numpy as np
 import pytest
 
 import onnx
@@ -61,6 +62,51 @@ class TestUtilityFunctions:
         assert m1.graph.output[0] == C0
         assert m1.graph.output[1] == C1
         shutil.rmtree(tdir, ignore_errors=True)
+
+    def test_extract_large_model_loads_external_data_from_input_directory(
+        self, tmp_path, monkeypatch
+    ) -> None:
+        input_dir = tmp_path / "input"
+        output_dir = tmp_path / "output"
+        input_dir.mkdir()
+        output_dir.mkdir()
+        input_path = input_dir / "model.onnx"
+        output_path = output_dir / "model.onnx"
+        expected = np.array([2.0, 3.0], dtype=np.float32)
+        weight = onnx.numpy_helper.from_array(expected, "W")
+        graph = helper.make_graph(
+            [helper.make_node("Add", ["X", "W"], ["Y"])],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [2])],
+            [weight],
+        )
+        onnx.save_model(
+            helper.make_model(graph),
+            input_path,
+            save_as_external_data=True,
+            location="weights.bin",
+            size_threshold=0,
+        )
+        (output_dir / "weights.bin").write_bytes(
+            np.array([99.0, 99.0], dtype=np.float32).tobytes()
+        )
+
+        original_getsize = os.path.getsize
+
+        def oversized_input(path):
+            if os.fspath(path) == os.fspath(input_path):
+                return onnx.checker.MAXIMUM_PROTOBUF + 1
+            return original_getsize(path)
+
+        monkeypatch.setattr(onnx.utils.os.path, "getsize", oversized_input)
+        onnx.utils.extract_model(
+            input_path, output_path, ["X"], ["Y"], check_model=False
+        )
+
+        extracted = onnx.load(output_path)
+        actual = onnx.numpy_helper.to_array(extracted.graph.initializer[0])
+        np.testing.assert_array_equal(actual, expected)
 
     def test_tar_members_filter_rejects_sibling_prefix_escape(self) -> None:
         with tempfile.TemporaryDirectory() as tdir:

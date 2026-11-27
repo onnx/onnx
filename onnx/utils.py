@@ -241,7 +241,8 @@ def extract_model(
 
     if infer_shapes and os.path.getsize(input_path) > onnx.checker.MAXIMUM_PROTOBUF:
         onnx.shape_inference.infer_shapes_path(input_path, output_path)
-        model = onnx.load(output_path)
+        model = onnx.load(output_path, load_external_data=False)
+        onnx.load_external_data_for_model(model, os.path.dirname(input_path))
     elif infer_shapes:
         model = onnx.load(input_path, load_external_data=False)
         model = onnx.shape_inference.infer_shapes(model)
