@@ -57,6 +57,22 @@ on:
           - 'release'
           - 'preview'
         default: 'preview'
+      release_type:
+        description: 'Select release type to prevent accidental publishing: release-candidate or release'
+        required: true
+        type: choice
+        options:
+          - 'release-candidate'
+          - 'release'
+        default: 'release-candidate'
+      confirm_publish_release:
+        description: 'Confirm you want to publish to pypi-release (must set to yes to allow publishing)'
+        required: true
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+        default: 'no'
 
 permissions:
   contents: read
@@ -153,7 +169,7 @@ jobs:
     runs-on: ubuntu-latest
 
     needs: [call-linux, call-mac, call-win, call-pyodide, call-sdist]
-    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_pypi_release == 'yes') && (github.repository_owner == 'onnx') && startsWith(github.ref, 'refs/heads/rel-') && (github.event_name == 'workflow_dispatch')
+    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_pypi_release == 'yes') && (github.event.inputs.confirm_publish_release == 'yes') && (github.repository_owner == 'onnx') && startsWith(github.ref, 'refs/heads/rel-') && (github.event_name == 'workflow_dispatch')
 
     steps:
 
@@ -171,16 +187,33 @@ jobs:
           persist-credentials: false
 
       - name: Check if package_version matches branch
+        env:
+          RELEASE_TYPE: ${{ github.event.inputs.release_type }}
         run: |
           branch_version=${GITHUB_REF#refs/heads/rel-}
           package_version=$(cat VERSION_NUMBER)
           echo "Branch version: $branch_version"
           echo "Package version: $package_version"
 
-          if [[ "$package_version" != "$branch_version" && "$package_version" != "$branch_version"rc* ]]; then
-            echo "Error: Package version ($package_version) does not match branch version ($branch_version) or expected RC format."
-            exit 1
-          fi
+          case "$RELEASE_TYPE" in
+            release)
+              if [ "$package_version" != "$branch_version" ]; then
+                echo "Error: For a full release the package version ($package_version) must match the branch version ($branch_version)."
+                exit 1
+              fi
+              ;;
+            release-candidate)
+              rc_number=${package_version#"${branch_version}rc"}
+              if [ "$rc_number" = "$package_version" ] || [ -z "$rc_number" ] || [[ "$rc_number" == *[!0-9]* ]]; then
+                echo "Error: For a release candidate the package version ($package_version) must match ${branch_version}rcN."
+                exit 1
+              fi
+              ;;
+            *)
+              echo "Error: Unexpected release_type ($RELEASE_TYPE)."
+              exit 1
+              ;;
+          esac
 
   check_for_publish_preview_build_to_testpypi_weekly:
     name: Check for Publish preview build to test.pypi-weekly
