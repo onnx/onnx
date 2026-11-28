@@ -2878,9 +2878,8 @@ Generates a {name} window as described in the paper https://ieeexplore.ieee.org/
         static_cast<int64_t>(TensorProto_DataType_FLOAT));
     schema.Attr(
         "periodic",
-        "If 1, returns a window to be used as periodic function. If 0, return a symmetric window. "
-        "When 'periodic' is specified, hann computes a window of length size + 1 and returns the first size points. "
-        "The default value is 1. ",
+        "If 1, returns a periodic window of length size, equivalent to the first size elements of a symmetric window "
+        "of length size + 1. If 0, returns a symmetric window of length size. The default value is 1.",
         AttributeProto::INT,
         static_cast<int64_t>(1));
     schema.Input(
@@ -2976,6 +2975,63 @@ ONNX_OPERATOR_SET_SCHEMA(
         {
           A0 = Constant <value = float {0.54347826087}>()
           A1 = Constant <value = float {0.45652173913}>()
+          A2 = Constant <value = float {0.0}>()
+          Zero = Constant <value = float {0.0}>()
+          One = Constant <value = float {1.0}>()
+          Two = Constant <value = float {2.0}>()
+          Tau = Constant <value = float {6.2831853}>()
+          Periodic_Size_FP = Cast <to = 1> (size)
+          Symmetric_Size_FP = Sub(Periodic_Size_FP, One)
+          IsPeriodic = Constant <value_int : int = @periodic>()
+          IsPeriodic_FP = Cast <to = 1> (IsPeriodic)
+          IsSymmetric_FP = Sub(One, IsPeriodic_FP)
+          Periodic_Component = Mul(Periodic_Size_FP, IsPeriodic_FP)
+          Symmetric_Component = Mul(Symmetric_Size_FP, IsSymmetric_FP)
+          Size_FP = Add(Periodic_Component, Symmetric_Component)
+          AngularIncrement = Div (Tau, Size_FP)
+          Range = Range (Zero, Periodic_Size_FP, One)
+          RangeAngular = Mul (Range, AngularIncrement)
+          TwoRangeAngular = Mul (RangeAngular, Two)
+          CosTwoRangeAngular = Cos (TwoRangeAngular)
+          A2_Component = Mul (A2, CosTwoRangeAngular)
+          CosRangeAngular = Cos (RangeAngular)
+          A1_Component = Mul (A1, CosRangeAngular)
+          Temp0 = Sub (A0, A1_Component)
+          Temp1 = Add (Temp0, A2_Component)
+          output = Cast <to : int = @output_datatype> (Temp1)
+        }
+        )ONNX"));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    HammingWindow,
+    29,
+    OpSchema()
+        .FillUsing(CosineSumWindowOpDocGenerator("Hamming"))
+        .SetDoc(R"DOC(
+Generates a one-dimensional Hamming window of length `N`, where `N` is the
+positive integer specified by the scalar input `size`.
+
+For each integer index `n` with `0 <= n < N`, the window value is
+
+```
+w[n] = 0.54 - 0.46 * cos(2 * pi * n / D)
+```
+
+where `D = N` when `periodic = 1`, and `D = N - 1` when `periodic = 0`.
+A periodic window is equivalent to the first `N` elements of a symmetric window
+of length `N + 1`.
+
+The window values are cast to `output_datatype`. The output tensor has shape `[N]`.
+
+The coefficients `0.54` and `0.46` follow equation (30b), Section V-D of
+[Harris (1978)](https://ieeexplore.ieee.org/document/1455106).
+)DOC")
+        .TypeConstraint("T1", {types::Int32, types::Int64}, "Constrain the input size to int32_t or int64_t.")
+        .TypeConstraint("T2", OpSchema::all_numeric_types_ir4(), "Constrain output types to numeric tensors.")
+        .FunctionBody(R"ONNX(
+        {
+          A0 = Constant <value = float {0.54}>()
+          A1 = Constant <value = float {0.46}>()
           A2 = Constant <value = float {0.0}>()
           Zero = Constant <value = float {0.0}>()
           One = Constant <value = float {1.0}>()

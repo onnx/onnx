@@ -8,16 +8,24 @@ import numpy as np
 from onnx.reference.ops._op_common_window import _CommonWindow
 
 
-class HammingWindow(_CommonWindow):
-    r"""Returns :math:`\\omega_n = \\alpha - \\beta \\cos \\left( \\frac{\\pi n}{N-1} \\right)` where *N* is the window length.
+class HammingWindow_17(_CommonWindow):
+    r"""Legacy window with :math:`\alpha=25/46` and :math:`\beta=21/46`.
 
-    See `hamming_window <https://pytorch.org/docs/stable/generated/torch.hamming_window.html>`_.
-    `alpha=0.54, beta=0.46`
+    The phase is ``2*pi*n/D``, with ``D=N`` for periodic windows and
+    ``D=N-1`` for symmetric windows.
     """
+
+    _alpha = 25.0 / 46.0
+    _beta = 1 - _alpha
 
     def _run(self, size, output_datatype=None, periodic=None):
         ni, N_1 = self._begin(size, periodic, output_datatype)
-        alpha = 25.0 / 46.0
-        beta = 1 - alpha
-        res = alpha - np.cos(ni * np.pi * 2 / N_1) * beta
+        res = self._alpha - np.cos(ni * np.pi * 2 / N_1) * self._beta
         return self._end(size, res, output_datatype)
+
+
+class HammingWindow_29(HammingWindow_17):
+    """Hamming window from Harris (1978), equation (30b)."""
+
+    _alpha = 0.54
+    _beta = 0.46

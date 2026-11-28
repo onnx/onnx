@@ -1519,6 +1519,7 @@ class OpSet_Onnx_ver28 {
 };
 
 // Iterate over schema from ai.onnx version 29
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, HammingWindow);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, GeGLU);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Expm1);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, DequantizePacked);
@@ -1538,6 +1539,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Unpack);
 class OpSet_Onnx_ver29 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, HammingWindow)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, GeGLU)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Expm1)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, DequantizePacked)>());

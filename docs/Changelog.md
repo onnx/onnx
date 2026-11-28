@@ -20907,7 +20907,7 @@ This version of the operator has been available since version 17 of the default 
 <dt><tt>output_datatype</tt> : int (default is 1)</dt>
 <dd>The data type of the output tensor. Strictly must be one of the values from DataType enum in TensorProto whose values correspond to T2. The default value is 1 = FLOAT. </dd>
 <dt><tt>periodic</tt> : int (default is 1)</dt>
-<dd>If 1, returns a window to be used as periodic function. If 0, return a symmetric window. When 'periodic' is specified, hann computes a window of length size + 1 and returns the first size points. The default value is 1. </dd>
+<dd>If 1, returns a periodic window of length size, equivalent to the first size elements of a symmetric window of length size + 1. If 0, returns a symmetric window of length size. The default value is 1.</dd>
 </dl>
 
 #### Inputs
@@ -20991,7 +20991,7 @@ This version of the operator has been available since version 17 of the default 
 <dt><tt>output_datatype</tt> : int (default is 1)</dt>
 <dd>The data type of the output tensor. Strictly must be one of the values from DataType enum in TensorProto whose values correspond to T2. The default value is 1 = FLOAT. </dd>
 <dt><tt>periodic</tt> : int (default is 1)</dt>
-<dd>If 1, returns a window to be used as periodic function. If 0, return a symmetric window. When 'periodic' is specified, hann computes a window of length size + 1 and returns the first size points. The default value is 1. </dd>
+<dd>If 1, returns a periodic window of length size, equivalent to the first size elements of a symmetric window of length size + 1. If 0, returns a symmetric window of length size. The default value is 1.</dd>
 </dl>
 
 #### Inputs
@@ -21031,7 +21031,7 @@ This version of the operator has been available since version 17 of the default 
 <dt><tt>output_datatype</tt> : int (default is 1)</dt>
 <dd>The data type of the output tensor. Strictly must be one of the values from DataType enum in TensorProto whose values correspond to T2. The default value is 1 = FLOAT. </dd>
 <dt><tt>periodic</tt> : int (default is 1)</dt>
-<dd>If 1, returns a window to be used as periodic function. If 0, return a symmetric window. When 'periodic' is specified, hann computes a window of length size + 1 and returns the first size points. The default value is 1. </dd>
+<dd>If 1, returns a periodic window of length size, equivalent to the first size elements of a symmetric window of length size + 1. If 0, returns a symmetric window of length size. The default value is 1.</dd>
 </dl>
 
 #### Inputs
@@ -34986,6 +34986,62 @@ This version of the operator has been available since version 29 of the default 
 <dd>Constrain input, weights, bias, and output to floating-point tensors.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain group indices to int32 or int64 tensors.</dd>
+</dl>
+
+### <a name="HammingWindow-29"></a>**HammingWindow-29**</a>
+
+  Generates a one-dimensional Hamming window of length `N`, where `N` is the
+  positive integer specified by the scalar input `size`.
+
+  For each integer index `n` with `0 <= n < N`, the window value is
+
+  ```
+  w[n] = 0.54 - 0.46 * cos(2 * pi * n / D)
+  ```
+
+  where `D = N` when `periodic = 1`, and `D = N - 1` when `periodic = 0`.
+  A periodic window is equivalent to the first `N` elements of a symmetric window
+  of length `N + 1`.
+
+  The window values are cast to `output_datatype`. The output tensor has shape `[N]`.
+
+  The coefficients `0.54` and `0.46` follow equation (30b), Section V-D of
+  [Harris (1978)](https://ieeexplore.ieee.org/document/1455106).
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>output_datatype</tt> : int (default is 1)</dt>
+<dd>The data type of the output tensor. Strictly must be one of the values from DataType enum in TensorProto whose values correspond to T2. The default value is 1 = FLOAT. </dd>
+<dt><tt>periodic</tt> : int (default is 1)</dt>
+<dd>If 1, returns a periodic window of length size, equivalent to the first size elements of a symmetric window of length size + 1. If 0, returns a symmetric window of length size. The default value is 1.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>size</tt> (non-differentiable) : T1</dt>
+<dd>A scalar value indicating the length of the window.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T2</dt>
+<dd>A Hamming window with length: size. The output has the shape: [size].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain the input size to int32_t or int64_t.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain output types to numeric tensors.</dd>
 </dl>
 
 ### <a name="LinearAttention-29"></a>**LinearAttention-29**</a>
