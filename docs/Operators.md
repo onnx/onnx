@@ -187,7 +187,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|16|
 |<a href="#GroupNormalization">GroupNormalization</a>|<a href="Changelog.md#GroupNormalization-21">21</a>, <a href="Changelog.md#GroupNormalization-18">18</a>|21|
 |<a href="#GroupedMatMul">GroupedMatMul</a>|<a href="Changelog.md#GroupedMatMul-29">29</a>|29|
-|<a href="#HammingWindow">HammingWindow</a>|<a href="Changelog.md#HammingWindow-17">17</a>|17|
+|<a href="#HammingWindow">HammingWindow</a>|<a href="Changelog.md#HammingWindow-29">29</a>, <a href="Changelog.md#HammingWindow-17">17</a>|29|
 |<a href="#HannWindow">HannWindow</a>|<a href="Changelog.md#HannWindow-17">17</a>|17|
 |<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-22">22</a>, <a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|18|
 |<a href="#HardSwish">HardSwish</a>|<a href="Changelog.md#HardSwish-22">22</a>, <a href="Changelog.md#HardSwish-14">14</a>|22|
@@ -19400,11 +19400,23 @@ expect(
 
 ### <a name="HammingWindow"></a><a name="hammingwindow">**HammingWindow**</a>
 
-  Generates a Hamming window as described in the paper https://ieeexplore.ieee.org/document/1455106.
+  Generates a Hamming window with coefficients alpha = 0.54 and beta = 0.46,
+  as defined in equation (30b), Section V-D of Harris (1978):
+  https://ieeexplore.ieee.org/document/1455106.
+
+  For an output of length N, the window is
+  `w[n] = 0.54 - 0.46 * cos(2 * pi * n / D)`, where `D = N` for a periodic
+  window and `D = N - 1` for a symmetric window.
+
+  HammingWindow-17 instead uses alpha = 25/46 and beta = 21/46, the coefficients
+  for exact cancellation at the first sidelobe position discussed before equation
+  (30b). Starting with version 29, the operator uses the 0.54/0.46 Hamming window.
 
 #### Version
 
-This version of the operator has been available since version 17 of the default ONNX operator set.
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#HammingWindow-17">17</a>
 
 #### Attributes
 
@@ -19452,8 +19464,8 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 size = np.int32(10)
-a0 = 25 / 46
-a1 = 1 - a0
+a0 = 0.54
+a1 = 0.46
 y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
 expect(
     node,
@@ -19467,8 +19479,8 @@ node = onnx.helper.make_node(
     "HammingWindow", inputs=["x"], outputs=["y"], periodic=0
 )
 size = np.int32(10)
-a0 = 25 / 46
-a1 = 1 - a0
+a0 = 0.54
+a1 = 0.46
 y = a0 - a1 * np.cos(
     2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
@@ -19478,6 +19490,32 @@ expect(
     outputs=[y.astype(np.float32)],
     name="test_hammingwindow_symmetric",
 )
+```
+
+</details>
+
+
+<details>
+<summary>v17</summary>
+
+```python
+# Keep the legacy coefficients covered independently of the latest schema.
+for periodic in (0, 1):
+    node = onnx.helper.make_node(
+        "HammingWindow", ["x"], ["y"], periodic=periodic
+    )
+    size = np.int32(10)
+    denominator = size if periodic else size - 1
+    y = 25 / 46 - (21 / 46) * np.cos(
+        2 * np.pi * np.arange(size, dtype=np.float32) / denominator
+    )
+    expect(
+        node,
+        inputs=[size],
+        outputs=[y.astype(np.float32)],
+        name=f"test_hammingwindow_v17_periodic_{periodic}",
+        opset_imports=[onnx.helper.make_opsetid("", 17)],
+    )
 ```
 
 </details>

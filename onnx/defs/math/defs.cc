@@ -3004,6 +3004,57 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX"));
 
 ONNX_OPERATOR_SET_SCHEMA(
+    HammingWindow,
+    29,
+    OpSchema()
+        .FillUsing(CosineSumWindowOpDocGenerator("Hamming"))
+        .SetDoc(R"DOC(
+Generates a Hamming window with coefficients alpha = 0.54 and beta = 0.46,
+as defined in equation (30b), Section V-D of Harris (1978):
+https://ieeexplore.ieee.org/document/1455106.
+
+For an output of length N, the window is
+`w[n] = 0.54 - 0.46 * cos(2 * pi * n / D)`, where `D = N` for a periodic
+window and `D = N - 1` for a symmetric window.
+
+HammingWindow-17 instead uses alpha = 25/46 and beta = 21/46, the coefficients
+for exact cancellation at the first sidelobe position discussed before equation
+(30b). Starting with version 29, the operator uses the 0.54/0.46 Hamming window.
+)DOC")
+        .TypeConstraint("T1", {types::Int32, types::Int64}, "Constrain the input size to int32_t or int64_t.")
+        .TypeConstraint("T2", OpSchema::all_numeric_types_ir4(), "Constrain output types to numeric tensors.")
+        .FunctionBody(R"ONNX(
+        {
+          A0 = Constant <value = float {0.54}>()
+          A1 = Constant <value = float {0.46}>()
+          A2 = Constant <value = float {0.0}>()
+          Zero = Constant <value = float {0.0}>()
+          One = Constant <value = float {1.0}>()
+          Two = Constant <value = float {2.0}>()
+          Tau = Constant <value = float {6.2831853}>()
+          Periodic_Size_FP = Cast <to = 1> (size)
+          Symmetric_Size_FP = Sub(Periodic_Size_FP, One)
+          IsPeriodic = Constant <value_int : int = @periodic>()
+          IsPeriodic_FP = Cast <to = 1> (IsPeriodic)
+          IsSymmetric_FP = Sub(One, IsPeriodic_FP)
+          Periodic_Component = Mul(Periodic_Size_FP, IsPeriodic_FP)
+          Symmetric_Component = Mul(Symmetric_Size_FP, IsSymmetric_FP)
+          Size_FP = Add(Periodic_Component, Symmetric_Component)
+          AngularIncrement = Div (Tau, Size_FP)
+          Range = Range (Zero, Periodic_Size_FP, One)
+          RangeAngular = Mul (Range, AngularIncrement)
+          TwoRangeAngular = Mul (RangeAngular, Two)
+          CosTwoRangeAngular = Cos (TwoRangeAngular)
+          A2_Component = Mul (A2, CosTwoRangeAngular)
+          CosRangeAngular = Cos (RangeAngular)
+          A1_Component = Mul (A1, CosRangeAngular)
+          Temp0 = Sub (A0, A1_Component)
+          Temp1 = Add (Temp0, A2_Component)
+          output = Cast <to : int = @output_datatype> (Temp1)
+        }
+        )ONNX"));
+
+ONNX_OPERATOR_SET_SCHEMA(
     BlackmanWindow,
     17,
     OpSchema()
