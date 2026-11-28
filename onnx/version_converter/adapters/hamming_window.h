@@ -20,7 +20,7 @@ class HammingWindowAdapter final : public Adapter {
   HammingWindowAdapter(const OpSetID& initial, const OpSetID& target) : Adapter("HammingWindow", initial, target) {}
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
-    const auto* schema = OpSchemaRegistry::Schema("HammingWindow", initial_version().version(), "");
+    const auto* schema = OpSchemaRegistry::Schema("HammingWindow", static_cast<int>(initial_version().version()), "");
     ONNX_ASSERT(schema != nullptr)
     const auto* function = schema->GetFunction();
     ONNX_ASSERT(function != nullptr)
